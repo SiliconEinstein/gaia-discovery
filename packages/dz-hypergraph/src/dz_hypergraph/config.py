@@ -213,6 +213,16 @@ class ZeroConfig:
 
     # New iterative discovery stack
     enable_mcts: bool = _env_bool("DISCOVERY_ZERO_ENABLE_MCTS", False)
+    engine_mode: str = _env("DISCOVERY_ZERO_ENGINE_MODE", "mcts")  # "mcts" | "sequential"
+    bridge_gate_mode: str = _env("DISCOVERY_ZERO_BRIDGE_GATE_MODE", "hard")  # "hard" | "none"
+    lean_min_confidence: float = _env_float("DISCOVERY_ZERO_LEAN_MIN_CONFIDENCE", 0.85)
+    lean_max_grade_d_ratio: float = _env_float("DISCOVERY_ZERO_LEAN_MAX_GRADE_D_RATIO", 0.15)
+    lean_allowed_strict_modes: list[str] = [
+        item.strip()
+        for item in _env("DISCOVERY_ZERO_LEAN_ALLOWED_STRICT_MODES", "direct_proof,lemma").split(",")
+        if item.strip()
+    ]
+    use_bridge_executor: bool = _env_bool("DISCOVERY_ZERO_USE_BRIDGE_EXECUTOR", False)
     enable_evolutionary_experiments: bool = _env_bool("DISCOVERY_ZERO_ENABLE_EVOLUTIONARY_EXPERIMENTS", True)
     enable_continuation_verification: bool = _env_bool("DISCOVERY_ZERO_ENABLE_CONTINUATION_VERIFICATION", True)
     enable_retrieval: bool = _env_bool(

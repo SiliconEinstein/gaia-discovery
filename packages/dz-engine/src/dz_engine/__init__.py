@@ -6,6 +6,9 @@ from pathlib import Path
 from typing import Any, Optional
 
 from dz_engine.mcts_engine import MCTSConfig, MCTSDiscoveryEngine
+from dz_engine.phase_gate import LeanGateDecision, Phase, PhaseGate, should_attempt_lean
+from dz_engine.sequential_engine import SequentialDiscoveryEngine, SequentialResult
+from dz_hypergraph.config import CONFIG
 from dz_hypergraph.models import HyperGraph
 
 
@@ -18,7 +21,17 @@ def run_discovery(
     backend: str = "bp",
     kwargs: Optional[dict[str, Any]] = None,
 ):
-    """Run MCTS discovery with a minimal high-level API."""
+    """Run discovery via configured engine mode."""
+    engine_mode = str(getattr(CONFIG, "engine_mode", "mcts")).casefold()
+    if engine_mode == "sequential":
+        engine = SequentialDiscoveryEngine(
+            graph_path=graph_path,
+            target_node_id=target_node_id,
+            model=model,
+            backend=backend,
+            **(kwargs or {}),
+        )
+        return engine.run()
     engine = MCTSDiscoveryEngine(
         graph_path=graph_path,
         target_node_id=target_node_id,
@@ -33,6 +46,12 @@ def run_discovery(
 __all__ = [
     "MCTSConfig",
     "MCTSDiscoveryEngine",
+    "SequentialDiscoveryEngine",
+    "SequentialResult",
+    "PhaseGate",
+    "Phase",
+    "LeanGateDecision",
+    "should_attempt_lean",
     "run_discovery",
     "HyperGraph",
 ]
