@@ -580,3 +580,92 @@ for eid, edge in graph.edges.items():
 ## 许可
 
 与上游 Discovery-Zero-v2 保持一致。
+
+## 快速开始
+
+### 基础用法
+
+```python
+from pathlib import Path
+from dz_hypergraph import HyperGraph
+from dz_hypergraph.persistence import save_graph
+from dz_engine import MCTSDiscoveryEngine, MCTSConfig
+
+# 1. 构建初始超图
+graph = HyperGraph()
+
+# 添加已知事实（seeds）
+seed1 = graph.add_node(
+    statement="Riemann Hypothesis: all non-trivial zeros lie on Re(s) = 1/2",
+    belief=0.99,
+    prior=0.99,
+    domain="number_theory",
+    state="proven"
+)
+
+# 添加目标命题
+target = graph.add_node(
+    statement="Prove lim inf of zero gaps < 0.51",
+    belief=0.1,
+    prior=0.1,
+    domain="number_theory",
+    state="unverified"
+)
+
+# 保存初始图
+save_graph(graph, Path("initial_graph.json"))
+
+# 2. 配置MCTS引擎
+config = MCTSConfig(
+    max_iterations=30,
+    max_time_seconds=3600,
+    c_puct=1.4,
+)
+
+# 3. 启动探索（所有推理模块自动启用）
+engine = MCTSDiscoveryEngine(
+    graph_path=Path("initial_graph.json"),
+    target_node_id=target.id,
+    config=config,
+    model="cds/Claude-4.6-opus",  # 或其他LLM
+    backend="bp",  # 贝叶斯传播
+    bridge_path=Path("bridge-plan.json"),
+    llm_record_dir=Path("llm_records"),
+)
+
+# 运行探索
+result = engine.run()
+
+print(f"迭代次数: {result.iterations_completed}")
+print(f"目标置信度: {result.target_belief_initial:.4f} → {result.target_belief_final:.4f}")
+save_graph(result.graph, Path("final_graph.json"))
+```
+
+### 自动启用的推理模块
+
+`MCTSDiscoveryEngine` 会**自动初始化**以下核心模块（无需手动配置）：
+
+- **AnalogyEngine** — 跨领域类比推理
+- **DecomposeEngine** — 问题分解与子目标生成
+- **SpecializeEngine** — 问题特化与泛化
+- **KnowledgeRetriever** — 知识检索与注入
+
+这些模块由 MCTS 的 UCB 选择机制自适应调度，无需人工指定执行顺序。
+
+### 自定义模块配置（高级）
+
+如需自定义模块行为，可显式传入：
+
+```python
+from dz_engine.analogy import AnalogyEngine
+
+# 自定义 analogy 引擎（如添加领域知识库）
+custom_analogy = AnalogyEngine()
+custom_analogy.domain_knowledge = load_domain_kb("physics.json")
+
+engine = MCTSDiscoveryEngine(
+    ...
+    analogy_engine=custom_analogy,  # 覆盖默认
+)
+```
+
