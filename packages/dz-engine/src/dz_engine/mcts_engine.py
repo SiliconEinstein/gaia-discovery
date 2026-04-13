@@ -149,6 +149,21 @@ class MCTSDiscoveryEngine:
         self.experience_buffer = experience_buffer
         self.problem_variant_generator = problem_variant_generator
         self.claim_verifier = claim_verifier
+
+        # 🔥 自动初始化核心推理模块（如果未提供）
+        if analogy_engine is None:
+            from dz_engine.analogy import AnalogyEngine
+            analogy_engine = AnalogyEngine()
+        if decompose_engine is None:
+            from dz_engine.decompose import DecomposeEngine
+            decompose_engine = DecomposeEngine()
+        if specialize_engine is None:
+            from dz_engine.specialize import SpecializeEngine
+            specialize_engine = SpecializeEngine()
+        if knowledge_retriever is None:
+            from dz_engine.knowledge_retrieval import KnowledgeRetriever
+            knowledge_retriever = KnowledgeRetriever()
+
         self.analogy_engine = analogy_engine
         self.specialize_engine = specialize_engine
         self.decompose_engine = decompose_engine
