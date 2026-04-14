@@ -1,0 +1,18 @@
+{
+  "iteration": 2,
+  "node_id": "0ad05753ef00",
+  "module": "lean",
+  "created_at": 1776157410.3471546,
+  "result": {
+    "action": "lean",
+    "target_node_id": "0ad05753ef00",
+    "selected_module": "lean",
+    "raw_output": null,
+    "normalized_output": null,
+    "judge_output": null,
+    "ingest_edge_id": null,
+    "created_node_ids": [],
+    "success": false,
+    "message": "OrchestrationError: `lake` not found. Install Lean 4 toolchain (elan + lake). See: https://lean-lang.org/lean4/doc/setup.html\nSuggestion for reformulation from previous attempt:\nThis conjecture requir"
+  }
+}

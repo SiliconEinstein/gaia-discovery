@@ -1,0 +1,408 @@
+{
+  "target_statement": "分析 Riemann zeta 函数在临界线上零点的连续间距统计性质，特别是小间距（相对于平均间距）的分布和理论下界。在 RH 假设下，探索是否存在 μ < 1 使得 lim inf (γ_{n+1} - γ_n) / (2π/log γ_n) < μ，以及该常数的最优值。",
+  "propositions": [
+    {
+      "id": "P1",
+      "statement": "临界线定义为 Re(s) = 1/2。Riemann 假设 (RH) 断言所有非平凡零点都在临界线上。",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P2",
+      "statement": "设 ρ_n = 1/2 + iγ_n 为第 n 个零点（按虚部递增排序），其中 0 < γ_1 < γ_2 < γ_3 < ...。",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [
+        "P1"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P3",
+      "statement": "零点计数函数 N(T) := #{ρ : 0 < Im(ρ) ≤ T} 满足渐近公式 N(T) ~ (T/2π) log(T/2π) - T/2π。",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P4",
+      "statement": "定义归一化间距 d_n := (γ_{n+1} - γ_n) · log(γ_n)/(2π)，使得渐近平均值 E[d_n] → 1。",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [
+        "P2",
+        "P3"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P5",
+      "statement": "2026年最新结果证明了在 RH 假设下，lim inf d_n < 0.50895。",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [
+        "P1",
+        "P4"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P6",
+      "statement": "Montgomery (1973) proved under RH: F(α) = 1 - (sin πα / πα)² + o(1) for 0 ≤ α ≤ 1, where F(α) is the pair correlation function of normalized zeta zeros.",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [
+        "P1"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P7",
+      "statement": "Montgomery pair correlation 猜想预测完整的 F(α) 公式对所有 α ≥ 0 成立，且归一化间距服从 GUE 分布。",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [
+        "P6"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P8",
+      "statement": "The pair correlation I(x,T) counting normalized zero pairs within distance x satisfies I(x,T) ~ 2N(T)∫_0^x F(u)du as T → ∞.",
+      "role": "bridge",
+      "grade": "B",
+      "depends_on": [
+        "P3",
+        "P6"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P9",
+      "statement": "For small x, ∫_0^x [1 - (sin πu / πu)²] du = c · x³ + O(x⁵) where c is an explicit constant to be computed.",
+      "role": "bridge",
+      "grade": "C",
+      "depends_on": [
+        "P6"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P10",
+      "statement": "The coefficient c in ∫_0^x [1 - (sin πu / πu)²] du = c·x³ + O(x⁵) equals π²/9 ≈ 1.0966.",
+      "role": "experiment_support",
+      "grade": "C",
+      "depends_on": [
+        "P9"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P11",
+      "statement": "If all normalized gaps satisfy d_n ≥ μ for n sufficiently large, then I(μ,T) = O(T^ε) for some ε < 1.",
+      "role": "bridge",
+      "grade": "B",
+      "depends_on": [
+        "P4"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P12",
+      "statement": "Combining I(μ,T) ~ 2c·μ³·N(T) from pair correlation with I(μ,T) = O(T^ε) from gap lower bound yields a contradiction for any μ > 0.",
+      "role": "bridge",
+      "grade": "B",
+      "depends_on": [
+        "P8",
+        "P9",
+        "P11"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P13",
+      "statement": "Under RH, lim inf d_n = 0, i.e., arbitrarily small normalized gaps exist.",
+      "role": "derived",
+      "grade": "B",
+      "depends_on": [
+        "P1",
+        "P12"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P14",
+      "statement": "The Montgomery pair correlation formula (for α ≤ 1) implies a quantitative lower bound: #{n ≤ N : d_n < x} ≥ c'·x³·N - E(N) where c' > 0 and E(N) = o(N).",
+      "role": "bridge",
+      "grade": "C",
+      "depends_on": [
+        "P8",
+        "P10",
+        "P12"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P15",
+      "statement": "The coefficient relating small gap count to x³·N is c' = c/3 where c is from P10, giving c' = π²/27 ≈ 0.366 if c = π²/9.",
+      "role": "experiment_support",
+      "grade": "C",
+      "depends_on": [
+        "P10",
+        "P14"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P16",
+      "statement": "Odlyzko 计算了高度达 10^13 的零点数据，数值证据强烈支持 Montgomery 猜想。",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P17",
+      "statement": "The optimal constant μ* := inf{μ : lim inf d_n < μ under RH} satisfies 0 ≤ μ* ≤ 0.50895.",
+      "role": "derived",
+      "grade": "B",
+      "depends_on": [
+        "P5",
+        "P13"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P18",
+      "statement": "GUE random matrix theory predicts μ* = 0, with small gap probability density P(d < x) ~ (π²/6)x² as x → 0.",
+      "role": "bridge",
+      "grade": "B",
+      "depends_on": [
+        "P7"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P19",
+      "statement": "The error term uniformity in Montgomery's F(α) = 1 - (sin πα/πα)² + o(1) must be addressed: specifically, is the o(1) uniform in α ∈ [0,1] as T → ∞?",
+      "role": "risk",
+      "grade": "D",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P20",
+      "statement": "To improve beyond 0.50895 requires new analytic techniques: either refined mollifier methods, explicit higher-moment bounds, or sharper error term analysis in pair correlation.",
+      "role": "risk",
+      "grade": "D",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P21",
+      "statement": "分析 Riemann zeta 函数在临界线上零点的连续间距统计性质，特别是小间距（相对于平均间距）的分布和理论下界。在 RH 假设下，探索是否存在 μ < 1 使得 lim inf (γ_{n+1} - γ_n) / (2π/log γ_n) < μ，以及该常数的最优值。",
+      "role": "target",
+      "grade": "B",
+      "depends_on": [
+        "P13",
+        "P17",
+        "P14",
+        "P18"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    }
+  ],
+  "chain": [
+    {
+      "id": "S1",
+      "statement": "Define the normalized gap d_n from zero enumeration and counting function asymptotics.",
+      "uses": [
+        "P2",
+        "P3"
+      ],
+      "concludes": [
+        "P4"
+      ],
+      "grade": "A",
+      "notes": null
+    },
+    {
+      "id": "S2",
+      "statement": "From Montgomery's proven pair correlation F(α) for α ∈ [0,1], establish the pair count asymptotic I(x,T) ~ 2N(T)∫_0^x F(u)du.",
+      "uses": [
+        "P3",
+        "P6"
+      ],
+      "concludes": [
+        "P8"
+      ],
+      "grade": "B",
+      "notes": null
+    },
+    {
+      "id": "S3",
+      "statement": "Compute the integral ∫_0^x [1 - (sin πu/πu)²]du to determine coefficient c.",
+      "uses": [
+        "P6"
+      ],
+      "concludes": [
+        "P9",
+        "P10"
+      ],
+      "grade": "C",
+      "notes": null
+    },
+    {
+      "id": "S4",
+      "statement": "Analyze the constraint that d_n ≥ μ for all large n implies bounded pair count I(μ,T).",
+      "uses": [
+        "P4"
+      ],
+      "concludes": [
+        "P11"
+      ],
+      "grade": "B",
+      "notes": null
+    },
+    {
+      "id": "S5",
+      "statement": "Derive contradiction between pair correlation growth of I(μ,T) and boundedness implied by gaps ≥ μ.",
+      "uses": [
+        "P8",
+        "P9",
+        "P11"
+      ],
+      "concludes": [
+        "P12"
+      ],
+      "grade": "B",
+      "notes": null
+    },
+    {
+      "id": "S6",
+      "statement": "Conclude lim inf d_n = 0 under RH by contraposition on the μ > 0 assumption.",
+      "uses": [
+        "P1",
+        "P12"
+      ],
+      "concludes": [
+        "P13"
+      ],
+      "grade": "B",
+      "notes": null
+    },
+    {
+      "id": "S7",
+      "statement": "Convert pair count lower bound to small gap count lower bound with explicit coefficient.",
+      "uses": [
+        "P8",
+        "P10",
+        "P12"
+      ],
+      "concludes": [
+        "P14"
+      ],
+      "grade": "C",
+      "notes": null
+    },
+    {
+      "id": "S8",
+      "statement": "Determine the factor relating pair counts to gap counts (possibly factor of 3).",
+      "uses": [
+        "P10",
+        "P14"
+      ],
+      "concludes": [
+        "P15"
+      ],
+      "grade": "C",
+      "notes": null
+    },
+    {
+      "id": "S9",
+      "statement": "Combine lim inf d_n = 0 with the 2026 upper bound to bracket the optimal constant μ*.",
+      "uses": [
+        "P5",
+        "P13"
+      ],
+      "concludes": [
+        "P17"
+      ],
+      "grade": "B",
+      "notes": null
+    },
+    {
+      "id": "S10",
+      "statement": "Invoke GUE heuristic from full Montgomery conjecture to predict μ* = 0.",
+      "uses": [
+        "P7"
+      ],
+      "concludes": [
+        "P18"
+      ],
+      "grade": "B",
+      "notes": null
+    },
+    {
+      "id": "S11",
+      "statement": "Synthesize existence (P13), current bounds (P17), quantitative predictions (P14), and heuristics (P18) to address the target question.",
+      "uses": [
+        "P13",
+        "P17",
+        "P14",
+        "P18"
+      ],
+      "concludes": [
+        "P21"
+      ],
+      "grade": "B",
+      "notes": null
+    }
+  ],
+  "summary": "Under RH, Montgomery's pair correlation (α∈[0,1]) supports a contradiction argument implying lim inf d_n = 0 (arbitrarily small normalized gaps). A 2026 result gives lim inf d_n < 0.50895, hence 0 ≤ μ* ≤ 0.50895. Quantitative small-gap coefficients and uniformity of error terms are flagged as key technical uncertainties; GUE heuristics predict μ* = 0."
+}

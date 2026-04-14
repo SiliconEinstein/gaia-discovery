@@ -1,0 +1,18 @@
+{
+  "iteration": 25,
+  "node_id": "a792972c5c68",
+  "module": "lean",
+  "created_at": 1776159572.5816095,
+  "result": {
+    "action": "lean",
+    "target_node_id": "a792972c5c68",
+    "selected_module": "lean",
+    "raw_output": null,
+    "normalized_output": null,
+    "judge_output": null,
+    "ingest_edge_id": null,
+    "created_node_ids": [],
+    "success": false,
+    "message": "OrchestrationError: The Paley-Wiener theorem for band-limited functions requires extensive formalization of complex analysis, distribution theory, and Fourier analysis that is not currently available "
+  }
+}

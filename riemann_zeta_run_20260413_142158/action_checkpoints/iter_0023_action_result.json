@@ -1,0 +1,18 @@
+{
+  "iteration": 23,
+  "node_id": "b84cb3ab6f0f",
+  "module": "lean",
+  "created_at": 1776068292.6014524,
+  "result": {
+    "action": "lean",
+    "target_node_id": "b84cb3ab6f0f",
+    "selected_module": "lean",
+    "raw_output": null,
+    "normalized_output": null,
+    "judge_output": null,
+    "ingest_edge_id": null,
+    "created_node_ids": [],
+    "success": false,
+    "message": "OrchestrationError: Cannot formally verify: The Arithmetic Fredholm Correction conjecture is an open research-level conjecture that combines multiple unformalized mathematical frameworks. Specifically"
+  }
+}

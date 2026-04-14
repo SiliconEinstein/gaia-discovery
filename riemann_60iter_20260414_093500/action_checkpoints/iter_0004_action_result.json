@@ -1,0 +1,18 @@
+{
+  "iteration": 4,
+  "node_id": "6577be4c0ccc",
+  "module": "lean",
+  "created_at": 1776131749.4727364,
+  "result": {
+    "action": "lean",
+    "target_node_id": "6577be4c0ccc",
+    "selected_module": "lean",
+    "raw_output": null,
+    "normalized_output": null,
+    "judge_output": null,
+    "ingest_edge_id": null,
+    "created_node_ids": [],
+    "success": false,
+    "message": "OrchestrationError: Montgomery pair correlation conjecture is an open mathematical problem that cannot be proven with current mathematical knowledge\nSuggestion for reformulation from previous attempt:"
+  }
+}

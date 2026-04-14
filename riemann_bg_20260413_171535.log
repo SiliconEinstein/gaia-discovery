@@ -1,0 +1,17 @@
+======================================================================
+Riemann Zeta 零点间距 - Discovery Zero 实验（后台运行）
+======================================================================
+
+运行目录: riemann_zeta_run_20260413_171536
+
+[1/2] 加载 seed knowledge...
+✓ 加载了 10 个 seeds
+Traceback (most recent call last):
+  File "/root/gaia-discovery/run_riemann_bg.py", line 122, in <module>
+    main()
+  File "/root/gaia-discovery/run_riemann_bg.py", line 60, in main
+    graph.save(initial_graph_path)
+    ^^^^^^^^^^
+  File "/opt/mamba/lib/python3.12/site-packages/pydantic/main.py", line 1026, in __getattr__
+    raise AttributeError(f'{type(self).__name__!r} object has no attribute {item!r}')
+AttributeError: 'HyperGraph' object has no attribute 'save'

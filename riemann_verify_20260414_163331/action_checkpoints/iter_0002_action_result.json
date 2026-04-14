@@ -1,0 +1,18 @@
+{
+  "iteration": 2,
+  "node_id": "9730c11187f9",
+  "module": "lean",
+  "created_at": 1776156368.5257478,
+  "result": {
+    "action": "lean",
+    "target_node_id": "9730c11187f9",
+    "selected_module": "lean",
+    "raw_output": null,
+    "normalized_output": null,
+    "judge_output": null,
+    "ingest_edge_id": null,
+    "created_node_ids": [],
+    "success": false,
+    "message": "OrchestrationError: The Montgomery pair correlation conjecture is a deep unproven conjecture in analytic number theory that relates the distribution of gaps between Riemann zeta zeros to random matrix"
+  }
+}

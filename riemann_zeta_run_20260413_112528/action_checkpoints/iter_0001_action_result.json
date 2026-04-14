@@ -1,0 +1,77 @@
+{
+  "iteration": 1,
+  "node_id": "4b6404e4e5c9",
+  "module": "plausible",
+  "created_at": 1776051004.2163205,
+  "result": {
+    "action": "plausible",
+    "target_node_id": "4b6404e4e5c9",
+    "selected_module": "plausible",
+    "raw_output": "Looking at the judge's feedback, I need to take a more direct route from Montgomery's pair correlation to the conclusion μ* = 0, avoiding the hand-wavy variance arguments.\n\n## Seed Facts\n\nThe essential starting points are:\n- Montgomery's pair correlation conjecture: the two-point correlation of normalized zeros matches GUE\n- This conjecture implies a specific form for the pair correlation function r(α) = 1 - (sin πα / πα)² + δ(α)\n- The 2026 result that lim inf d_n < 0.50895 under RH (unconditional progress)\n\n## Competing Routes\n\n**Route A (Indirect/Variance)**: Use variance bounds on zero counts to force clustering → leads to hand-waving as judge noted.\n\n**Route B (Direct Correlation Integral)**: The pair correlation function directly determines the gap distribution via integration against appropriate test functions. This is the standard route.\n\n**Route C (Gaudin Distribution)**: If pair correlation matches GUE, then the full eigenvalue statistics match, including the nearest-neighbor spacing distribution (Gaudin distribution), which vanishes cubically at 0.\n\nI'll pursue **Route C** as it's the most direct and avoids the problematic intermediate steps.\n\n## The Direct Route\n\n**Step 1: From Pair Correlation to Full GUE Statistics**\n\nMontgomery's pair correlation conjecture, in its strong form, asserts that the n-level correlation functions of normalized zeta zeros match those of GUE eigenvalues for all n. While Montgomery originally proved convergence to r(α) only for |α| < 1 (assuming RH), the full conjecture extends this to all correlation functions.\n\n**Step 2: The Gaudin Nearest-Neighbor Distribution**\n\nFor GUE matrices of size N, the nearest-neighbor spacing distribution converges as N → ∞ to the Gaudin distribution p(s). This distribution is explicitly given by:\n\np(s) = (d²/ds²) E(s)\n\nwhere E(s) = det(I - K_s) is the Fredholm determinant of the sine kernel K(x,y) = sin(π(x-y))/(π(x-y)) restricted to the interval [0,s].\n\n**Step 3: Cubic Vanishing at Zero**\n\nThe crucial property: p(s) ~ (π²/3) s² as s → 0⁺.\n\nThis cubic vanishing (quadratic in the density, cubic in the cumulative) arises from the determinantal structure. The probability of finding a gap of size at most δ is:\n\nP(d ≤ δ) = ∫₀^δ p(s) ds ~ (π²/9) δ³ as δ → 0⁺.\n\nThis is small but **strictly positive for all δ > 0**.\n\n**Step 4: The Key Deduction**\n\nIf the normalized zero gaps d_n follow the Gaudin distribution (assuming the full GUE hypothesis), then for any δ > 0:\n\n- The proportion of gaps with d_n ≤ δ is approximately (π²/9) δ³ > 0\n- Since there are infinitely many zeros, infinitely many gaps satisfy d_n ≤ δ\n- This holds for **every** δ > 0\n\n**Step 5: Conclusion μ* = 0**\n\nBy the definition of lim inf:\n- μ* = lim inf_{n→∞} d_n\n- For any δ > 0, infinitely many d_n ≤ δ\n- Therefore μ* ≤ δ for all δ > 0\n- Hence μ* = 0\n\n**Step 6: New Auxiliary Object - The Gap Exponent**\n\nDefine the **gap exponent** β by:\n\nlim_{δ→0⁺} [log P(d_n < δ)] / [log δ] = β\n\nUnder the GUE hypothesis, β = 3 (cubic vanishing). This exponent β is a new testable invariant that:\n- Distinguishes different universality classes (Poisson gives β = 1, GOE gives β = 1, GUE gives β = 3)\n- Can be estimated numerically from Odlyzko's data\n- Would reveal any deviation from GUE statistics at small scales\n\n**Step 7: Novel Testable Prediction**\n\nThe GUE hypothesis predicts not just μ* = 0, but the specific **rate of approach**:\n\n#{n ≤ N : d_n < δ} ~ (π²/9) δ³ · N\n\nfor fixed small δ as N → ∞. This is a quantitative strengthening that could be numerically verified against Odlyzko's computations and gives a concrete formula for how often small gaps occur.\n\n```json\n{\n  \"premises\": [\n    {\"id\": \"696d7307eb11\", \"statement\": \"Riemann zeta function definition and analytic continuation\"},\n    {\"id\": \"465363ad1dec\", \"statement\": \"Critical line definition and RH\"},\n    {\"id\": \"9899811ca6c6\", \"statement\": \"Zeros ρ_n = 1/2 + iγ_n ordered by imaginary part\"},\n    {\"id\": \"75dc7755eba3\", \"statement\": \"Montgomery pair correlation conjecture: normalized zero gaps match GUE\"},\n    {\"id\": \"b6a18fca2619\", \"statement\": \"GUE eigenvalue spacing follows Tracy-Widom/Gaudin distribution\"},\n    {\"id\": null, \"statement\": \"Full GUE Hypothesis: All n-level correlations of normalized zeta zeros match GUE eigenvalue correlations\"},\n    {\"id\": null, \"statement\": \"Gaudin distribution property: the nearest-neighbor spacing density p(s) ~ (π²/3)s² as s → 0⁺, giving P(gap ≤ δ) ~ (π²/9)δ³\"}\n  ],\n  \"steps\": [\n    \"Step 1: The full GUE hypothesis extends Montgomery's pair correlation to assert that all finite-dimensional correlation functions of normalized zeta zeros match those of GUE random matrices.\",\n    \"Step 2: For GUE matrices, the nearest-neighbor spacing distribution is the Gaudin distribution p(s), derived from the Fredholm determinant of the sine kernel.\",\n    \"Step 3: The Gaudin distribution has cubic vanishing at zero: p(s) ~ (π²/3)s² as s → 0⁺. Therefore P(d ≤ δ) ~ (π²/9)δ³ > 0 for all δ > 0.\",\n    \"Step 4: Under the full GUE hypothesis, normalized zeta zero gaps d_n = (γ_{n+1} - γ_n)·log(γ_n)/(2π) follow the Gaudin distribution. Thus for any δ > 0, the proportion of gaps below δ is approximately (π²/9)δ³ > 0.\",\n    \"Step 5: Since there are infinitely many zeros and each δ > 0 gives positive probability, infinitely many gaps satisfy d_n < δ for every δ > 0.\",\n    \"Step 6: By definition of lim inf, having infinitely many d_n < δ for all δ > 0 forces μ* = lim inf d_n = 0.\",\n    \"Step 7: New testable prediction: #{n ≤ N : d_n < δ} ~ (π²/9)δ³·N gives the precise rate at which small gaps occur, verifiable against Odlyzko's numerical data.\"\n  ],\n  \"conclusion\": {\n    \"statement\": \"Assuming RH and the full GUE hypothesis for zeta zeros, the optimal constant is μ* = 0. That is, lim inf (γ_{n+1} - γ_n)/(2π/log γ_n) = 0. Moreover, the count of normalized gaps below δ among the first N zeros is asymptotically (π²/9)δ³·N.\",\n    \"formal_statement\": \"theorem zeta_zero_gap_infimum (RH : riemann_hypothesis) (GUE : full_gue_hypothesis_for_zeta) : liminf (λ n, (γ (n+1) - γ n) * log (γ n) / (2 * π)) = 0 ∧ ∀ δ > 0, (Nat.card {n ≤ N | normalized_gap n < δ}) / N → (π^2/9) * δ^3\"\n  },\n  \"module\": \"plausible\",\n  \"domain\": \"number_theory\"\n}\n```",
+    "normalized_output": {
+      "premises": [
+        {
+          "id": null,
+          "statement": "Riemann zeta function definition and analytic continuation"
+        },
+        {
+          "id": null,
+          "statement": "Critical line definition and RH"
+        },
+        {
+          "id": null,
+          "statement": "Zeros ρ_n = 1/2 + iγ_n ordered by imaginary part"
+        },
+        {
+          "id": null,
+          "statement": "Montgomery pair correlation conjecture: normalized zero gaps match GUE"
+        },
+        {
+          "id": null,
+          "statement": "GUE eigenvalue spacing follows Tracy-Widom/Gaudin distribution"
+        },
+        {
+          "id": null,
+          "statement": "Full GUE Hypothesis: All n-level correlations of normalized zeta zeros match GUE eigenvalue correlations"
+        },
+        {
+          "id": null,
+          "statement": "Gaudin distribution property: the nearest-neighbor spacing density p(s) ~ (π²/3)s² as s → 0⁺, giving P(gap ≤ δ) ~ (π²/9)δ³"
+        }
+      ],
+      "steps": [
+        "Step 1: The full GUE hypothesis extends Montgomery's pair correlation to assert that all finite-dimensional correlation functions of normalized zeta zeros match those of GUE random matrices.",
+        "Step 2: For GUE matrices, the nearest-neighbor spacing distribution is the Gaudin distribution p(s), derived from the Fredholm determinant of the sine kernel.",
+        "Step 3: The Gaudin distribution has cubic vanishing at zero: p(s) ~ (π²/3)s² as s → 0⁺. Therefore P(d ≤ δ) ~ (π²/9)δ³ > 0 for all δ > 0.",
+        "Step 4: Under the full GUE hypothesis, normalized zeta zero gaps d_n = (γ_{n+1} - γ_n)·log(γ_n)/(2π) follow the Gaudin distribution. Thus for any δ > 0, the proportion of gaps below δ is approximately (π²/9)δ³ > 0.",
+        "Step 5: Since there are infinitely many zeros and each δ > 0 gives positive probability, infinitely many gaps satisfy d_n < δ for every δ > 0.",
+        "Step 6: By definition of lim inf, having infinitely many d_n < δ for all δ > 0 forces μ* = lim inf d_n = 0.",
+        "Step 7: New testable prediction: #{n ≤ N : d_n < δ} ~ (π²/9)δ³·N gives the precise rate at which small gaps occur, verifiable against Odlyzko's numerical data."
+      ],
+      "conclusion": {
+        "statement": "Assuming RH and the full GUE hypothesis for zeta zeros, the optimal constant is μ* = 0. That is, lim inf (γ_{n+1} - γ_n)/(2π/log γ_n) = 0. Moreover, the count of normalized gaps below δ among the first N zeros is asymptotically (π²/9)δ³·N.",
+        "formal_statement": "theorem zeta_zero_gap_infimum (RH : riemann_hypothesis) (GUE : full_gue_hypothesis_for_zeta) : liminf (λ n, (γ (n+1) - γ n) * log (γ n) / (2 * π)) = 0 ∧ ∀ δ > 0, (Nat.card {n ≤ N | normalized_gap n < δ}) / N → (π^2/9) * δ^3"
+      },
+      "module": "plausible",
+      "confidence": 0.72,
+      "domain": "number_theory",
+      "review_confidence": 0.72
+    },
+    "judge_output": {
+      "confidence": 0.72,
+      "reasoning": "The reasoning chain is logically sound in its broad strokes: if the full GUE hypothesis holds (all n-level correlations match GUE), then the nearest-neighbor spacing distribution of normalized zeta zeros should follow the Gaudin distribution. The Gaudin distribution has p(s) ~ (π²/3)s² near s=0, giving cubic vanishing and hence P(gap ≤ δ) ~ (π²/9)δ³. Since this probability is positive for all δ > 0 and there are infinitely many zeros, the lim inf of normalized gaps must be 0. This part of the argument is clean and correct conditional on the premises. However, there are several concerns that prevent higher confidence: (1) The full GUE hypothesis as typically formulated concerns correlation functions, and the passage from n-level correlations to the nearest-neighbor spacing distribution requires careful justification — the spacing distribution is determined by all n-point correlations via inclusion-exclusion on the Fredholm determinant, so this is valid in principle but the step is non-trivial. (2) The GUE hypothesis is itself an unproven conjecture, and the conclusion's strength entirely depends on it. (3) The quantitative prediction #{n ≤ N : d_n < δ} ~ (π²/9)δ³·N requires not just that the limiting distribution is Gaudin but that the convergence is strong enough to give this asymptotic count — this is an equidistribution statement that goes slightly beyond just having the correct limiting distribution. (4) The leading coefficient π²/3 for p(s) near 0 is standard for GUE (as opposed to GOE or GSE), and the integration giving π²/9 is correct. (5) The formal statement mixes notation somewhat loosely (the asymptotic for the count should specify N → ∞). Overall, the logical structure is solid for a plausible-module argument, and the main conclusions follow correctly from the stated premises.",
+      "concerns": [
+        "The passage from n-level correlations to the nearest-neighbor spacing distribution via Fredholm determinant is asserted but not explicitly justified — it's a non-trivial step even though it is mathematically valid.",
+        "The equidistribution claim (asymptotic count of small gaps) requires stronger convergence than merely having the correct limiting distribution; some uniformity or rate of convergence is implicitly assumed.",
+        "The full GUE hypothesis itself is a very strong unproven conjecture — Montgomery only proved pair correlation for restricted test functions, and even Odlyzko's data only provides numerical evidence.",
+        "The formal statement has minor issues: the asymptotic for the card should specify the limit as N → ∞, and the notation is somewhat informal for a formal theorem statement.",
+        "The coefficient π²/3 for the small-s behavior of the Gaudin distribution should be verified — some sources use different normalizations. The standard GUE result is p(s) = (π²/3)s² + O(s⁴) under mean-spacing-1 normalization, which appears correct here."
+      ],
+      "suggestion": "The argument would benefit from explicitly citing the relationship between n-point correlation functions and the gap distribution via the Fredholm determinant of the sine kernel, and from discussing what kind of convergence (e.g., convergence in distribution vs. stronger forms) is needed for the quantitative counting result."
+    },
+    "ingest_edge_id": null,
+    "created_node_ids": [],
+    "success": true,
+    "message": "plausible planning complete"
+  }
+}

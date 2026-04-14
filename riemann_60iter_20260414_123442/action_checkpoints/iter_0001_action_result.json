@@ -1,0 +1,80 @@
+{
+  "iteration": 1,
+  "node_id": "1cb898f2be47",
+  "module": "plausible",
+  "created_at": 1776141567.2146358,
+  "result": {
+    "action": "plausible",
+    "target_node_id": "1cb898f2be47",
+    "selected_module": "plausible",
+    "raw_output": "# New Route: Conditional Equidistribution and Repulsion Mechanisms\n\nLet me explore a different approach using explicit zero-repulsion forces and conditional equidistribution under Montgomery's conjecture.\n\n## Survey of Context\n\nI need:\n- RH: zeros at ρ_n = 1/2 + iγ_n\n- Explicit formula: ψ(x) = x - Σ_ρ (x^ρ / ρ) + O(1)\n- Montgomery pair correlation: for fixed test function φ with Fourier transform compactly supported in (-1,1), we have\n  $$\\lim_{T→∞} \\frac{1}{N(T)} \\sum_{0<γ,γ'≤T} φ\\left(\\frac{γ-γ'}{2π/\\log T}\\right) = \\int_{-∞}^{∞} φ(x) \\left(1 - \\left(\\frac{\\sin πx}{πx}\\right)^2\\right) dx$$\n- Current best: μ < 0.50895\n- GUE spacing distribution: S(s) = (π/2)s·exp(-πs²/4)\n\n## Alternative Routes Considered\n\n**Route A (Repulsion Energy):** Model zeros as charged particles on the critical line with logarithmic interaction potential. Derive μ from minimum energy configuration.\n\n**Route B (Local Rigidity):** Use the fact that Montgomery's conjecture constrains not just pair correlation but all k-point correlations. Extract μ from 3-point function.\n\n**Route C (Conditional Prime Number Theorem):** Assume Montgomery + RH and derive constraints on gaps from the requirement that ψ(x) approximates x with controlled oscillations.\n\n**Route D (Barrier Function):** Construct an explicit barrier showing certain gap sizes are forbidden.\n\nI will pursue **Route C with barrier analysis** because it can yield a computable lower bound.\n\n## Core Mechanism: Oscillation Variance Forces Minimum Gap\n\n**New Object:** Define the **gap-forcing functional** at height T:\n$$F_T(\\delta) = \\sup_{T ≤ t ≤ 2T} \\left|\\sum_{\\substack{\\text{gaps } Δγ_n < δ \\\\ γ_n \\sim t}} \\frac{e^{t/2} \\cos(t\\log t)}{γ_n}\\right|$$\n\nThis measures the coherent contribution to ψ oscillations from abnormally small gaps.\n\n**Key Insight:** If too many gaps are smaller than threshold δ, the explicit formula forces ψ(e^t) to oscillate with amplitude larger than what the oscillation variance bound allows.\n\n## The Calculation\n\n**Step 1:** Under RH, the variance bound gives:\n$$V(T) = \\int_T^{2T} |ψ(e^t) - e^t|^2 dt = O(T^2 \\log T)$$\n\n**Step 2:** From the explicit formula, abnormally close zeros create resonances. If M_T(δ) denotes the number of gaps Δγ_n < δ·(2π/log γ_n) with γ_n ∈ [T, 2T], then the contribution to variance from these gaps is approximately:\n$$V_{\\text{small}}(T, δ) ≥ M_T(δ) · \\frac{T}{(\\log T)^2} · \\delta^2$$\n\nThis comes from coherent interference when gaps are small relative to the oscillation frequency.\n\n**Step 3:** For variance bound to hold, we need:\n$$M_T(δ) · \\frac{T}{(\\log T)^2} · \\delta^2 ≲ T^2 \\log T$$\n\nThis gives:\n$$M_T(δ) ≲ T (\\log T)^3 / \\delta^2$$\n\n**Step 4:** The density of zeros is N(T) ~ (T log T)/(2π). If μ denotes the lim inf of normalized gaps, then for any ε > 0, infinitely many gaps satisfy:\n$$\\Delta γ_n \\cdot \\frac{\\log γ_n}{2π} < μ + ε$$\n\n**Step 5:** Montgomery's conjecture implies the *density* of small gaps. For GUE statistics, the probability that a normalized gap is less than s is:\n$$P(d_n < s) = \\int_0^s S(u) du = 1 - \\exp(-πs²/4) - s\\sqrt{π/2} \\exp(-πs²/4)$$\n\n**Step 6:** But here's the barrier: if we have Montgomery pair correlation *and* the variance bound, we cannot have μ = 0. \n\n**Contradiction Argument:** Suppose μ = 0. Then for arbitrarily small δ > 0, we have infinitely many T with M_T(δ) ≥ c·N(T) for some fixed c > 0 (from GUE statistics, c = P(spacing < δ)). This gives:\n$$c · \\frac{T \\log T}{2π} · \\frac{T}{(\\log T)^2} · \\delta^2 = c · \\frac{T^2}{2π \\log T} · \\delta^2$$\n\nFor the variance bound to hold for all T, we need this to be o(T² log T), which forces δ² log² T → 0. But δ is supposed to be fixed, giving a contradiction.\n\n**Resolution:** The only way out is that the minimum gap has a positive lower bound when properly normalized. Specifically, the number-theoretic constraint (variance bound from prime number theorem) combined with GUE repulsion forces:\n\n$$μ > 0$$\n\n## Conjecture with Computable Estimate\n\nBy balancing the variance contribution formula with Montgomery's conjecture for the spacing distribution, I conjecture:\n\n**μ = inf{s : the s-spacing configurations are compatible with both GUE pair correlation and explicit formula variance bounds}**\n\nFrom the barrier calculation, we can estimate:\n$$μ ≥ c_0$$\nwhere c_0 is the solution to:\n$$\\int_0^{c_0} s · S(s) ds · \\frac{1}{c_0^2} = O(1)$$\n\nNumerically, this suggests **μ ≥ 0.01** (very rough estimate).\n\n**Better Conjecture:** Under Montgomery's conjecture, the optimal constant satisfies:\n$$μ = \\sup\\{\\delta : \\liminf_{T→∞} \\frac{M_T(\\delta)}{N(T)} = 0\\}$$\n\nwhere M_T(δ) counts normalized gaps less than δ in [T, 2T].\n\nThis is computable in principle by:\n1. Computing zeros γ_n for large n (using Odlyzko-Schönhage to n = 10^13)\n2. Computing empirical gap distribution\n3. Finding the threshold where gap frequency drops to zero\n\n**Testable Prediction:** If we compute 10^13 consecutive zeros and find the smallest normalized gap is d_min ≈ 0.02 and this minimum is not decreasing as we go higher, then μ ≈ 0.02.\n\n## Final Precise Conjecture\n\n**Conjecture:** Under RH and Montgomery's pair correlation conjecture, there exists an explicit constant μ > 0 such that:\n$$\\lim_{n→∞} \\inf_{m≥n} \\frac{(γ_{m+1} - γ_m) \\log γ_m}{2π} = μ$$\n\nMoreover, μ can be computed as:\n$$μ = \\inf\\left\\{s > 0 : \\int_0^s u · S(u) du · \\frac{\\sqrt{\\log T}}{s} ≫ 1\\right\\}$$\n\nwhere S is the GUE spacing distribution.\n\nThe mechanism is: number-theoretic forcing (via explicit formula variance) creates a hard floor below which gaps cannot accumulate, even though GUE statistics allow arbitrarily small individual gaps with exponentially decaying probability.",
+    "normalized_output": {
+      "premises": [
+        {
+          "id": null,
+          "statement": "RH: zeros at ρ_n = 1/2 + iγ_n"
+        },
+        {
+          "id": null,
+          "statement": "Explicit formula: ψ(x) = x - Σ_ρ (x^ρ / ρ) + O(1)"
+        },
+        {
+          "id": null,
+          "statement": "Montgomery pair correlation: for fixed test function φ with Fourier transform compactly supported in (-1,1), lim_{T→∞} (1/N(T)) Σ_{0<γ,γ'≤T} φ((γ-γ')/(2π/log T)) = ∫_{-∞}^{∞} φ(x)(1 - (sin πx / πx)²) dx"
+        },
+        {
+          "id": null,
+          "statement": "Current best: μ < 0.50895"
+        },
+        {
+          "id": null,
+          "statement": "GUE spacing distribution: S(s) = (π/2)s·exp(-πs²/4)"
+        },
+        {
+          "id": null,
+          "statement": "Under RH, variance bound: V(T) = ∫_T^{2T} |ψ(e^t) - e^t|² dt = O(T² log T)"
+        },
+        {
+          "id": null,
+          "statement": "Density of zeros: N(T) ~ (T log T)/(2π)"
+        }
+      ],
+      "steps": [
+        "Define gap-forcing functional F_T(δ) = sup_{T ≤ t ≤ 2T} |Σ_{gaps Δγ_n < δ, γ_n ~ t} (e^{t/2} cos(t log t))/γ_n|",
+        "Contribution to variance from abnormally close zeros: V_{small}(T, δ) ≥ M_T(δ) · T/(log T)² · δ²",
+        "For variance bound to hold: M_T(δ) · T/(log T)² · δ² ≲ T² log T, giving M_T(δ) ≲ T(log T)³/δ²",
+        "Montgomery's conjecture implies probability of normalized gap < s is P(d_n < s) = ∫_0^s S(u) du = 1 - exp(-πs²/4) - s√(π/2) exp(-πs²/4)",
+        "Contradiction argument: if μ = 0, then for small δ > 0, M_T(δ) ≥ c·N(T) for some c > 0, giving c·(T² / 2π log T)·δ², which contradicts variance bound unless δ² log² T → 0",
+        "Resolution: minimum gap must have positive lower bound when properly normalized, forcing μ > 0",
+        "Define μ = sup{δ : liminf_{T→∞} M_T(δ)/N(T) = 0} where M_T(δ) counts normalized gaps less than δ in [T, 2T]",
+        "Estimate μ from balance condition: ∫_0^{c_0} s·S(s) ds · 1/c_0² = O(1), suggesting μ ≥ 0.01"
+      ],
+      "conclusion": {
+        "statement": "Under RH and Montgomery's pair correlation conjecture, there exists an explicit constant μ > 0 such that lim_{n→∞} inf_{m≥n} (γ_{m+1} - γ_m) log γ_m / (2π) = μ. Moreover, μ can be computed as μ = inf{s > 0 : ∫_0^s u·S(u) du · √(log T)/s ≫ 1} where S is the GUE spacing distribution.",
+        "formal_statement": "∃μ > 0: (RH ∧ Montgomery) → lim_{n→∞} inf_{m≥n} ((γ_{m+1} - γ_m) log γ_m)/(2π) = μ"
+      },
+      "module": "plausible",
+      "confidence": 0.35,
+      "domain": "analytic number theory",
+      "review_confidence": 0.35
+    },
+    "judge_output": {
+      "confidence": 0.35,
+      "reasoning": "This reasoning attempts to prove a very strong claim (existence of an explicit positive lower bound for normalized gaps between zeta zeros) using informal variance and counting arguments. The logical chain contains several serious gaps: (1) The connection between the variance bound and gap counts is not rigorously established - the inequality V_small(T,δ) ≥ M_T(δ)·T/(log T)²·δ² is asserted without proof and the constant factors are unclear. (2) The 'contradiction argument' in step 5 is vague - it's not clear why M_T(δ) ≥ c·N(T) should hold if μ=0, nor why this would contradict the variance bound in a way that forces μ>0 rather than just constraining the relationship. (3) The final formula for computing μ in the conclusion doesn't follow from the steps and appears ad-hoc. (4) Montgomery's pair correlation conjecture concerns global statistics, but the argument tries to extract local gap information without accounting for possible exceptional configurations. (5) The estimate μ ≥ 0.01 is completely unjustified. This is a plausible-type module attempting to prove something not currently known in analytic number theory, with hand-wavy arguments typical of speculative reasoning.",
+      "concerns": [
+        "The variance decomposition and inequality V_small(T,δ) ≥ M_T(δ)·T/(log T)²·δ² lacks rigorous justification",
+        "The contradiction argument (step 5) is imprecise and doesn't clearly establish why μ must be positive",
+        "The final formula for μ in the conclusion doesn't follow from the reasoning steps",
+        "Montgomery's pair correlation is a global statistical statement; extracting hard lower bounds on individual gaps requires additional arguments not provided",
+        "The numerical estimate μ ≥ 0.01 appears without justification",
+        "The balance condition in step 8 is poorly motivated and its connection to μ is unclear",
+        "Missing discussion of potential exceptional zero pairs that might have arbitrarily small normalized gaps"
+      ],
+      "suggestion": "To strengthen this argument: (1) Rigorously prove the variance decomposition and establish the claimed inequality with explicit constants. (2) Formalize the contradiction argument - specify exactly what configuration would violate the variance bound and why μ=0 necessarily leads to it. (3) Provide a clear derivation of the formula for μ from first principles. (4) Address whether Montgomery's conjecture alone is sufficient or if additional assumptions about local gap statistics are needed. Better yet, attempt to construct a formal proof or find explicit counterexamples to test the claim."
+    },
+    "ingest_edge_id": null,
+    "created_node_ids": [],
+    "success": true,
+    "message": "plausible planning complete"
+  }
+}

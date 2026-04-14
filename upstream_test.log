@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/root/gaia-discovery/run_upstream_test.py", line 35, in <module>
+    config = MCTSConfig(max_iterations=5, single_action_budget_seconds=360)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: MCTSConfig.__init__() got an unexpected keyword argument 'single_action_budget_seconds'

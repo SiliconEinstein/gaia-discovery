@@ -1,0 +1,375 @@
+{
+  "target_statement": "分析 Riemann zeta 函数在临界线上零点的连续间距统计性质，特别是小间距（相对于平均间距）的分布和理论下界。在 RH 假设下，探索是否存在 μ < 1 使得 lim inf (γ_{n+1} - γ_n) / (2π/log γ_n) < μ，以及该常数的最优值。",
+  "propositions": [
+    {
+      "id": "P1",
+      "statement": "Riemann Hypothesis (RH): All non-trivial zeros of ζ(s) lie on the critical line Re(s)=1/2; enumerate zeros as ρ_n=1/2+iγ_n with 0<γ_1<γ_2<…",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P2",
+      "statement": "Riemann–von Mangoldt: N(T) ~ (T/(2π)) log(T/(2π)) − T/(2π) as T→∞; normalized gap d_n := (γ_{n+1}−γ_n)·log(γ_n)/(2π) has mean → 1.",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P3",
+      "statement": "Montgomery pair correlation conjecture (restricted support): for suitable test f, the normalized zero correlations converge to ∫ f(x)(1−(sin πx/(πx))^2)dx (GUE pair correlation).",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P4",
+      "statement": "Odlyzko numerical computations of zeros up to height ~10^13 support GUE-like spacing statistics for ζ zeros.",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P5",
+      "statement": "Under RH, a proven bound (2026) gives lim inf_{n→∞} d_n < 0.50895.",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [
+        "P1"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P6",
+      "statement": "Under RH + (full) Montgomery/GUE spacing predictions, lim inf_{n→∞} d_n = 0 (arbitrarily small normalized gaps occur infinitely often).",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [
+        "P1",
+        "P3"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P7",
+      "statement": "GUE nearest-neighbor spacing density has level repulsion p_GUE(s) ~ (π^2/3)s^2 as s→0.",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P8",
+      "statement": "Gaudin–Mehta: GUE gap probability P_GUE(s)=det(I−K_s) where K_s is sine-kernel operator on L^2[0,s]; nearest-neighbor density p_GUE(s)=d^2/ds^2 det(I−K_s).",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P9",
+      "statement": "Widom invertibility: sine-kernel operator K_s has spectrum in [0,1), so (I−K_s)^{-1} exists as bounded operator for s>0.",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P10",
+      "statement": "Fredholm determinant perturbation identity: for trace-class δK and bounded (I−K)^{-1}, det(I−K−δK)=det(I−K)·det(I−(I−K)^{-1}δK).",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P11",
+      "statement": "Finite-height pair correlation of ζ zeros differs from the sine-kernel/GUE form by explicit arithmetic oscillatory terms indexed by primes/prime powers derived from the explicit formula.",
+      "role": "bridge",
+      "grade": "B",
+      "depends_on": [
+        "P1",
+        "P2"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P12",
+      "statement": "For each prime p and k≥1, define an operator A_{p,k,T} on L^2[0,s] with cosine-oscillatory kernel; each A_{p,k,T} is rank-2 (via cos decomposition), trace-class, with trace-norm bound ≲ s·(log p)/(p^k log T).",
+      "role": "bridge",
+      "grade": "B",
+      "depends_on": [
+        "P11"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P13",
+      "statement": "Define δK_T := Σ_p Σ_{k≥1} A_{p,k,T}. Bounding ||δK_T||_1 uses truncation/regularization of Σ_p (log p)/(p−1), yielding heuristic ||δK_T||_1 = O(s·log log T/log T)→0.",
+      "role": "bridge",
+      "grade": "C",
+      "depends_on": [
+        "P12"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P14",
+      "statement": "Assuming the zeta-gap probability at height T can be represented as det(I−K_s−δK_T), then by P9–P10 one gets P_T(s)=det(I−K_s)·det(I−(I−K_s)^{-1}δK_T).",
+      "role": "bridge",
+      "grade": "B",
+      "depends_on": [
+        "P8",
+        "P9",
+        "P10",
+        "P13"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P15",
+      "statement": "First-order Fredholm expansion gives det(I−(I−K_s)^{-1}δK_T)=1−tr((I−K_s)^{-1}δK_T)+O(||(I−K_s)^{-1}δK_T||_1^2); rank-2 structure yields explicit trace integrals defining coefficients c_p(s,T), leading term ~ (1/log T)Σ_p (log p/p)c_p(s,T).",
+      "role": "derived",
+      "grade": "C",
+      "depends_on": [
+        "P14",
+        "P12"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P16",
+      "statement": "RISK: Pair correlation (2-point) corrections do not by themselves determine gap probabilities; determinantal Fredholm representation encodes all n-point correlations, and ζ zeros at finite T are not known to form an (approximate) determinantal point process with kernel K_s+δK_T.",
+      "role": "risk",
+      "grade": "D",
+      "depends_on": [
+        "P11",
+        "P14"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P17",
+      "statement": "RISK: Uniform control of c_p(s,T) as p grows with T is assumed; summing over primes up to T^{1/log log T} requires bounds on c_p(s,T) for log p/log T not small.",
+      "role": "risk",
+      "grade": "D",
+      "depends_on": [
+        "P15"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P18",
+      "statement": "RISK: Bounding higher-order remainder O(||(I−K_s)^{-1}δK_T||_1^2) requires control of ||(I−K_s)^{-1}|| and ||δK_T||_1; uniformity in s is not established (though fixed small s is less problematic).",
+      "role": "risk",
+      "grade": "D",
+      "depends_on": [
+        "P14",
+        "P13"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P19",
+      "statement": "Arithmetic Fredholm Correction conjecture: for fixed s>0, P_T(s)=det(I−K_s)·(1−(1/log T)Σ_p (log p/p)c_p(s,T)+O((log log T/log T)^2)), with leading simplified correction ≈ det(I−K_s)·(1−c_0(s)·log log T/log T).",
+      "role": "derived",
+      "grade": "D",
+      "depends_on": [
+        "P14",
+        "P15"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P20",
+      "statement": "Answer synthesis: (i) Under RH, μ=0.50895<1 works since lim inf d_n<0.50895. (ii) Under RH+Montgomery/GUE, lim inf d_n=0 so μ can be arbitrarily small. (iii) The optimal μ under RH alone remains open; the proposed Arithmetic Fredholm Correction offers a potential framework to refine understanding/estimates.",
+      "role": "derived",
+      "grade": "B",
+      "depends_on": [
+        "P5",
+        "P6",
+        "P7",
+        "P8",
+        "P19"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P21",
+      "statement": "分析 Riemann zeta 函数在临界线上零点的连续间距统计性质，特别是小间距（相对于平均间距）的分布和理论下界。在 RH 假设下，探索是否存在 μ < 1 使得 lim inf (γ_{n+1} - γ_n) / (2π/log γ_n) < μ，以及该常数的最优值。",
+      "role": "target",
+      "grade": "B",
+      "depends_on": [
+        "P20"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    }
+  ],
+  "chain": [
+    {
+      "id": "S1",
+      "statement": "Use Gaudin–Mehta to represent GUE gap probability by a sine-kernel Fredholm determinant and recall small-s level repulsion.",
+      "uses": [
+        "P7"
+      ],
+      "concludes": [
+        "P8"
+      ],
+      "grade": "A",
+      "notes": null
+    },
+    {
+      "id": "S2",
+      "statement": "Invoke explicit-formula-based analysis to express finite-height deviations of ζ zero pair correlation from sine-kernel form as prime-indexed oscillatory terms.",
+      "uses": [
+        "P1",
+        "P2"
+      ],
+      "concludes": [
+        "P11"
+      ],
+      "grade": "B",
+      "notes": null
+    },
+    {
+      "id": "S3",
+      "statement": "Rewrite each prime-power oscillatory term as a rank-2 trace-class operator perturbation A_{p,k,T} with explicit norm bounds.",
+      "uses": [
+        "P11"
+      ],
+      "concludes": [
+        "P12"
+      ],
+      "grade": "B",
+      "notes": null
+    },
+    {
+      "id": "S4",
+      "statement": "Sum rank-2 perturbations to form δK_T and (heuristically) bound its trace norm via truncation/regularization of the divergent prime sum, obtaining size O(log log T/log T).",
+      "uses": [
+        "P12"
+      ],
+      "concludes": [
+        "P13"
+      ],
+      "grade": "C",
+      "notes": null
+    },
+    {
+      "id": "S5",
+      "statement": "Assuming the gap probability equals det(I−K_s−δK_T), apply the Fredholm multiplicative perturbation identity using invertibility of (I−K_s) to factor P_T(s).",
+      "uses": [
+        "P8",
+        "P9",
+        "P10",
+        "P13"
+      ],
+      "concludes": [
+        "P14"
+      ],
+      "grade": "B",
+      "notes": null
+    },
+    {
+      "id": "S6",
+      "statement": "Expand the perturbation determinant to first order and compute traces using rank-2 structure to obtain explicit coefficients c_p(s,T).",
+      "uses": [
+        "P14",
+        "P12"
+      ],
+      "concludes": [
+        "P15"
+      ],
+      "grade": "C",
+      "notes": null
+    },
+    {
+      "id": "S7",
+      "statement": "Package the first-order expansion into the Arithmetic Fredholm Correction asymptotic for P_T(s), subject to risks about determinantal approximation, uniformity in p, and remainder bounds.",
+      "uses": [
+        "P14",
+        "P15"
+      ],
+      "concludes": [
+        "P19"
+      ],
+      "grade": "D",
+      "notes": null
+    },
+    {
+      "id": "S8",
+      "statement": "Combine established small-gap bounds (μ=0.50895 under RH; μ→0 under RH+Montgomery/GUE) with the proposed correction framework to address the target question and contextualize the open optimal μ under RH alone.",
+      "uses": [
+        "P5",
+        "P6",
+        "P7",
+        "P8",
+        "P19"
+      ],
+      "concludes": [
+        "P20"
+      ],
+      "grade": "B",
+      "notes": null
+    },
+    {
+      "id": "S9",
+      "statement": "Use the synthesis to conclude the target statement is addressed.",
+      "uses": [
+        "P20"
+      ],
+      "concludes": [
+        "P21"
+      ],
+      "grade": "B",
+      "notes": null
+    }
+  ],
+  "summary": "在 RH 下已知 lim inf d_n < 0.50895，因此存在 μ<1；在 RH+Montgomery/GUE 预测下 lim inf d_n=0。文中提出“Arithmetic Fredholm Correction”作为将素数贡献视作对 sine kernel 的 Fredholm 行列式扰动的框架，但关键环节存在未解决风险：由二点相关推出缺口概率、对随 T 增长的素数求和所需一致性控制、以及高阶余项界。"
+}

@@ -1,0 +1,18 @@
+{
+  "iteration": 14,
+  "node_id": "dd3298ff54b0",
+  "module": "lean",
+  "created_at": 1776065854.0922365,
+  "result": {
+    "action": "lean",
+    "target_node_id": "dd3298ff54b0",
+    "selected_module": "lean",
+    "raw_output": null,
+    "normalized_output": null,
+    "judge_output": null,
+    "ingest_edge_id": null,
+    "created_node_ids": [],
+    "success": false,
+    "message": "OrchestrationError: Fundamental formalization barriers: (1) Riemann Hypothesis is not formalized in Mathlib; (2) Montgomery pair correlation conjecture is not in Mathlib; (3) Riemann zeta zeros enumer"
+  }
+}

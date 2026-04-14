@@ -1,0 +1,405 @@
+
+
+I'll analyze the route carefully before producing the bridge plan.
+
+## Natural Language Analysis
+
+The route proposes an improvement to the best known constant for small gaps between zeta zeros (from 0.50895 to 0.48) under RH. Let me trace the logical structure:
+
+**Seeds (established facts):**
+1. RH assumption
+2. Zero counting function asymptotics
+3. Normalized gap definition and average = 1
+4. Montgomery pair correlation for |α| < 1 (proven under RH)
+5. Current best result: lim inf d_n < 0.50895 under RH
+6. Goldston's second moment of S'(t)
+7. GUE predictions from random matrix theory
+
+**Key new constructions in the route:**
+1. The exact relation d_n + ΔS_n = 1 + O(1/log γ_n) — this is a known identity from the decomposition N(t) = smooth part + S(t)
+2. The "gap acceleration" a_n = d_{n+1} - d_n — a genuinely new object introduced by the route
+3. The claim that mean-square of a_n involves Cov(ΔS_n, ΔS_{n+1}) — requires three-point correlation
+4. The specific computation Cov(ΔS_n, ΔS_{n+1}) = -1/(12π) + o(1) — this is the critical novel claim and is risky
+5. The anti-clustering lemma: small gaps can't cluster
+6. The weighted optimization giving μ < 0.48
+
+**Risk assessment:**
+- The covariance computation (item 4) is the most dangerous step. It claims to extract three-point correlation information from only the |α| < 1 regime of pair correlation. This needs very careful verification.
+- The anti-clustering mechanism (item 5) is a novel argument that depends on the covariance computation.
+- The final optimization to 0.48 depends on all previous steps.
+- Several intermediate steps could be checked numerically against Odlyzko data.
+
+**Grading considerations:**
+- The identity d_n + ΔS_n = 1 + O(1/log γ_n) is essentially established (grade A)
+- The Cauchy-Schwarz bound from evidence [a58870391246] is standard (grade A)
+- Definition of a_n and its expression in terms of ΔS increments: algebraic, checkable (grade A)
+- Mean-square of a_n = 2·Var(ΔS) - 2·Cov(ΔS_n, ΔS_{n+1}): algebraic identity (grade A)
+- The covariance computation: this is the KEY risky step. It claims to evaluate a three-point sum using only |α|<1 pair correlation. This should be C (testable numerically) AND D (the theoretical derivation is unclear).
+- The anti-clustering bound: depends on the covariance; grade B as a structural bridge
+- The final μ < 0.48 conclusion: depends on everything; grade B
+- GUE prediction that lim inf d_n = 0 (conjectural): grade B
+
+Let me also note testable predictions: the covariance value, the anti-clustering inequality, and the bound P(0.48) can all be tested against Odlyzko data.
+
+```json
+{
+  "target_statement": "分析 Riemann zeta 函数在临界线上零点的连续间距统计性质，特别是小间距（相对于平均间距）的分布和理论下界。在 RH 假设下，探索是否存在 μ < 1 使得 lim inf (γ_{n+1} - γ_n) / (2π/log γ_n) < μ，以及该常数的最优值。",
+  "propositions": [
+    {
+      "id": "P1",
+      "statement": "Riemann Hypothesis (RH): all non-trivial zeros of ζ(s) lie on the critical line Re(s) = 1/2.",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": "Assumed throughout as the conditional hypothesis.",
+      "formalization_notes": "Standard axiom in formalization.",
+      "experiment_notes": "Numerically verified for billions of zeros."
+    },
+    {
+      "id": "P2",
+      "statement": "零点计数函数 N(T) := #{ρ : 0 < Im(ρ) ≤ T} 满足渐近公式 N(T) ~ (T/2π) log(T/2π) - T/2π.",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": "Riemann–von Mangoldt formula, unconditionally proven.",
+      "formalization_notes": "Standard result; formalizable from contour integral arguments.",
+      "experiment_notes": ""
+    },
+    {
+      "id": "P3",
+      "statement": "Let ρ_n = 1/2 + iγ_n be the n-th zero ordered by increasing imaginary part. Define the normalized gap d_n := (γ_{n+1} - γ_n) · log(γ_n)/(2π). The average normalized gap equals 1.",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": ["P2"],
+      "notes": "Direct consequence of N(T) asymptotics.",
+      "formalization_notes": "Follows from differentiating N(T).",
+      "experiment_notes": ""
+    },
+    {
+      "id": "P4",
+      "statement": "Under RH, Montgomery proved that the Fourier transform F(α) of the pair correlation of normalized zeros satisfies F(α) = |α| + o(1) for |α| < 1, as T → ∞.",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": ["P1"],
+      "notes": "Montgomery 1973, proven conditionally on RH.",
+      "formalization_notes": "Well-documented proof.",
+      "experiment_notes": ""
+    },
+    {
+      "id": "P5",
+      "statement": "Under RH, lim inf d_n < 0.50895 is proven (2026 best result).",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": ["P1"],
+      "notes": "Current state of the art, cited in the graph as proven.",
+      "formalization_notes": "Published result; proof uses Goldston-type methods.",
+      "experiment_notes": ""
+    },
+    {
+      "id": "P6",
+      "statement": "Define S(t) = (1/π) arg ζ(1/2+it) - (t/(2π))log(t/(2π)) + t/(2π). Under RH, Goldston proved ∫₀ᵀ S'(t)² dt ~ T(log T)²/(12π²).",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": ["P1"],
+      "notes": "Goldston 1984, proven under RH.",
+      "formalization_notes": "Well-known result in analytic number theory.",
+      "experiment_notes": ""
+    },
+    {
+      "id": "P7",
+      "statement": "The exact relation between normalized gaps and the S-function increments: d_n + ΔS_n = 1 + O(1/log γ_n), where ΔS_n = S(γ_{n+1}) - S(γ_n). This follows from N(γ_{n+1}) - N(γ_n) = 1 and the decomposition N(t) = smooth(t) + S(t).",
+      "role": "derived",
+      "grade": "A",
+      "depends_on": ["P2", "P3"],
+      "notes": "Standard identity: N(γ_{n+1}) - N(γ_n) = 1, and the smooth part contributes d_n + O(1/log γ_n).",
+      "formalization_notes": "Direct algebraic computation from definitions.",
+      "experiment_notes": ""
+    },
+    {
+      "id": "P8",
+      "statement": "Under RH, the mean of (ΔS_n)² over γ_n ∈ [T, 2T] is asymptotically 1/(6π). That is, (1/N(T)) Σ_{γ_n ∈ [T,2T]} (ΔS_n)² → 1/(6π) as T → ∞.",
+      "role": "derived",
+      "grade": "B",
+      "depends_on": ["P6", "P7"],
+      "notes": "Follows from integrating S'(t)² over consecutive zero intervals and using Goldston's asymptotic. The passage from the integral to the discrete sum involves some care with the spacing-weighted average.",
+      "formalization_notes": "Requires justifying the discretization; should be a standard exercise under RH.",
+      "experiment_notes": "Can be numerically verified against Odlyzko zero data."
+    },
+    {
+      "id": "P9",
+      "statement": "Montgomery pair correlation conjecture (full): the normalized pair correlation function of zeros converges to 1 - (sin(πx)/(πx))² for all x. GUE random matrix statistics predict the full gap distribution, including that lim inf d_n = 0 (i.e., the optimal μ = 0 under full GUE).",
+      "role": "seed",
+      "grade": "B",
+      "depends_on": [],
+      "notes": "The full conjecture is unproven; only the |α|<1 part is proven under RH. The μ=0 prediction is conjectural.",
+      "formalization_notes": "The full GUE prediction serves as a target conjecture, not a proven input.",
+      "experiment_notes": "Strongly supported by Odlyzko computations."
+    },
+    {
+      "id": "P10",
+      "statement": "Define the gap acceleration a_n := d_{n+1} - d_n. Then a_n = ΔS_n - ΔS_{n+1} + O(1/log γ_n), where ΔS_n = S(γ_{n+1}) - S(γ_n).",
+      "role": "bridge",
+      "grade": "A",
+      "depends_on": ["P7"],
+      "notes": "Purely algebraic: from d_n = 1 - ΔS_n + O(1/log γ_n), subtract consecutive instances. This is the key new object introduced by the route.",
+      "formalization_notes": "Direct subtraction of two instances of P7.",
+      "experiment_notes": ""
+    },
+    {
+      "id": "P11",
+      "statement": "The mean-square of a_n satisfies the identity: (1/N) Σ a_n² = 2·Var(ΔS) - 2·Cov(ΔS_n, ΔS_{n+1}) + O(1/log T), where Var(ΔS) = E[(ΔS_n)²] - (E[ΔS_n])² and Cov(ΔS_n, ΔS_{n+1}) = E[ΔS_n · ΔS_{n+1}] - (E[ΔS_n])².",
+      "role": "bridge",
+      "grade": "A",
+      "depends_on": ["P10"],
+      "notes": "Standard algebraic identity for the variance of a difference of consecutive random variables. Uses a_n = ΔS_n - ΔS_{n+1} + O(1/log γ_n) and expands the square.",
+      "formalization_notes": "Elementary algebra once P10 is established.",
+      "experiment_notes": ""
+    },
+    {
+      "id": "P12_testable",
+      "statement": "Numerical test: Compute Cov(ΔS_n, ΔS_{n+1}) = (1/N) Σ ΔS_n · ΔS_{n+1} - ((1/N) Σ ΔS_n)² for Odlyzko zero data at height ~10^{12}–10^{13}. The route predicts this value is approximately -1/(12π) ≈ -0.02654.",
+      "role": "experiment_support",
+      "grade": "C",
+      "depends_on": ["P10", "P11"],
+      "notes": "This is the most important numerical check for the route. If the covariance does not match -1/(12π), the entire improvement collapses.",
+      "formalization_notes": "",
+      "experiment_notes": "Requires access to consecutive zero data (Odlyzko tables or LMFDB). Compute S(γ_n) for each zero, form increments, compute the sample covariance. Compare to -1/(12π)."
+    },
+    {
+      "id": "P13",
+      "statement": "Under RH, using Montgomery's pair correlation result for |α| < 1 applied to sums over triples of consecutive zeros, the covariance Cov(ΔS_n, ΔS_{n+1}) = -1/(12π) + o(1) as T → ∞.",
+      "role": "bridge",
+      "grade": "D",
+      "depends_on": ["P4", "P8", "P10", "P11"],
+      "notes": "THIS IS THE CRITICAL AND MOST DANGEROUS STEP. The route claims that the lag-1 autocovariance of ΔS_n can be computed from Montgomery's pair correlation restricted to |α|<1, by applying the explicit formula to overlapping intervals [γ_n, γ_{n+1}] ∩ [γ_{n+1}, γ_{n+2}]. However, ΔS_n · ΔS_{n+1} involves a triple sum over zeros (γ_j, γ_k, γ_l), which is NOT directly a pair correlation quantity. The route asserts that the diagonal regime is controlled by |α|<1 pair correlation, but this requires a non-trivial argument about the three-point function that is not spelled out. The -1/(12π) value appears to come from a formal GUE calculation or a heuristic determinantal computation, not a rigorous derivation.",
+      "formalization_notes": "Would require either: (a) a rigorous evaluation of the triple zero sum under RH, or (b) proof that the leading term of E[ΔS_n · ΔS_{n+1}] is controlled by the two-point function alone (a 'diagonal dominance' argument).",
+      "experiment_notes": "The numerical prediction -1/(12π) can and should be tested before any formalization attempt; see P12_testable."
+    },
+    {
+      "id": "P14",
+      "statement": "Under the assumptions of P8 and P13, (1/N) Σ a_n² = 2·(1/(6π)) + 2·(1/(12π)) + o(1) = 1/(2π) + o(1) ≈ 0.1592.",
+      "role": "derived",
+      "grade": "B",
+      "depends_on": ["P8", "P11", "P13"],
+      "notes": "Direct substitution: Var(ΔS) = E[(ΔS)²] - 0 ≈ 1/(6π) (since E[ΔS_n] = O(1/log T) → 0), and Cov = -1/(12π). Then 2·(1/(6π)) - 2·(-1/(12π)) = 2/(6π) + 2/(12π) = 1/(3π) + 1/(6π) = 3/(6π) = 1/(2π). Arithmetic check needed.",
+      "formalization_notes": "Arithmetic. But depends on the D-graded P13.",
+      "experiment_notes": "Can also test (1/N)Σa_n² directly on zero data."
+    },
+    {
+      "id": "P14_check",
+      "statement": "Numerical test: Compute (1/N) Σ a_n² for Odlyzko zero data at height ~10^{12}–10^{13}. The route predicts this value is approximately 1/(2π) ≈ 0.1592.",
+      "role": "experiment_support",
+      "grade": "C",
+      "depends_on": ["P10"],
+      "notes": "Independent numerical check of P14 that does not require computing covariances; just compute gap accelerations and their mean-square.",
+      "formalization_notes": "",
+      "experiment_notes": "Simpler computation than P12_testable: just needs consecutive zeros, compute d_n, then a_n = d_{n+1} - d_n, then average a_n²."
+    },
+    {
+      "id": "P15",
+      "statement": "Anti-clustering lemma: If d_n < μ, then |ΔS_n| > 1 - μ - O(1/log γ_n) by P7. Combined with the gap-acceleration identity a_n = ΔS_n - ΔS_{n+1} + O(1/log γ_n), if additionally d_{n+1} < μ, then |a_n| = |d_{n+1} - d_n| < 2μ while |ΔS_n - ΔS_{n+1}| = |a_n + O(1/log γ_n)|. In particular, both d_n < μ and d_{n+1} < μ requires |ΔS_n| > 1-μ and |ΔS_{n+1}| > 1-μ simultaneously, constraining a_n = ΔS_n - ΔS_{n+1} to lie in a narrow range.",
+      "role": "bridge",
+      "grade": "B",
+      "depends_on": ["P7", "P10"],
+      "notes": "The algebraic constraints are correct. The step from pointwise constraints to a probabilistic anti-clustering bound requires integrating against the distribution of a_n, which uses P14.",
+      "formalization_notes": "The algebra is straightforward. The probabilistic conclusion requires Chebyshev/Markov inequality applied to a_n using P14.",
+      "experiment_notes": ""
+    },
+    {
+      "id": "P16",
+      "statement": "Under RH and assuming P13, define P(μ) = lim sup (1/N)·#{n ≤ N : d_n < μ}. Then P(μ) ≤ μ/(2(1-μ)² + μ²/π). For μ = 0.48, this gives P(0.48) ≤ 0.31.",
+      "role": "bridge",
+      "grade": "D",
+      "depends_on": ["P14", "P15"],
+      "notes": "The route claims this bound follows from the anti-clustering mechanism plus the mean-square of a_n. The derivation is not spelled out: one needs to show how the conditional constraint on pairs (d_n, d_{n+1}) translates to a bound on the marginal frequency P(μ). This likely requires an optimization argument (choosing weights to minimize the bound) that is sketched but not detailed. The specific formula μ/(2(1-μ)² + μ²/π) needs verification.",
+      "formalization_notes": "Would require writing out the full Chebyshev-type argument with the specific test function.",
+      "experiment_notes": "P(0.48) can be directly measured from zero data."
+    },
+    {
+      "id": "P16_testable",
+      "statement": "Numerical test: For Odlyzko zero data at height ~10^{12}, compute the fraction of normalized gaps d_n < 0.48 and compare to the predicted upper bound of 0.31. Also compute fraction with d_n < 0.4 and compare to the GUE prediction.",
+      "role": "experiment_support",
+      "grade": "C",
+      "depends_on": ["P3"],
+      "notes": "Direct empirical measurement. If P(0.48) already exceeds 0.31 in the data, the bound P16 is wrong.",
+      "formalization_notes": "",
+      "experiment_notes": "Requires tabulated normalized gaps. The GUE gap distribution CDF at μ gives the predicted fraction; compare to empirical."
+    },
+    {
+      "id": "P17",
+      "statement": "Under RH and assuming P13, apply a weighted sum: define φ(d_n, d_{n+1}) = (μ - d_n)_+ and consider Σ_n φ(d_n, d_{n+1}). The triple-correlation-enhanced bound on Σφ, using the anti-clustering constraint from P15 and the variance of a_n from P14, forces this sum to be positive for μ < 0.48, implying the existence of some n with d_n < 0.48.",
+      "role": "bridge",
+      "grade": "D",
+      "depends_on": ["P14", "P15", "P16"],
+      "notes": "This is the final optimization step. The route does not provide the detailed computation showing that the weighted sum method yields exactly 0.48. The choice of test function φ and the optimization over parameters are sketched, not proven. This step also inherits all risk from P13.",
+      "formalization_notes": "Would require a complete optimization argument with explicit constants.",
+      "experiment_notes": ""
+    },
+    {
+      "id": "P18",
+      "statement": "Under RH (and assuming the covariance computation P13 is valid), lim inf d_n < 0.48, improving the current record of 0.50895.",
+      "role": "derived",
+      "grade": "D",
+      "depends_on": ["P1", "P5", "P17"],
+      "notes": "Final conclusion of the route. Inherits D grade from P13 and P17. Would be a significant improvement if validated.",
+      "formalization_notes": "theorem improved_small_gap (RH : ...) : liminf (fun n => (γ (n+1) - γ n) * log (γ n) / (2 * π)) < 0.48",
+      "experiment_notes": ""
+    },
+    {
+      "id": "P19",
+      "statement": "Under RH + full GUE conjecture, lim inf d_n = 0, i.e., the optimal μ = 0. More precisely, under GUE the minimum normalized gap among the first N zeros scales as N^{-1/3} with Tracy-Widom fluctuations.",
+      "role": "bridge",
+      "grade": "B",
+      "depends_on": ["P9"],
+      "notes": "Standard consequence of GUE statistics. Conditional on an unproven conjecture, but the implication GUE ⟹ μ=0 is well-understood.",
+      "formalization_notes": "The implication is a theorem about GUE eigenvalue statistics; the hypothesis (full GUE for zeros) is conjectural.",
+      "experiment_notes": "Can test the N^{-1/3} scaling numerically."
+    },
+    {
+      "id": "P20",
+      "statement": "Obstruction to current methods: Goldston-Montgomery type arguments use only the second moment of S'(t) and pair correlation for |α|<1, which limits the provable μ. To break below 0.50895 requires either: (a) extending pair correlation beyond |α|=1 (unproven), (b) using higher-order correlation information, or (c) a fundamentally new approach.",
+      "role": "bridge",
+      "grade": "B",
+      "depends_on": ["P4", "P5", "P6"],
+      "notes": "This is the motivating observation for the route: the route attempts option (b) via the gap acceleration and triple correlation.",
+      "formalization_notes": "The obstruction can be formalized as a lower bound on what the second-moment method alone can achieve.",
+      "experiment_notes": ""
+    },
+    {
+      "id": "P_Cauchy_Schwarz",
+      "statement": "By Cauchy-Schwarz applied to ΔS_n = ∫_{γ_n}^{γ_{n+1}} S'(t) dt, we get (ΔS_n)² ≤ (γ_{n+1} - γ_n) · ∫_{γ_n}^{γ_{n+1}} S'(t)² dt. Equivalently, ∫_{γ_n}^{γ_{n+1}} S'(t)² dt ≥ (1-d_n)² · log(γ_n)/(2π d_n) when d_n < 1.",
+      "role": "derived",
+      "grade": "A",
+      "depends_on": ["P7"],
+      "notes": "Standard application of Cauchy-Schwarz. This is the basis of Goldston's method for proving small gaps.",
+      "formalization_notes": "Elementary inequality.",
+      "experiment_notes": ""
+    },
+    {
+      "id": "P_target",
+      "statement": "分析 Riemann zeta 函数在临界线上零点的连续间距统计性质，特别是小间距（相对于平均间距）的分布和理论下界。在 RH 假设下，探索是否存在 μ < 1 使得 lim inf (γ_{n+1} - γ_n) / (2π/log γ_n) < μ，以及该常数的最优值。",
+      "role": "target",
+      "grade": "D",
+      "depends_on": ["P5", "P18", "P19", "P20"],
+      "notes": "The target is an open exploratory question. The answer assembled by the route: (1) Yes, under RH, μ < 0.50895 is proven (P5). (2) The route proposes μ < 0.48 via a new gap-acceleration method (P18), contingent on validating the covariance computation P13. (3) Under full GUE, the optimal μ = 0 (P19). (4) Current method obstructions are identified (P20).",
+      "formalization_notes": "The target itself is exploratory and not a single theorem; the key formalizable subgoal is P18.",
+      "experiment_notes": "Multiple numerical checks identified: P12_testable, P14_check, P16_testable."
+    }
+  ],
+  "chain": [
+    {
+      "id": "S1",
+      "statement": "From the zero counting function N(T) and the definition of normalized gaps, derive the exact relation d_n + ΔS_n = 1 + O(1/log γ_n).",
+      "uses": ["P2", "P3"],
+      "concludes": ["P7"],
+      "grade": "A",
+      "notes": "Standard computation: N(γ_{n+1}) - N(γ_n) = 1, expand using smooth part + S(t)."
+    },
+    {
+      "id": "S2",
+      "statement": "Apply Cauchy-Schwarz to ΔS_n = ∫S'(t) dt over [γ_n, γ_{n+1}] to obtain a lower bound on ∫S'² in terms of d_n.",
+      "uses": ["P7"],
+      "concludes": ["P_Cauchy_Schwarz"],
+      "grade": "A",
+      "notes": "Standard Cauchy-Schwarz inequality."
+    },
+    {
+      "id": "S3",
+      "statement": "From Goldston's second moment of S'(t) under RH, derive the mean of (ΔS_n)² over [T,2T] by summing the Cauchy-Schwarz bound and matching with the integral asymptotic.",
+      "uses": ["P6", "P7", "P_Cauchy_Schwarz"],
+      "concludes": ["P8"],
+      "grade": "B",
+      "notes": "The passage from continuous integral to discrete sum over zero intervals requires justification that the error is lower order."
+    },
+    {
+      "id": "S4",
+      "statement": "Introduce the gap acceleration a_n = d_{n+1} - d_n and express it in terms of consecutive ΔS increments using P7.",
+      "uses": ["P7"],
+      "concludes": ["P10"],
+      "grade": "A",
+      "notes": "Purely algebraic substitution."
+    },
+    {
+      "id": "S5",
+      "statement": "Expand (1/N) Σ a_n² = (1/N) Σ (ΔS_n - ΔS_{n+1})² to obtain the identity involving Var(ΔS) and Cov(ΔS_n, ΔS_{n+1}).",
+      "uses": ["P10"],
+      "concludes": ["P11"],
+      "grade": "A",
+      "notes": "Elementary algebra of expanding a square of differences."
+    },
+    {
+      "id": "S6",
+      "statement": "CRITICAL STEP: Attempt to compute Cov(ΔS_n, ΔS_{n+1}) under RH using the explicit formula and Montgomery's pair correlation for |α| < 1. The route claims the leading term is -1/(12π).",
+      "uses": ["P4", "P8", "P10", "P11"],
+      "concludes": ["P13"],
+      "grade": "D",
+      "notes": "This is the most dangerous step. The computation involves a triple sum over zeros which is NOT a standard pair correlation quantity. The route asserts diagonal dominance but does not prove it. The value -1/(12π) may come from a GUE heuristic rather than a rigorous derivation from |α|<1 pair correlation alone."
+    },
+    {
+      "id": "S7",
+      "statement": "Substitute Var(ΔS) ≈ 1/(6π) and Cov(ΔS_n, ΔS_{n+1}) ≈ -1/(12π) into the identity from P11 to obtain (1/N)Σa_n² ≈ 1/(2π).",
+      "uses": ["P8", "P11", "P13"],
+      "concludes": ["P14"],
+      "grade": "B",
+      "notes": "Direct arithmetic; inherits risk from P13."
+    },
+    {
+      "id": "S8",
+      "statement": "Derive the anti-clustering constraint: if d_n < μ and d_{n+1} < μ simultaneously, the forced constraints on ΔS_n, ΔS_{n+1} restrict a_n to a narrow range, which has small probability given the variance of a_n from P14.",
+      "uses": ["P7", "P10", "P14"],
+      "concludes": ["P15"],
+      "grade": "B",
+      "notes": "The algebraic constraints are clear; the probabilistic argument requires a Chebyshev-type bound using P14."
+    },
+    {
+      "id": "S9",
+      "statement": "Use the anti-clustering mechanism to bound P(μ) = lim sup (1/N)·#{d_n < μ} by optimizing over the constraint from P15.",
+      "uses": ["P14", "P15"],
+      "concludes": ["P16"],
+      "grade": "D",
+      "notes": "The optimization argument is not detailed. The specific formula needs derivation."
+    },
+    {
+      "id": "S10",
+      "statement": "Apply a weighted test function φ(d_n, d_{n+1}) = (μ - d_n)_+ and optimize over μ using the bounds from P15 and P16 to show Σφ > 0 for μ < 0.48.",
+      "uses": ["P14", "P15", "P16"],
+      "concludes": ["P17"],
+      "grade": "D",
+      "notes": "The choice of test function and the verification that the weighted sum is positive for μ < 0.48 are not spelled out."
+    },
+    {
+      "id": "S11",
+      "statement": "Conclude from the positivity of Σφ that there exists n with d_n < 0.48, giving lim inf d_n < 0.48 under RH.",
+      "uses": ["P1", "P17"],
+      "concludes": ["P18"],
+      "grade": "D",
+      "notes": "Immediate from P17 if P17 is established. Inherits all risk."
+    },
+    {
+      "id": "S12",
+      "statement": "Under full GUE conjecture, the gap distribution is known: CDF(0) = 0 implies arbitrarily small gaps exist, so lim inf d_n = 0 and optimal μ = 0. More precisely, the minimum gap among N zeros scales as N^{-1/3}.",
+      "uses": ["P9"],
+      "concludes": ["P19"],
+      "grade": "B",
+      "notes": "Well-known consequence of GUE theory. Conditional on unproven GUE conjecture for zeros."
+    },
+    {
+      "id": "S13",
+      "statement": "Identify the obstruction in current methods: second-moment methods using only |α|<1 pair correlation have a natural barrier, motivating the gap-acceleration approach.",
+      "uses": ["P4", "P5", "P6"],
+      "concludes": ["P20"],
+      "grade": "B",
+      "notes": "Structural observation about limitations of existing techniques."
+    },
+    {
+      "id": "S14",
+      "statement": "Assemble the complete answer: (1) under RH, μ < 0.50895 is proven (P5); (2) the gap-acceleration method proposes μ < 0.48 contingent on P13 (P18); (3) under full GUE, μ = 0 (P19); (4) method obstructions identified (P20).",
+      "uses": ["P5", "P18", "P19", "P20"],
+      "concludes": ["P_target"],
+      "grade": "D",
+      "notes": "The target is an exploratory question. The assembled answer includes proven results (P5), a conditional improvement (P18), and conjectural asymptotics (P19)."
+    }
+  ],
+  "summary": "The route proposes improving the best known small-gap constant from 0.50895 to 0.48 under RH by introducing a 'gap acceleration' a_n = d_{n+1} - d_n and exploiting its variance (which involves the lag-1 autocovariance of ΔS_n). The critical and most risky step (P13, grade D) is the claim that Cov(ΔS_n, ΔS_{n+1}) = -1/(12π), derived from Montgomery's pair correlation for |α|<1 — but this involves three-point zero correlations and the derivation is not rigorous. Three numerical experiments (P12_testable, P14_check, P16_testable) are identified as essential validation before any formalization attempt."
+}
+```

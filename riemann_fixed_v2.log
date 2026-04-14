@@ -1,0 +1,12 @@
+=== 启动修复后的Riemann实验 ===
+Workspace: riemann_fixed_v2_20260414_165309
+修复内容:
+1. ✅ Evidence edges for weakened/refuted experiments
+2. ✅ outcome='supported' for passed experiments
+
+开始运行...
+Traceback (most recent call last):
+  File "/root/gaia-discovery/run_riemann_fixed_v2.py", line 43, in <module>
+    engine = MCTSDiscoveryEngine(
+             ^^^^^^^^^^^^^^^^^^^^
+TypeError: MCTSDiscoveryEngine.__init__() got an unexpected keyword argument 'target_statement'

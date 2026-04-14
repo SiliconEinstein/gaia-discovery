@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/root/gaia-discovery/run_verify_simple.py", line 19, in <module>
+    from dz_engine.config import MCTSConfig
+ModuleNotFoundError: No module named 'dz_engine.config'

@@ -1,0 +1,11 @@
+{
+  "stdout": "{\"passed\": true, \"trials\": 100, \"max_error\": 0.0, \"counterexample\": null, \"summary\": \"Computed 100 zeros: all had Re(s) = 1/2 within numerical precision (max deviation = 0.00e+00). NOTE: This is NOT a genuine test of RH because mpmath.zetazero() ASSUMES zeros lie on critical line in its algorithm. We are verifying algorithmic consistency, not the conjecture itself.\"}\n",
+  "stderr": "",
+  "result": {
+    "passed": true,
+    "trials": 100,
+    "max_error": 0.0,
+    "counterexample": null,
+    "summary": "Computed 100 zeros: all had Re(s) = 1/2 within numerical precision (max deviation = 0.00e+00). NOTE: This is NOT a genuine test of RH because mpmath.zetazero() ASSUMES zeros lie on critical line in its algorithm. We are verifying algorithmic consistency, not the conjecture itself."
+  }
+}

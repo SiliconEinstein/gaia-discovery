@@ -1,0 +1,376 @@
+# Bridge Plan Analysis
+
+Let me analyze the reasoning route and decompose it into explicit propositions with appropriate grades.
+
+## Structure Overview
+
+The route proposes a novel approach to improving the small gap bound for Riemann zeta zeros. The key innovation is the **Wirtinger-Repulsion Bound** — a claimed unconditional-under-RH result that quantifies level repulsion without requiring Montgomery's full conjecture. This is then combined with modified Beurling-Selberg minorants to potentially push the bound below 0.50895.
+
+The structure breaks into:
+
+1. **Established seeds**: RH, zero counting, Montgomery partial results, current best bound 0.50895, GUE statistics
+2. **Novel constructions**: Wirtinger-Repulsion Bound, Repulsion-Assisted Minorant Principle
+3. **Technical derivations**: The optimization problem, specific minorant families
+4. **Testable claims**: Numerical verification of repulsion bound, minorant sum computation
+5. **Target conjecture**: The final claimed improvement to μ* < 0.50895
+
+## Key Risk Assessment
+
+The **Wirtinger-Repulsion Bound** (P_WRB) is the critical new ingredient. The route provides a proof sketch using Wirtinger inequality + mean-value theorems, but this requires careful verification:
+- The Wirtinger application to intervals between zeros needs exact justification
+- The summation argument and comparison with moment theorems needs checking
+- This is the kind of claim best validated by computation (checking O(ε₀²) scaling on Odlyzko data) before attempting formalization
+
+The **Repulsion-Assisted Minorant Principle** is a structural bridge that's plausible but needs clarification about when negativity near zero is genuinely compensated.
+
+The **specific numerical claim** (μ* ≤ 0.495 with particular parameters) is squarely experimental.
+
+## Proposition Decomposition
+
+**Seeds (A grade)**: Standard facts about RH, zero enumeration, counting function, normalized gaps, Montgomery partial results, 2026 bound, GUE statistics
+
+**Bridge propositions**:
+- B grade: Structural insights about classical Beurling-Selberg barrier, repulsion-assisted minorant framework
+- C grade: Wirtinger-Repulsion bound (testable via Odlyzko data), specific parameter choices, numerical optimization
+- D grade: The full claim that the method works to achieve μ* < 0.50895
+
+**Target**: The exploratory analysis of small gap distribution and optimal μ
+
+```json
+{
+  "target_statement": "分析 Riemann zeta 函数在临界线上零点的连续间距统计性质，特别是小间距（相对于平均间距）的分布和理论下界。在 RH 假设下，探索是否存在 μ < 1 使得 lim inf (γ_{n+1} - γ_n) / (2π/log γ_n) < μ，以及该常数的最优值。",
+  "propositions": [
+    {
+      "id": "P1",
+      "statement": "Riemann Hypothesis (RH): All non-trivial zeros of ζ(s) lie on the critical line Re(s) = 1/2. Zeros are enumerated as ρ_n = 1/2 + iγ_n with 0 < γ_1 < γ_2 < ...",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": "Standard formulation of RH with zero enumeration convention",
+      "formalization_notes": "Direct definition in Lean; verified in graph",
+      "experiment_notes": null
+    },
+    {
+      "id": "P2",
+      "statement": "Zero counting function N(T) := #{ρ : 0 < Im(ρ) ≤ T} satisfies N(T) ~ (T/(2π)) log(T/(2π)) − T/(2π) as T → ∞.",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": "Classical Riemann-von Mangoldt formula",
+      "formalization_notes": "Well-documented in analytic number theory; formalizable from contour integral arguments",
+      "experiment_notes": null
+    },
+    {
+      "id": "P3",
+      "statement": "The normalized gap is d_n := (γ_{n+1} − γ_n) · log(γ_n)/(2π). The mean value of d_n over n ≤ N(T) tends to 1 as T → ∞.",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": ["P2"],
+      "notes": "Follows directly from zero counting asymptotics",
+      "formalization_notes": "Direct computation from P2",
+      "experiment_notes": null
+    },
+    {
+      "id": "P4",
+      "statement": "Under RH, lim inf_{n→∞} d_n < 0.50895 (2026 result, improving prior bound of 0.515396).",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": ["P1", "P3"],
+      "notes": "State-of-the-art unconditional-under-RH bound; verified in graph",
+      "formalization_notes": "References published result; proof uses mollified mean-value estimates",
+      "experiment_notes": null
+    },
+    {
+      "id": "P5",
+      "statement": "Montgomery pair correlation theorem (partial): For test functions f with Fourier transform supported in (−1,1), the pair correlation of normalized zeros satisfies (1/N) Σ_{m≠n≤N} f((γ_m - γ_n)log(γ_n)/(2π)) → ∫ f(x)(1 - (sin πx / πx)²) dx as N → ∞, assuming RH.",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": ["P1"],
+      "notes": "Montgomery's proved result for limited Fourier support; the full conjecture extends to all support",
+      "formalization_notes": "Published theorem with explicit Fourier support restriction",
+      "experiment_notes": null
+    },
+    {
+      "id": "P6",
+      "statement": "Montgomery pair correlation conjecture (full): The normalized zero spacings of ζ follow GUE statistics asymptotically, i.e., the pair correlation formula holds for test functions with arbitrary Fourier support.",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": "Unproven conjecture; strongly supported by Odlyzko's numerical evidence",
+      "formalization_notes": "Stated as conjecture",
+      "experiment_notes": null
+    },
+    {
+      "id": "P7",
+      "statement": "GUE nearest-neighbor spacing density satisfies p_GUE(s) ~ (π²/3)s² as s → 0 (quadratic level repulsion).",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": "Standard random matrix theory result",
+      "formalization_notes": "Derivable from GUE eigenvalue distribution theory",
+      "experiment_notes": null
+    },
+    {
+      "id": "P8",
+      "statement": "Odlyzko's numerical computations of zeros up to height ~10^{13} show the histogram of normalized gaps d_n closely matches the GUE nearest-neighbor spacing distribution.",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": "Published computational results",
+      "formalization_notes": null,
+      "experiment_notes": "Odlyzko's data is publicly available and can be reprocessed"
+    },
+    {
+      "id": "P9",
+      "statement": "Classical Beurling-Selberg Barrier: The standard approach to proving lim inf d_n < μ uses Beurling-Selberg minorants σ_η^-(x; μ) of exponential type η for the indicator 1_{[0,μ]}(x). With η ≤ 1 (matching Montgomery's proved Fourier support), the minorant satisfies ∫₀^∞ σ_1^-(x; μ) dx = μ - 1/2, requiring μ > 1/2 for positivity.",
+      "role": "bridge",
+      "grade": "B",
+      "depends_on": ["P5"],
+      "notes": "Explains why classical methods cannot break below 0.5 directly; well-understood in harmonic analysis",
+      "formalization_notes": "Standard Beurling-Selberg theory; requires careful bounds on minorant integrals",
+      "experiment_notes": null
+    },
+    {
+      "id": "P10",
+      "statement": "Wirtinger-Repulsion Bound (Claimed): Under RH, for any ε₀ > 0, #{n ∈ [T,2T] : d_n < ε₀} ≤ C · ε₀² · N(T) for an effective constant C. Proof idea: On interval [γ_n, γ_{n+1}] where ζ vanishes at both endpoints, Wirtinger inequality gives ∫|ζ(1/2+it)|² dt ≤ (gap/π)² · ∫|ζ'(1/2+it)|² dt. Summing over small-gap intervals and comparing with second/fourth moment theorems yields quadratic bound.",
+      "role": "bridge",
+      "grade": "C",
+      "depends_on": ["P1", "P3"],
+      "notes": "This is the KEY novel ingredient. The proof sketch is plausible but needs verification. Best tested first by checking O(ε₀²) scaling on Odlyzko's data.",
+      "formalization_notes": "Requires: (1) Wirtinger inequality application to zeta on intervals with zeros at endpoints, (2) moment theorem bounds, (3) careful error term control",
+      "experiment_notes": "CRITICAL TEST: Count gaps d_n < ε₀ for ε₀ = 0.01, 0.02, ..., 0.2 using Odlyzko data; verify #{d_n < ε₀}/N(T) = O(ε₀²) scaling"
+    },
+    {
+      "id": "P11",
+      "statement": "Wirtinger Inequality Application: For f ∈ C¹[a,b] with f(a) = f(b) = 0, we have ∫_a^b |f(t)|² dt ≤ ((b-a)/π)² ∫_a^b |f'(t)|² dt.",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": "Standard Wirtinger/Poincaré inequality",
+      "formalization_notes": "Elementary calculus of variations result",
+      "experiment_notes": null
+    },
+    {
+      "id": "P12",
+      "statement": "Second and Fourth Moment Theorems: Under RH, ∫_0^T |ζ(1/2+it)|² dt ~ T log T and ∫_0^T |ζ'(1/2+it)|² dt ~ (1/3) T (log T)³ as T → ∞.",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": ["P1"],
+      "notes": "Classical mean-value theorems for zeta and its derivative on critical line",
+      "formalization_notes": "Well-documented results",
+      "experiment_notes": null
+    },
+    {
+      "id": "P13",
+      "statement": "Wirtinger-to-Repulsion Derivation: Assuming P11 applies to ζ(1/2+it) on [γ_n, γ_{n+1}] and using P12, the sum Σ_{d_n < ε₀, n ∈ [T,2T]} 1 can be bounded by comparing the ratio ∫|ζ|²/∫|ζ'|² over small-gap intervals versus the global ratio from moment theorems.",
+      "role": "bridge",
+      "grade": "C",
+      "depends_on": ["P10", "P11", "P12"],
+      "notes": "The logical connection between Wirtinger inequality and the repulsion bound. Requires checking that summing over small-gap intervals gives the claimed O(ε₀²) factor.",
+      "formalization_notes": "Needs careful bookkeeping of interval contributions",
+      "experiment_notes": "Can be partially verified by direct numerical integration of |ζ|² and |ζ'|² over small-gap intervals in Odlyzko's range"
+    },
+    {
+      "id": "P14",
+      "statement": "Repulsion-Assisted Minorant Framework: Given a quantitative repulsion bound #{d_n < ε₀} = O(ε₀² N(T)), one can use modified minorants ψ_μ(x) = σ_1^-(x; μ) + λ · K(x) where K has Fourier transform supported in [-1,1], satisfies K(x) ≥ 0 for x ≥ ε₀, but may be negative for x < ε₀. The error from the region x < ε₀ is bounded by ||K||_∞ · C · ε₀².",
+      "role": "bridge",
+      "grade": "B",
+      "depends_on": ["P9", "P10"],
+      "notes": "Structural framework for exploiting repulsion; the key insight is that negativity near zero is affordable if repulsion is strong enough",
+      "formalization_notes": "Requires functional analysis setup for bandlimited functions",
+      "experiment_notes": null
+    },
+    {
+      "id": "P15",
+      "statement": "Bandlimited Kernel Construction: The family K_α(x) = (sin(πx)/(πx))² · cos(2παx) for α ∈ (0,1) has Fourier transform supported in [-1,1] (since it's a convolution of sinc² with a cosine modulation).",
+      "role": "bridge",
+      "grade": "C",
+      "depends_on": [],
+      "notes": "Explicit construction of candidate kernels; the Fourier support claim follows from convolution properties",
+      "formalization_notes": "Direct Fourier transform computation",
+      "experiment_notes": "Verify Fourier support numerically via FFT"
+    },
+    {
+      "id": "P16",
+      "statement": "Optimization Problem Formulation: The problem of finding optimal μ via repulsion-assisted minorants reduces to: maximize over (λ, K, ε₀) the quantity ∫₀^∞ σ₁⁻(x;μ) · r(x) dx + λ[∫_{ε₀}^∞ K(x) r(x) dx - C ε₀² ||K||_∞] subject to K̂ supported in [-1,1], where r(x) = 1 - (sin πx/πx)².",
+      "role": "bridge",
+      "grade": "B",
+      "depends_on": ["P5", "P14"],
+      "notes": "Converts the minorant approach into a concrete optimization problem; r(x) is the Montgomery pair correlation weight",
+      "formalization_notes": "Linear programming in infinite-dimensional function space",
+      "experiment_notes": null
+    },
+    {
+      "id": "P17",
+      "statement": "Numerical Optimization Claim: With K = K_{0.7} (from P15), ε₀ = 0.08, λ ≈ 0.3, the optimization objective in P16 is positive for μ = 0.495.",
+      "role": "experiment_support",
+      "grade": "C",
+      "depends_on": ["P15", "P16"],
+      "notes": "Specific parameter values claimed to achieve improvement; purely numerical claim",
+      "formalization_notes": null,
+      "experiment_notes": "DIRECT TEST: Compute the objective function with these parameters via numerical integration"
+    },
+    {
+      "id": "P18",
+      "statement": "Minorant Sum Test: The sum (1/N(T)) Σ_{n≤N(T)} ψ_{0.495}(d_n) can be computed directly using Odlyzko's zero data, providing empirical evidence for whether the repulsion-assisted minorant gives a positive sum.",
+      "role": "experiment_support",
+      "grade": "C",
+      "depends_on": ["P14", "P17"],
+      "notes": "Direct numerical test of the approach",
+      "formalization_notes": null,
+      "experiment_notes": "Compute on Odlyzko data; positive sum supports the conjecture"
+    },
+    {
+      "id": "P19",
+      "statement": "Gap between partial and full Montgomery: The proved pair correlation (P5) only holds for Fourier support in (-1,1), while GUE statistics (P6, P7) require the full conjecture. The repulsion-assisted method attempts to extract more from the partial result by incorporating unconditional-under-RH repulsion information.",
+      "role": "bridge",
+      "grade": "B",
+      "depends_on": ["P5", "P6", "P7"],
+      "notes": "Conceptual clarification of where the method sits relative to known results",
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P20",
+      "statement": "Under RH + full Montgomery conjecture (P6), lim inf_{n→∞} d_n = 0. That is, for any μ > 0, there exist infinitely many n with d_n < μ.",
+      "role": "derived",
+      "grade": "B",
+      "depends_on": ["P1", "P6", "P7"],
+      "notes": "Standard consequence of GUE statistics; the problem is proving this unconditionally or with only partial Montgomery",
+      "formalization_notes": "Follows from GUE gap distribution having support down to 0",
+      "experiment_notes": null
+    },
+    {
+      "id": "R1",
+      "statement": "RISK: The Wirtinger-Repulsion Bound (P10) proof sketch may have gaps. Specifically: (1) applying Wirtinger to ζ requires ζ(1/2+iγ_n) = 0 to be exact rather than approximate, (2) the summation argument over small-gap intervals needs to avoid double-counting contributions to moment integrals, (3) the comparison with global moment theorems may require additional uniformity assumptions.",
+      "role": "risk",
+      "grade": "D",
+      "depends_on": ["P10", "P13"],
+      "notes": "The core novel claim is not yet fully justified; numerical verification is essential before trusting it",
+      "formalization_notes": null,
+      "experiment_notes": "Priority: Test P10 numerically before proceeding with other steps"
+    },
+    {
+      "id": "R2",
+      "statement": "RISK: The constant C in the Wirtinger-Repulsion Bound needs to be explicit and small enough for the optimization in P16-P17 to actually achieve μ < 0.50895. If C is too large, the error term C·ε₀²·||K||_∞ may dominate.",
+      "role": "risk",
+      "grade": "D",
+      "depends_on": ["P10", "P17"],
+      "notes": "Effectiveness depends on explicit constants",
+      "formalization_notes": null,
+      "experiment_notes": "Extract effective C from numerical data"
+    },
+    {
+      "id": "P21",
+      "statement": "Main Conjecture (Repulsion-Assisted Small Gap Bound): Under RH, using the Wirtinger-repulsion bound #{d_n < ε₀} = O(ε₀² N(T)) combined with repulsion-assisted Beurling-Selberg minorants, one can prove lim inf d_n < μ* for some μ* < 0.50895.",
+      "role": "derived",
+      "grade": "D",
+      "depends_on": ["P10", "P14", "P16"],
+      "notes": "The main claimed improvement; depends critically on P10 being valid with good constants",
+      "formalization_notes": "theorem repulsion_assisted_small_gap (RH : riemann_hypothesis) : ∃ μ < 0.50895, lim_inf (λ n, (gamma (n+1) - gamma n) * log (gamma n) / (2 * π)) < μ",
+      "experiment_notes": "Contingent on verifying P10, P17, P18"
+    },
+    {
+      "id": "TARGET",
+      "statement": "分析 Riemann zeta 函数在临界线上零点的连续间距统计性质，特别是小间距（相对于平均间距）的分布和理论下界。在 RH 假设下，探索是否存在 μ < 1 使得 lim inf (γ_{n+1} - γ_n) / (2π/log γ_n) < μ，以及该常数的最优值。",
+      "role": "target",
+      "grade": "B",
+      "depends_on": ["P1", "P3", "P4", "P5", "P6", "P7", "P9", "P14", "P19", "P20", "P21"],
+      "notes": "The target is an exploratory analysis question. The route provides: (1) established baseline μ=0.50895 under RH alone, (2) lim inf d_n = 0 under RH + full Montgomery, (3) a conjectured mechanism (Wirtinger-repulsion + assisted minorants) to potentially improve the unconditional bound.",
+      "formalization_notes": "The analysis synthesizes established results with a novel but unverified approach",
+      "experiment_notes": null
+    }
+  ],
+  "chain": [
+    {
+      "id": "S1",
+      "statement": "Establish the basic setup: Under RH (P1), zeros are enumerated on the critical line, the counting function gives average spacing (P2, P3), and the normalized gap d_n has mean 1.",
+      "uses": ["P1", "P2", "P3"],
+      "concludes": ["P3"],
+      "grade": "A",
+      "notes": "Standard definitions and asymptotics"
+    },
+    {
+      "id": "S2",
+      "statement": "State the current best unconditional-under-RH result: lim inf d_n < 0.50895 (P4), achieved via mollified mean-value estimates.",
+      "uses": ["P1", "P3", "P4"],
+      "concludes": ["P4"],
+      "grade": "A",
+      "notes": "Published 2026 result"
+    },
+    {
+      "id": "S3",
+      "statement": "Recall Montgomery's partial result (P5): pair correlation holds for Fourier support in (-1,1), and the full conjecture (P6) would give GUE statistics with quadratic repulsion (P7).",
+      "uses": ["P1", "P5", "P6", "P7"],
+      "concludes": ["P19"],
+      "grade": "A",
+      "notes": "Establishes the gap between known and conjectured"
+    },
+    {
+      "id": "S4",
+      "statement": "Explain the classical Beurling-Selberg barrier (P9): with Fourier support limited to (-1,1), standard minorants require μ > 1/2 for positivity, creating the classical obstruction.",
+      "uses": ["P5", "P9"],
+      "concludes": ["P9"],
+      "grade": "B",
+      "notes": "Standard harmonic analysis; explains why direct methods stall"
+    },
+    {
+      "id": "S5",
+      "statement": "Introduce the novel Wirtinger-Repulsion Bound (P10): using Wirtinger inequality (P11) on intervals [γ_n, γ_{n+1}] combined with moment theorems (P12), claim #{d_n < ε₀} = O(ε₀² N(T)).",
+      "uses": ["P1", "P11", "P12"],
+      "concludes": ["P10", "P13"],
+      "grade": "C",
+      "notes": "KEY NOVEL STEP: This is the critical new claim requiring verification. Best tested numerically on Odlyzko data."
+    },
+    {
+      "id": "S6",
+      "statement": "Develop the repulsion-assisted minorant framework (P14): if quadratic repulsion is available, one can use minorants that are negative near zero, with bounded error.",
+      "uses": ["P9", "P10"],
+      "concludes": ["P14"],
+      "grade": "B",
+      "notes": "Structural insight connecting repulsion to minorant flexibility"
+    },
+    {
+      "id": "S7",
+      "statement": "Construct explicit bandlimited kernels K_α (P15) and formulate the optimization problem (P16) combining Montgomery's pair correlation with the repulsion error bound.",
+      "uses": ["P5", "P14", "P15"],
+      "concludes": ["P16"],
+      "grade": "B",
+      "notes": "Reduces the problem to concrete optimization"
+    },
+    {
+      "id": "S8",
+      "statement": "Evaluate the optimization numerically (P17): specific parameter choices suggest positivity for μ = 0.495. Verify via direct minorant sum computation (P18).",
+      "uses": ["P15", "P16"],
+      "concludes": ["P17", "P18"],
+      "grade": "C",
+      "notes": "Numerical claims requiring direct computation"
+    },
+    {
+      "id": "S9",
+      "statement": "Note that under full Montgomery (P6), lim inf d_n = 0 follows immediately from GUE statistics (P20). The repulsion-assisted method attempts to extract partial progress using only the proved pair correlation.",
+      "uses": ["P6", "P7"],
+      "concludes": ["P20"],
+      "grade": "B",
+      "notes": "Establishes the full-conjecture baseline"
+    },
+    {
+      "id": "S10",
+      "statement": "Synthesize into the main conjecture (P21): IF the Wirtinger-Repulsion Bound holds with good constants AND the optimization yields positivity, THEN lim inf d_n < μ* for some μ* < 0.50895.",
+      "uses": ["P10", "P14", "P16", "P17"],
+      "concludes": ["P21"],
+      "grade": "D",
+      "notes": "Conditional on verifying the novel ingredients"
+    },
+    {
+      "id": "S11",
+      "statement": "Address the target question by combining: (1) established bound P4, (2) conditional bound P20 under full Montgomery, (3) conjectured improved bound P21 via the novel method.",
+      "uses": ["P1", "P3", "P4", "P5", "P9", "P14", "P19", "P20", "P21"],
+      "concludes": ["TARGET"],
+      "grade": "B",
+      "notes": "Synthesis answering the exploratory question with both established results and a promising but unverified new direction"
+    }
+  ],
+  "summary": "The route addresses zeta zero gap statistics by combining established results (RH-conditional bound 0.50895, Montgomery partial pair correlation, GUE predictions) with a novel Wirtinger-Repulsion Bound claiming #{d_n < ε₀} = O(ε₀² N(T)) unconditionally under RH. This quadratic repulsion, if valid, enables 'repulsion-assisted minorants' that exploit negativity near zero to potentially break the 0.5 barrier. The key unverified ingredient (P10) should be tested numerically on Odlyzko data before attempting formalization; the specific optimization parameters (P17) also require direct computation."
+}
+```

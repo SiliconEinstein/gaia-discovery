@@ -1,0 +1,18 @@
+{
+  "iteration": 26,
+  "node_id": "30932907c02b",
+  "module": "lean",
+  "created_at": 1776069231.903191,
+  "result": {
+    "action": "lean",
+    "target_node_id": "30932907c02b",
+    "selected_module": "lean",
+    "raw_output": null,
+    "normalized_output": null,
+    "judge_output": null,
+    "ingest_edge_id": null,
+    "created_node_ids": [],
+    "success": false,
+    "message": "OrchestrationError: The Wirtinger-Repulsion Bound requires analytic number theory infrastructure not available in Mathlib: (1) Riemann zeta function ζ(s) and its analytic properties on the critical li"
+  }
+}

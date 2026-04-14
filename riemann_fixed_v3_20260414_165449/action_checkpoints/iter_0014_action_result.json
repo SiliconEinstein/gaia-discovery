@@ -1,0 +1,18 @@
+{
+  "iteration": 14,
+  "node_id": "adaea44cd961",
+  "module": "lean",
+  "created_at": 1776158441.2269807,
+  "result": {
+    "action": "lean",
+    "target_node_id": "adaea44cd961",
+    "selected_module": "lean",
+    "raw_output": null,
+    "normalized_output": null,
+    "judge_output": null,
+    "ingest_edge_id": null,
+    "created_node_ids": [],
+    "success": false,
+    "message": "OrchestrationError: The Montgomery pair correlation conjecture is a major open problem in analytic number theory that has not been proven by mathematicians. It cannot be formally verified in Lean 4 be"
+  }
+}
