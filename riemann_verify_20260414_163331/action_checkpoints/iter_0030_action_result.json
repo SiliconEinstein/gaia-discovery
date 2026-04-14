@@ -1,0 +1,85 @@
+{
+  "iteration": 30,
+  "node_id": "6c67f4cca929",
+  "module": "retrieve",
+  "created_at": 1776162339.6368914,
+  "result": {
+    "action": "retrieve",
+    "target_node_id": "6c67f4cca929",
+    "selected_module": "retrieve",
+    "raw_output": "Retrieved known relevant facts for current node.\n- (lemma) Under GUE statistics, the second moment of nearest-neighbor spacings is E[s²] = 4/π where s is the normalized spacing [random_matrix_theory]\n- (tool) Montgomery's pair correlation conjecture with parameter α₀ ≈ 0.72 implies GUE-like local statistics hold up to range α₀ in the normalized scale [Montgomery_1973]\n- (related) For normalized zero spacings d_n = (γ_{n+1} - γ_n)log(γ_n)/(2π), the GUE conjecture predicts the distribution approaches S(s) = (π/2)s·exp(-πs²/4) [Berry_Keating_1999]\n- (obstruction) The cutoff parameter α₀ in Montgomery's conjecture determines the range over which pair correlation matches GUE; full GUE correspondence requires α₀ = 1 [Odlyzko_1987]\n- (lemma) For GUE nearest-neighbor spacing with density S(s), the exact second moment is ∫₀^∞ s² S(s) ds = 4/π [Mehta_random_matrices_2004]\n- (obstruction) If pair correlation holds only for |α| < α₀ < 1, higher moment bounds may differ from full GUE predictions due to incomplete spectral rigidity [Bogomolny_Keating_1996]\n- (related) The variance bound E[d_n²] - E[d_n]² for zeta zero gaps depends critically on n-level correlation functions, not just pair correlation [Hejhal_1994]\n- (related) Rudnick-Sarnak conjecture: n-point correlation functions of zeta zeros match GUE for all n, which would imply E[d_n²] = 4/π exactly [Rudnick_Sarnak_1996]\nFeedback context: Verified results from previous iterations:\n- [VERIFIED] The GUE nearest-neighbor spacing distribution is S(s) = (π/2)s·exp(-πs²/4) (belief=1.000)\n- [VERIFIED] Riemann Hypothesis: all non-trivial zeros of ζ(s) lie on Re(s) = 1/2 (belief=1.000)\n- [VERIFIED] Montgomery pair correlation conjecture: the normalized gap statistics R₂(α) of zeta zeros follow GUE statistics for |α| < α₀ where α₀ is the correlation cutoff (belief=1.000)\n- [VERIFIED] Current best rigorous result under RH: lim inf (γ_{n+1} - γ_n) log(γ_n) / (2π) < 0.50895 (belief=1.000)\n- [VERIFIED] Three-point correlation conjecture: for normalized consecutive gaps of zeta zeros, R₃(s₁, s₂) follows the GUE sine kernel determinant statistics (belief=1.000)\n- [VERIFIED] EXPERIMENTAL PARTIAL REFUTATION (penalty=0.90): Experimental evidence with 500 zeros suggests α₀ is in the range 0.4-1.0, broadly consistent with α₀ ≈ 0.72, but precise verificatio\n- [VERIFIED] EXPERIMENTAL PARTIAL REFUTATION (penalty=0.90): Experimental evidence from GUE-based simulation provides weak support for μ = 0: simulated gaps show polynomial approach to small va\n- [VERIFIED] Under the Riemann Hypothesis, all non-trivial zeros of ζ(s) lie on the critical line Re(s) = 1/2, so ρ_n = 1/2 + iγ_n with γ_n real and increasing (belief=1.000)\n- [VERIFIED] The normalized gap is defined as d_n = (γ_{n+1} - γ_n) · log(γ_n) / (2π), where log(γ_n)/(2π) is the mean spacing near height γ_n (belief=1.000)\n- [VERIFIED] Under RH, the current best rigorous upper bound is lim inf_{n→∞} d_n < 0.50895 (belief=1.000)\n- [VERIFIED] The number variance for a point process is Σ²(L) = ⟨(N(x, x+L) - L·ρ̄)²⟩ where N(x, x+L) counts points in [x, x+L] and ρ̄ is mean density (belief=1.000)\n- [VERIFIED] The GUE nearest-neighbor spacing distribution is S(s) = (π/2)s · exp(-πs²/4) (belief=1.000)\n- [VERIFIED] The pair correlation function R₂(r) for a point process measures correlations between point pairs at separation r, normalized by mean density (belief=1.000)\n- [VERIFIED] EXPERIMENTAL PARTIAL REFUTATION (penalty=0.35): Experimental evidence supports the conjecture: The number variance can be expressed via pair correlation as Σ²(L) = L + ∫₀^L ∫₀^L [R\n- [VERIFIED] Mathematical prerequisites are consistent: Montgomery pair correlation with cutoff α₀ ≈ 0.72 and GUE statistics are well-defined. However, the specific claim μ ≥ 0.24 from convex o\n- [VERIFIED] The experimental setup is methodologically circular: assuming GUE statistics and observing GUE-consistent gaps does not provide evidence about the actual value of μ for Riemann zet\n- [VERIFIED] Experimental evidence confirms that the gap-weighted quadratic moment G_quad is well-defined for GUE-distributed normalized gaps and converges to the theoretical value 4/π ≈ 1.273.\n- [VERIFIED] EXPERIMENTAL PARTIAL REFUTATION (penalty=0.35): Experimental evidence strongly supports: The gap-weighted quadratic moment G_quad = lim inf_{N→∞} (1/N) Σ_{n=1}^N [d_n]² is well-def\n- [VERIFIED] Under the Riemann Hypothesis (RH), all non-trivial zeros of ζ(s) lie on the critical line Re(s) = 1/2, so ρ_n = 1/2 + iγ_n with γ_n real and γ_n < γ_{n+1} (belief=1.000)\n- [VERIFIED] The normalized gap is defined as d_n = (γ_{n+1} - γ_n) · log(γ_n) / (2π), where log(γ_n)/(2π) represents the local mean spacing of zeros near height γ_n (belief=1.000)\n- [VERIFIED] The GUE (Gaussian Unitary Ensemble) nearest-neighbor spacing distribution is S_GUE(s) = (π/2)s · exp(-πs²/4) for s ≥ 0 (belief=1.000)\n- [VERIFIED] Montgomery pair correlation conjecture: For the normalized gaps of Riemann zeta zeros, the pair correlation function R₂(α) matches GUE statistics for |α| < α₀, where α₀ is the corr\n- [VERIFIED] For a point process with mean density ρ̄, the number variance is Σ²(L) = ⟨(N(x, x+L) - L·ρ̄)²⟩ where N(x, x+L) counts points in interval [x, x+L] (belief=1.000)\n- [VERIFIED] Riemann zeta zeros γ_n can be computed to arbitrary precision up to n = 10^13 using the Odlyzko-Schönhage algorithm (belief=1.000)\n- [VERIFIED] EXPERIMENTAL PARTIAL REFUTATION (penalty=0.90): Experimental evidence strongly supports: GUE-based simulations confirm that normalized gaps d_n approach zero with polynomial freque\n- [VERIFIED] RH holds - all zeros are ρ_n = 1/2 + iγ_n with real γ_n (belief=1.000)\n- [VERIFIED] Explicit formula ψ(x) = x - Σ_ρ (x^ρ / ρ) + O(1) (belief=1.000)\n- [VERIFIED] Normalized gap d_n = (γ_{n+1} - γ_n) · log(γ_n) / (2π) (belief=1.000)",
+    "normalized_output": {
+      "module": "retrieve",
+      "domain": "number_theory",
+      "premises": [
+        {
+          "id": null,
+          "statement": "Under GUE statistics, the second moment of nearest-neighbor spacings is E[s²] = 4/π where s is the normalized spacing"
+        },
+        {
+          "id": null,
+          "statement": "Montgomery's pair correlation conjecture with parameter α₀ ≈ 0.72 implies GUE-like local statistics hold up to range α₀ in the normalized scale"
+        },
+        {
+          "id": null,
+          "statement": "For normalized zero spacings d_n = (γ_{n+1} - γ_n)log(γ_n)/(2π), the GUE conjecture predicts the distribution approaches S(s) = (π/2)s·exp(-πs²/4)"
+        },
+        {
+          "id": null,
+          "statement": "The cutoff parameter α₀ in Montgomery's conjecture determines the range over which pair correlation matches GUE; full GUE correspondence requires α₀ = 1"
+        },
+        {
+          "id": null,
+          "statement": "For GUE nearest-neighbor spacing with density S(s), the exact second moment is ∫₀^∞ s² S(s) ds = 4/π"
+        },
+        {
+          "id": null,
+          "statement": "If pair correlation holds only for |α| < α₀ < 1, higher moment bounds may differ from full GUE predictions due to incomplete spectral rigidity"
+        },
+        {
+          "id": null,
+          "statement": "The variance bound E[d_n²] - E[d_n]² for zeta zero gaps depends critically on n-level correlation functions, not just pair correlation"
+        },
+        {
+          "id": null,
+          "statement": "Rudnick-Sarnak conjecture: n-point correlation functions of zeta zeros match GUE for all n, which would imply E[d_n²] = 4/π exactly"
+        }
+      ],
+      "steps": [
+        "Retrieved known relevant facts for current node.",
+        "- (lemma) Under GUE statistics, the second moment of nearest-neighbor spacings is E[s²] = 4/π where s is the normalized spacing [random_matrix_theory]",
+        "- (tool) Montgomery's pair correlation conjecture with parameter α₀ ≈ 0.72 implies GUE-like local statistics hold up to range α₀ in the normalized scale [Montgomery_1973]",
+        "- (related) For normalized zero spacings d_n = (γ_{n+1} - γ_n)log(γ_n)/(2π), the GUE conjecture predicts the distribution approaches S(s) = (π/2)s·exp(-πs²/4) [Berry_Keating_1999]",
+        "- (obstruction) The cutoff parameter α₀ in Montgomery's conjecture determines the range over which pair correlation matches GUE; full GUE correspondence requires α₀ = 1 [Odlyzko_1987]",
+        "- (lemma) For GUE nearest-neighbor spacing with density S(s), the exact second moment is ∫₀^∞ s² S(s) ds = 4/π [Mehta_random_matrices_2004]",
+        "- (obstruction) If pair correlation holds only for |α| < α₀ < 1, higher moment bounds may differ from full GUE predictions due to incomplete spectral rigidity [Bogomolny_Keating_1996]",
+        "- (related) The variance bound E[d_n²] - E[d_n]² for zeta zero gaps depends critically on n-level correlation functions, not just pair correlation [Hejhal_1994]",
+        "- (related) Rudnick-Sarnak conjecture: n-point correlation functions of zeta zeros match GUE for all n, which would imply E[d_n²] = 4/π exactly [Rudnick_Sarnak_1996]",
+        "Feedback context: Verified results from previous iterations:\n- [VERIFIED] The GUE nearest-neighbor spacing distribution is S(s) = (π/2)s·exp(-πs²/4) (belief=1.000)\n- [VERIFIED] Riemann Hypothesis: all non-trivial zeros of ζ(s) lie on Re(s) = 1/2 (belief=1.000)\n- [VERIFIED] Montgomery pair correlation conjecture: the normalized gap statistics R₂(α) of zeta zeros follow GUE statistics for |α| < α₀ where α₀ is the correlation cutoff (belief=1.000)\n- [VERIFIED] Current best rigorous result under RH: lim inf (γ_{n+1} - γ_n) log(γ_n) / (2π) < 0.50895 (belief=1.000)\n- [VERIFIED] Three-point correlation conjecture: for normalized consecutive gaps of zeta zeros, R₃(s₁, s₂) follows the GUE sine kernel determinant statistics (belief=1.000)\n- [VERIFIED] EXPERIMENTAL PARTIAL REFUTATION (penalty=0.90): Experimental evidence with 500 zeros suggests α₀ is in the range 0.4-1.0, broadly consistent with α₀ ≈ 0.72, but precise verificatio\n- [VERIFIED] EXPERIMENTAL PARTIAL REFUTATION (penalty=0.90): Experimental evidence from GUE-based simulation provides weak support for μ = 0: simulated gaps show polynomial approach to small va\n- [VERIFIED] Under the Riemann Hypothesis, all non-trivial zeros of ζ(s) lie on the critical line Re(s) = 1/2, so ρ_n = 1/2 + iγ_n with γ_n real and increasing (belief=1.000)\n- [VERIFIED] The normalized gap is defined as d_n = (γ_{n+1} - γ_n) · log(γ_n) / (2π), where log(γ_n)/(2π) is the mean spacing near height γ_n (belief=1.000)\n- [VERIFIED] Under RH, the current best rigorous upper bound is lim inf_{n→∞} d_n < 0.50895 (belief=1.000)\n- [VERIFIED] The number variance for a point process is Σ²(L) = ⟨(N(x, x+L) - L·ρ̄)²⟩ where N(x, x+L) counts points in [x, x+L] and ρ̄ is mean density (belief=1.000)\n- [VERIFIED] The GUE nearest-neighbor spacing distribution is S(s) = (π/2)s · exp(-πs²/4) (belief=1.000)\n- [VERIFIED] The pair correlation function R₂(r) for a point process measures correlations between point pairs at separation r, normalized by mean density (belief=1.000)\n- [VERIFIED] EXPERIMENTAL PARTIAL REFUTATION (penalty=0.35): Experimental evidence supports the conjecture: The number variance can be expressed via pair correlation as Σ²(L) = L + ∫₀^L ∫₀^L [R\n- [VERIFIED] Mathematical prerequisites are consistent: Montgomery pair correlation with cutoff α₀ ≈ 0.72 and GUE statistics are well-defined. However, the specific claim μ ≥ 0.24 from convex o\n- [VERIFIED] The experimental setup is methodologically circular: assuming GUE statistics and observing GUE-consistent gaps does not provide evidence about the actual value of μ for Riemann zet\n- [VERIFIED] Experimental evidence confirms that the gap-weighted quadratic moment G_quad is well-defined for GUE-distributed normalized gaps and converges to the theoretical value 4/π ≈ 1.273.\n- [VERIFIED] EXPERIMENTAL PARTIAL REFUTATION (penalty=0.35): Experimental evidence strongly supports: The gap-weighted quadratic moment G_quad = lim inf_{N→∞} (1/N) Σ_{n=1}^N [d_n]² is well-def\n- [VERIFIED] Under the Riemann Hypothesis (RH), all non-trivial zeros of ζ(s) lie on the critical line Re(s) = 1/2, so ρ_n = 1/2 + iγ_n with γ_n real and γ_n < γ_{n+1} (belief=1.000)\n- [VERIFIED] The normalized gap is defined as d_n = (γ_{n+1} - γ_n) · log(γ_n) / (2π), where log(γ_n)/(2π) represents the local mean spacing of zeros near height γ_n (belief=1.000)\n- [VERIFIED] The GUE (Gaussian Unitary Ensemble) nearest-neighbor spacing distribution is S_GUE(s) = (π/2)s · exp(-πs²/4) for s ≥ 0 (belief=1.000)\n- [VERIFIED] Montgomery pair correlation conjecture: For the normalized gaps of Riemann zeta zeros, the pair correlation function R₂(α) matches GUE statistics for |α| < α₀, where α₀ is the corr\n- [VERIFIED] For a point process with mean density ρ̄, the number variance is Σ²(L) = ⟨(N(x, x+L) - L·ρ̄)²⟩ where N(x, x+L) counts points in interval [x, x+L] (belief=1.000)\n- [VERIFIED] Riemann zeta zeros γ_n can be computed to arbitrary precision up to n = 10^13 using the Odlyzko-Schönhage algorithm (belief=1.000)\n- [VERIFIED] EXPERIMENTAL PARTIAL REFUTATION (penalty=0.90): Experimental evidence strongly supports: GUE-based simulations confirm that normalized gaps d_n approach zero with polynomial freque\n- [VERIFIED] RH holds - all zeros are ρ_n = 1/2 + iγ_n with real γ_n (belief=1.000)\n- [VERIFIED] Explicit formula ψ(x) = x - Σ_ρ (x^ρ / ρ) + O(1) (belief=1.000)\n- [VERIFIED] Normalized gap d_n = (γ_{n+1} - γ_n) · log(γ_n) / (2π) (belief=1.000)"
+      ],
+      "conclusion": {
+        "statement": "UNPROVEN CLAIM: If Montgomery's conjecture holds with α₀ ≈ 0.72, then the gap distribution must satisfy the moment bound E[d_n²] ≥ 4/π ≈ 1.273",
+        "formal_statement": null
+      },
+      "review_confidence": 0.15,
+      "confidence": 0.15
+    },
+    "judge_output": {
+      "confidence": 0.15,
+      "reasoning": "This is a 'retrieve' module step that simply lists premises from the literature. The conclusion claims a moment bound E[d_n²] ≥ 4/π follows from Montgomery's conjecture with α₀ ≈ 0.72. However, the premises explicitly state OPPOSITE conditions: premise 6 warns that 'If pair correlation holds only for |α| < α₀ < 1, higher moment bounds may differ from full GUE predictions,' and premise 7 states 'variance bound E[d_n²] - E[d_n]² for zeta zero gaps depends critically on n-level correlation functions, not just pair correlation.' The conclusion appears to claim that LIMITED pair correlation (α₀ ≈ 0.72 < 1) implies the FULL GUE moment bound, which contradicts the premises. The premises suggest the full moment E[d_n²] = 4/π requires the Rudnick-Sarnak conjecture (all n-point correlations), not just Montgomery's limited pair correlation.",
+      "concerns": [
+        "The conclusion claims Montgomery's conjecture with α₀ ≈ 0.72 implies E[d_n²] ≥ 4/π, but premise 6 explicitly states moment bounds may differ when α₀ < 1",
+        "Premise 7 states variance bounds depend on n-level correlations, not just pair correlation, undermining the logical chain",
+        "Premise 8 (Rudnick-Sarnak) states that E[d_n²] = 4/π requires ALL n-point correlations to match GUE, not just pair correlation",
+        "The conclusion is marked 'UNPROVEN CLAIM' but the reasoning doesn't establish the claimed implication—it appears to contradict it",
+        "This is a 'retrieve' module which should just gather facts, but the conclusion appears to make an inference not supported by the retrieved facts",
+        "No actual reasoning steps are shown—just a list of retrieved premises followed by a conclusion that doesn't follow from them"
+      ],
+      "suggestion": "The premises should lead to the opposite conclusion: Montgomery's conjecture with α₀ ≈ 0.72 is INSUFFICIENT to guarantee E[d_n²] = 4/π, which would require the stronger Rudnick-Sarnak conjecture. If the goal is to establish a moment bound, either revise the conclusion to reflect what the premises actually support, or retrieve different premises that actually support the claimed bound."
+    },
+    "ingest_edge_id": null,
+    "created_node_ids": [],
+    "success": true,
+    "message": "retrieve complete"
+  }
+}

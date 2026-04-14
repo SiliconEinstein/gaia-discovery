@@ -1,0 +1,355 @@
+{
+  "target_statement": "Determine the optimal constant μ such that lim inf (γ_{n+1} - γ_n) log(γ_n) / (2π) = μ under RH",
+  "propositions": [
+    {
+      "id": "P1",
+      "statement": "RH: All non-trivial zeros of ζ(s) lie on the critical line Re(s) = 1/2, so ρ_n = 1/2 + iγ_n",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P2",
+      "statement": "Montgomery's pair correlation conjecture: normalized gaps of zeta zeros follow GUE statistics for |α| < 1",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P3",
+      "statement": "Under RH, current best rigorous upper bound: lim inf (γ_{n+1} - γ_n) log(γ_n) / (2π) < 0.50895",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P4",
+      "statement": "The GUE nearest-neighbor spacing distribution is S(s) = (π/2)s·exp(-πs²/4)",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P5",
+      "statement": "GUE joint probability density is proportional to product of |λ_i - λ_j| times exponential potential, encoding level repulsion",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P6",
+      "statement": "Zeros γ_n can be computed to arbitrary precision up to n = 10^13 using Odlyzko-Schönhage algorithm",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P7",
+      "statement": "Define normalized gap d_n = (γ_{n+1} - γ_n) log(γ_n) / (2π), which is the natural local scaling for gap statistics",
+      "role": "bridge",
+      "grade": "B",
+      "depends_on": [
+        "P1"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P8",
+      "statement": "The empirical gap distribution from computed zeros up to γ_n ≈ 10^13 can be compared against GUE spacing distribution S(s)",
+      "role": "experiment_support",
+      "grade": "C",
+      "depends_on": [
+        "P6",
+        "P4",
+        "P7"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P9",
+      "statement": "The integral I = (1/(2√π)) ∫₀^∞ s·S(s)·e^(-s) ds can be numerically evaluated to arbitrary precision",
+      "role": "experiment_support",
+      "grade": "C",
+      "depends_on": [
+        "P4"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P10",
+      "statement": "Define k-point gap correlation function G_k(s_1,...,s_k;T) measuring joint distribution of k consecutive normalized gaps among zeros with imaginary parts up to T",
+      "role": "bridge",
+      "grade": "B",
+      "depends_on": [
+        "P7"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P11",
+      "statement": "GUE model predicts polynomial rigidity: probability of k consecutive gaps all smaller than ε decays like ε^(k(k+1)/2)",
+      "role": "bridge",
+      "grade": "B",
+      "depends_on": [
+        "P2",
+        "P5"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P12",
+      "statement": "Empirical rigidity length scale ℓ_rigid(T) can be measured from computed zeros by analyzing suppression of fluctuations at various scales",
+      "role": "experiment_support",
+      "grade": "C",
+      "depends_on": [
+        "P6",
+        "P7"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "R1",
+      "statement": "G_k factorizes under RH and Montgomery's conjecture with correction terms encoding higher-order rigidity: G_k ≈ ∏ S(s_i) · C_k(s_1,...,s_k) where C_k captures k-body correlations",
+      "role": "risk",
+      "grade": "D",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "R2",
+      "statement": "Pigeonhole-energy argument: partition zeros into windows and bound total gap energy ∑ d_n in each window using GUE rigidity to derive μ ≥ c·(1-δ(W)) as W→∞",
+      "role": "risk",
+      "grade": "D",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "R3",
+      "statement": "The optimal constant satisfies μ ≥ (1/(2√π)) ∫₀^∞ s·S(s)·e^(-s) ds by treating minimal gap as minimum of modulated Poisson process with GUE spacing statistics",
+      "role": "risk",
+      "grade": "D",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "R4",
+      "statement": "There exists a rigidity length scale ℓ_rigid(∞) = lim_{T→∞} ℓ_rigid(T) such that μ ~ 1/ℓ_rigid(∞), linking minimal spacing to global rigidity property",
+      "role": "risk",
+      "grade": "D",
+      "depends_on": [],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P13",
+      "statement": "If the GUE model accurately describes zero gap statistics and rigidity properties hold as predicted, then μ should be bounded below by a constant determined by GUE extreme value theory",
+      "role": "bridge",
+      "grade": "B",
+      "depends_on": [
+        "P2",
+        "P11"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P14",
+      "statement": "Under RH, the problem of determining optimal μ in lim inf (γ_{n+1} - γ_n) log(γ_n)/(2π) = μ remains open, with rigorous bound μ < 0.50895, GUE heuristic suggesting μ ≈ 0.318, and several conjectural mechanisms proposed but unproven",
+      "role": "target",
+      "grade": "B",
+      "depends_on": [
+        "P1",
+        "P3",
+        "P8",
+        "P9",
+        "P13"
+      ],
+      "notes": null,
+      "formalization_notes": null,
+      "experiment_notes": null
+    }
+  ],
+  "chain": [
+    {
+      "id": "S1",
+      "statement": "Assume RH and establish normalized gap framework: under RH all zeros lie on Re(s)=1/2, and the natural normalized gap is d_n = (γ_{n+1} - γ_n) log(γ_n)/(2π)",
+      "uses": [
+        "P1"
+      ],
+      "concludes": [
+        "P7"
+      ],
+      "grade": "B",
+      "notes": null
+    },
+    {
+      "id": "S2",
+      "statement": "Define k-point correlation functions G_k to study joint gap distributions, generalizing Montgomery's pair correlation to higher order statistics",
+      "uses": [
+        "P7",
+        "P2"
+      ],
+      "concludes": [
+        "P10"
+      ],
+      "grade": "B",
+      "notes": null
+    },
+    {
+      "id": "S3",
+      "statement": "Use computed zeros up to 10^13 to empirically verify that gap distribution closely matches GUE spacing distribution S(s)",
+      "uses": [
+        "P6",
+        "P4",
+        "P7"
+      ],
+      "concludes": [
+        "P8"
+      ],
+      "grade": "C",
+      "notes": null
+    },
+    {
+      "id": "S4",
+      "statement": "Numerically evaluate the integral I = (1/(2√π)) ∫₀^∞ s·S(s)·e^(-s) ds using the GUE spacing formula",
+      "uses": [
+        "P4"
+      ],
+      "concludes": [
+        "P9"
+      ],
+      "grade": "C",
+      "notes": null
+    },
+    {
+      "id": "S5",
+      "statement": "Extract empirical rigidity length scale from computed zeros by measuring fluctuation suppression at various window sizes",
+      "uses": [
+        "P6",
+        "P7"
+      ],
+      "concludes": [
+        "P12"
+      ],
+      "grade": "C",
+      "notes": null
+    },
+    {
+      "id": "S6",
+      "statement": "From GUE repulsion mechanism and polynomial rigidity prediction, infer that minimal gaps should be controlled by extreme value statistics in a rigid point process",
+      "uses": [
+        "P2",
+        "P5",
+        "P11"
+      ],
+      "concludes": [
+        "P13"
+      ],
+      "grade": "B",
+      "notes": null
+    },
+    {
+      "id": "S7",
+      "statement": "RISKY: Conjecture that G_k factorizes with correction terms under extended Montgomery conjecture",
+      "uses": [
+        "P10",
+        "P2"
+      ],
+      "concludes": [
+        "R1"
+      ],
+      "grade": "D",
+      "notes": null
+    },
+    {
+      "id": "S8",
+      "statement": "RISKY: Apply pigeonhole-energy argument with window partitioning to derive lower bound on μ using GUE rigidity",
+      "uses": [
+        "P11",
+        "P10"
+      ],
+      "concludes": [
+        "R2"
+      ],
+      "grade": "D",
+      "notes": null
+    },
+    {
+      "id": "S9",
+      "statement": "RISKY: Propose explicit integral formula for lower bound by treating minimal gap as extreme value of modulated Poisson process",
+      "uses": [
+        "P4"
+      ],
+      "concludes": [
+        "R3"
+      ],
+      "grade": "D",
+      "notes": null
+    },
+    {
+      "id": "S10",
+      "statement": "RISKY: Conjecture connection between minimal spacing constant μ and asymptotic rigidity length scale",
+      "uses": [],
+      "concludes": [
+        "R4"
+      ],
+      "grade": "D",
+      "notes": null
+    },
+    {
+      "id": "S11",
+      "statement": "Synthesize current state of the problem: rigorous bound μ < 0.50895 is established; GUE heuristics and numerical evidence suggest μ ≈ 0.318; several conjectural mechanisms are proposed but unproven",
+      "uses": [
+        "P1",
+        "P3",
+        "P8",
+        "P9",
+        "P13"
+      ],
+      "concludes": [
+        "P14"
+      ],
+      "grade": "B",
+      "notes": null
+    }
+  ],
+  "summary": "The optimal constant μ remains undetermined: rigorous upper bound 0.50895 exists, GUE heuristics suggest μ ≈ 0.318 via integral formula, and experiments can test gap statistics against GUE predictions. Four major conjectural mechanisms lack rigorous justification, representing the current frontier of this open problem."
+}
