@@ -2291,6 +2291,7 @@ def run_experiment_action(
         },
         "module": "experiment",
         "domain": normalized.get("domain", target.domain),
+        "outcome": "supported",
     }
     if summary_statement:
         final_output["steps"].append("Original experiment conclusion: " + summary_statement)
