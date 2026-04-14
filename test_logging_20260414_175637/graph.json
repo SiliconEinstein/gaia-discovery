@@ -1,0 +1,58 @@
+{
+  "nodes": {
+    "7f5641ee7022": {
+      "id": "7f5641ee7022",
+      "statement": "Pythagorean theorem: a² + b² = c² for right triangles",
+      "formal_statement": null,
+      "belief": 1.0,
+      "prior": 1.0,
+      "domain": "geometry",
+      "provenance": null,
+      "verification_source": null,
+      "memo_ref": null,
+      "discovered_at": "2026-04-14T09:56:37.055324Z",
+      "state": "unverified"
+    },
+    "d1302a63672a": {
+      "id": "d1302a63672a",
+      "statement": "Triangle inequality: |a-b| ≤ c ≤ a+b for all sides",
+      "formal_statement": null,
+      "belief": 1.0,
+      "prior": 1.0,
+      "domain": "geometry",
+      "provenance": null,
+      "verification_source": null,
+      "memo_ref": null,
+      "discovered_at": "2026-04-14T09:56:37.055378Z",
+      "state": "unverified"
+    },
+    "1e575b002d68": {
+      "id": "1e575b002d68",
+      "statement": "Sum of angles in a triangle equals 180°",
+      "formal_statement": null,
+      "belief": 1.0,
+      "prior": 1.0,
+      "domain": "geometry",
+      "provenance": null,
+      "verification_source": null,
+      "memo_ref": null,
+      "discovered_at": "2026-04-14T09:56:37.055400Z",
+      "state": "unverified"
+    },
+    "efcfb78701fc": {
+      "id": "efcfb78701fc",
+      "statement": "Prove that for any triangle ABC, the circumradius R and inradius r satisfy R ≥ 2r",
+      "formal_statement": null,
+      "belief": 0.1,
+      "prior": 0.1,
+      "domain": "geometry",
+      "provenance": null,
+      "verification_source": null,
+      "memo_ref": null,
+      "discovered_at": "2026-04-14T09:56:37.055418Z",
+      "state": "unverified"
+    }
+  },
+  "edges": {},
+  "version": 4
+}

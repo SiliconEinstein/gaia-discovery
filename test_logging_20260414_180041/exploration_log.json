@@ -1,0 +1,50 @@
+{
+  "case_id": "test_logging_20260414_180041",
+  "display_name": "test_logging_20260414_180041",
+  "suite_id": "manual",
+  "metadata": {
+    "model": "Vendor2/Claude-4.5-Sonnet",
+    "engine": "mcts",
+    "last_iteration": 0,
+    "last_flush_at": "2026-04-14T10:00:41.184978+00:00",
+    "started_at": "2026-04-14T10:00:41.184995+00:00",
+    "llm_record_dir": "/root/gaia-discovery/test_logging_20260414_180041/llm_record",
+    "backend": "bp"
+  },
+  "steps": [],
+  "snapshots": [
+    {
+      "step": "seed",
+      "nodes": {
+        "c6ab0d165d6c": {
+          "prior": 1.0,
+          "belief": 1.0,
+          "state": "unverified",
+          "statement": "Pythagorean theorem: a² + b² = c² for right triangles"
+        },
+        "9a102179cb88": {
+          "prior": 1.0,
+          "belief": 1.0,
+          "state": "unverified",
+          "statement": "Triangle inequality: |a-b| ≤ c ≤ a+b for all sides"
+        },
+        "0d90f124b094": {
+          "prior": 1.0,
+          "belief": 1.0,
+          "state": "unverified",
+          "statement": "Sum of angles in a triangle equals 180°"
+        },
+        "946e6a89dbd5": {
+          "prior": 0.1,
+          "belief": 0.1,
+          "state": "unverified",
+          "statement": "Prove that for any triangle ABC, the circumradius R and inradius r satisfy R ≥ 2r"
+        }
+      },
+      "edges": {}
+    }
+  ],
+  "node_ids": {
+    "target": "946e6a89dbd5"
+  }
+}
