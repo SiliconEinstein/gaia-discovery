@@ -1061,7 +1061,11 @@ def run_judge(output: dict[str, Any], model: Optional[str] = None) -> dict[str, 
     unparseable output, so that a single malformed response never
     crashes the entire run.
     """
-    judge_model = getattr(CONFIG, "judge_model", "") or model
+    try:
+      from dz_hypergraph.config import CONFIG
+      judge_model = getattr(CONFIG, "judge_model", "") or model
+    except Exception:
+      judge_model = model
     try:
         _, parsed = run_skill(
             "judge.skill.md",
