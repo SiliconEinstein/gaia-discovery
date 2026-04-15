@@ -1,0 +1,44 @@
+# Exploring the Euler Inequality R ≥ 2r
+
+Let me explore several proof routes for this classical inequality, then commit to the most promising path that introduces new computational leverage.
+
+## Initial Survey
+
+The target is to prove R ≥ 2r for any triangle. From context:
+- Basic geometric facts are available (Pythagorean theorem, triangle inequality, angle sum)
+- The planning feedback suggests extremal principles and the special role of the equilateral triangle
+- Key formulas to consider: R = abc/(4K) and r = K/s where K is area and s is semiperimeter
+
+## Competing Routes
+
+**Route A (Direct Algebraic)**: Use formulas R = abc/(4K), r = K/s, and derive R ≥ 2r algebraically using triangle inequalities.
+
+**Route B (Trigonometric)**: Use r = 4R sin(A/2)sin(B/2)sin(C/2) and bound the sine product.
+
+**Route C (Distance Formula - NEW)**: Introduce the Euler line and use the distance formula OI² = R(R - 2r) where O is circumcenter and I is incenter. This is non-negative if and only if R ≥ 2r.
+
+**Route D (Variational)**: Prove the equilateral triangle minimizes R/r using calculus of variations.
+
+## Selected Route: Distance Formula (Route C)
+
+I select Route C because it introduces a **new geometric object** (the distance OI between centers) and transforms an algebraic inequality into a **geometric positivity condition**. This is both elegant and computationally verifiable.
+
+### The Mechanism
+
+The key insight is that the inequality R ≥ 2r is equivalent to a geometric statement about the configuration of triangle centers. When we compute the squared distance between the circumcenter O and incenter I, we obtain Euler's formula:
+
+OI² = R² - 2Rr = R(R - 2r)
+
+Since distances are non-negative, OI² ≥ 0, which immediately gives R(R - 2r) ≥ 0. Since R > 0 for any non-degenerate triangle, we must have R ≥ 2r.
+
+### Why This Route Works
+
+1. **New object introduced**: The distance OI is not in the original problem statement
+2. **Testable**: We can compute OI for specific triangles (equilateral, right, isosceles, scalene) and verify the formula
+3. **Generalizable**: This method extends to other triangle center inequalities
+4. **Mechanistic clarity**: The inequality encodes information about the relative positions of two fundamental triangle centers
+
+### The Proof Steps
+
+**Step 1: Establish coordinate system and definitions**
+For triangle ABC, let

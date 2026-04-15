@@ -1,0 +1,37 @@
+{
+  "iteration": 21,
+  "node_id": "177fd0c0a721",
+  "module": "experiment",
+  "created_at": 1776063829.2091079,
+  "result": {
+    "action": "experiment",
+    "target_node_id": "177fd0c0a721",
+    "selected_module": "experiment",
+    "raw_output": "```json\n{\n  \"premises\": [\n    {\"id\": \"7f826d5151c1\", \"statement\": \"设 ρ_n = 1/2 + iγ_n 为第 n 个零点（按虚部递增排序），其中 0 < γ_1 < γ_2 < γ_3 < ...\"},\n    {\"id\": \"85e2bc67710c\", \"statement\": \"零点的平均归一化间距为 1 / N'(γ_n) = 2π / log(γ_n/2π)，趋近于 2π / log γ_n\"},\n    {\"id\": \"b069b47adf1a\", \"statement\": \"数值观察表明，绝大多数归一化间距 d_n := (γ_{n+1} - γ_n) · log(γ_n)/(2π) 接近 1，但存在罕见的小间距事件\"}\n  ],\n  \"steps\": [\n    \"# Python code to test the gap indicator G_δ(t) definition and properties\\nimport json\\nimport mpmath\\nfrom mpmath import mp\\n\\n# Set precision\\nmp.dps = 30\\n\\n# Compute zeta zeros using mpmath\\ndef get_zeta_zeros(n_zeros):\\n    \\\"\\\"\\\"Get first n_zeros non-trivial zeros of zeta on critical line.\\\"\\\"\\\"\\n    zeros = []\\n    for k in range(1, n_zeros + 1):\\n        gamma = mpmath.zetazero(k).imag\\n        zeros.append(float(gamma))\\n    return zeros\\n\\n# Compute normalized gaps\\ndef compute_normalized_gaps(zeros):\\n    \\\"\\\"\\\"Compute d_n = (γ_{n+1} - γ_n) *",
+    "normalized_output": {
+      "module": "experiment",
+      "domain": "number_theory",
+      "outcome": "weakened",
+      "conclusion": {
+        "statement": "Experimental evidence for claim tested in code (target: Define the gap indicator G_δ(t) := Σ_{|t-γ_n|<δ} 1_{[d_n < μ]} which counts zeros near t with small successor gaps)"
+      },
+      "confidence": 0.9,
+      "steps": [
+        "import json\nimport mpmath\nfrom mpmath import mp\nimport math\n\n# Set precision\nmp.dps = 25\n\n# Compute zeta zeros using mpmath - reduced count to avoid timeout\ndef get_zeta_zeros(n_zeros):\n    \"\"\"Get first n_zeros non-trivial zeros of zeta on critical line.\"\"\"\n    zeros = []\n    for k in range(1, n_zeros + 1):\n        gamma = mpmath.zetazero(k).imag\n        zeros.append(float(gamma))\n    return zeros\n\n# Compute normalized gaps\ndef compute_normalized_gaps(zeros):\n    \"\"\"Compute d_n = (gamma_{n+1} - gamma_n) * log(gamma_n) / (2*pi).\"\"\"\n    gaps = []\n    for i in range(len(zeros) - 1):\n        raw_gap = zeros[i + 1] - zeros[i]\n        d_n = raw_gap * math.log(zeros[i]) / (2 * math.pi)\n        gaps.append(d_n)\n    return gaps\n\n# Define the gap indicator G_delta(t)\ndef gap_indicator(t, zeros, gaps, delta, mu):\n    \"\"\"\n    G_delta(t) := sum over n where |t - gamma_n| < delta of 1_{d_n < mu}\n    Counts zeros near t with small successor gaps.\n    \"\"\"\n    count = 0\n    for i in range(len(gaps)):\n        if abs(t - zeros[i]) < delta:\n            if gaps[i] < mu:\n                count += 1\n    return count\n\n# Main computation - reduced to 100 zeros to avoid timeout\nn_zeros = 100\nzeros = get_zeta_zeros(n_zeros)\ngaps = compute_normalized_gaps(zeros)\n\n# Verify basic properties\n# 1. Average normalized gap should be close to 1\nmean_gap = sum(gaps) / len(gaps)\n\n# 2. Test G_delta for various parameters\ndelta = 5.0  # window size\nmu = 1.0     # threshold: small gaps are those below average\n\n# Evaluate G_delta at sample zero locations (not all, to save time)\nsample_indices = list(range(0, len(zeros), 5))  # every 5th zero\ng_values = []\nfor i in sample_indices:\n    g = gap_indicator(zeros[i], zeros, gaps, delta, mu)\n    g_values.append(g)\n\n# Count how many zeros have small gaps (d_n < mu)\nsmall_gap_count = sum(1 for d in gaps if d < mu)\nsmall_gap_fraction = small_gap_count / len(gaps)\n\n# 3. Verify G_delta is non-negative (by definition)\nall_nonneg = all(g >= 0 for g in g_values)\n\n# 4. Verify G_delta is integer-valued (it's a count)\nall_integer = all(isinstance(g, int) for g in g_values)\n\n# 5. Check that G_delta(t) <= total number of zeros in window\nmax_g = max(g_values) if g_values else 0\n\n# 6. Verify monotonicity in delta: larger delta => larger or equal G_delta\ndelta_small = 2.0\ndelta_large = 10.0\nmonotone_ok = True\nfor i in range(min(20, len(zeros))):\n    g_small = gap_indicator(zeros[i], zeros, gaps, delta_small, mu)\n    g_large = gap_indicator(zeros[i], zeros, gaps, delta_large, mu)\n    if g_large < g_small:\n        monotone_ok = False\n        break\n\n# 7. Verify monotonicity in mu: larger mu => larger or equal G_delta\nmu_small = 0.5\nmu_large = 1.5\nmu_monotone_ok = True\nfor i in range(min(20, len(zeros))):\n    g_mu_small = gap_indicator(zeros[i], zeros, gaps, delta, mu_small)\n    g_mu_large = gap_indicator(zeros[i], zeros, gaps, delta, mu_large)\n    if g_mu_large < g_mu_small:\n        mu_monotone_ok = False\n        break\n\n# Determine pass/fail\ntrials = n_zeros\nmax_error = abs(mean_gap - 1.0)\npassed = all_nonneg and all_integer and monotone_ok and mu_monotone_ok and (max_error < 0.15)\n\ncounterexample = None\nif not passed:\n    counterexample = {\n        \"all_nonneg\": all_nonneg,\n        \"all_integer\": all_integer,\n        \"monotone_delta\": monotone_ok,\n        \"monotone_mu\": mu_monotone_ok,\n        \"mean_gap\": mean_gap,\n        \"mean_gap_error\": max_error\n    }\n\nsummary = (\n    f\"Tested G_delta(t) gap indicator with {n_zeros} zeros. \"\n    f\"Mean normalized gap={mean_gap:.6f} (error from 1: {max_error:.6f}). \"\n    f\"Small gap fraction (d_n<1): {small_gap_fraction:.4f}. \"\n    f\"G_delta non-negative: {all_nonneg}, integer-valued: {all_integer}. \"\n    f\"Monotone in delta: {monotone_ok}, monotone in mu: {mu_monotone_ok}. \"\n    f\"Max G_delta value: {max_g}.\"\n)\n\nprint(json.dumps({\n    \"passed\": passed,\n    \"trials\": trials,\n    \"max_error\": max_error,\n    \"counterexample\": counterexample,\n    \"summary\": summary\n}))",
+        "Actual execution summary: {\"passed\": false, \"trials\": 100, \"max_error\": 0.6522679189413507, \"counterexample\": {\"all_nonneg\": true, \"all_integer\": true, \"monotone_delta\": true, \"monotone_mu\": true, \"mean_gap\": 1.6522679189413507, \"mean_gap_error\": 0.6522679189413507}, \"summary\": \"Tested G_delta(t) gap indicator with 100 zeros. Mean normalized gap=1.652268 (error from 1: 0.652268). Small gap fraction (d_n<1): 0.1414. G_delta non-negative: True, integer-valued: True. Monotone in delta: True, monotone in mu: True. Max G_delta value: 2.\"}"
+      ]
+    },
+    "judge_output": {
+      "confidence": 0.9,
+      "reasoning": "Experiment found concrete counterexamples with zero successful trials across 100 runs. Belief is sharply reduced but not hard-locked.",
+      "concerns": [
+        "Experimental refutation is not formal proof of falsehood."
+      ],
+      "suggestion": null
+    },
+    "ingest_edge_id": null,
+    "created_node_ids": [],
+    "success": true,
+    "message": "experiment complete"
+  }
+}

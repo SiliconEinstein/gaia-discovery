@@ -1,0 +1,26 @@
+======================================================================
+Riemann Zeta 零点间距 - Discovery Zero 实验（后台运行）
+======================================================================
+
+运行目录: riemann_zeta_run_20260413_171435
+
+[1/2] 加载 seed knowledge...
+Traceback (most recent call last):
+  File "/root/gaia-discovery/run_riemann_bg.py", line 122, in <module>
+    main()
+  File "/root/gaia-discovery/run_riemann_bg.py", line 57, in main
+    graph, target_id = load_seeds("/tmp/riemann_seed_knowledge.json")
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/gaia-discovery/run_riemann_bg.py", line 23, in load_seeds
+    node = graph.add_node(
+           ^^^^^^^^^^^^^^^
+  File "/root/gaia-discovery/packages/dz-hypergraph/src/dz_hypergraph/models.py", line 205, in add_node
+    node = Node(
+           ^^^^^
+  File "/opt/mamba/lib/python3.12/site-packages/pydantic/main.py", line 250, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Node
+state
+  Input should be 'unverified', 'proven' or 'refuted' [type=literal_error, input_value='verified', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/literal_error

@@ -1,0 +1,18 @@
+{
+  "iteration": 27,
+  "node_id": "a7a6f76158a7",
+  "module": "lean",
+  "created_at": 1776059293.2070434,
+  "result": {
+    "action": "lean",
+    "target_node_id": "a7a6f76158a7",
+    "selected_module": "lean",
+    "raw_output": null,
+    "normalized_output": null,
+    "judge_output": null,
+    "ingest_edge_id": null,
+    "created_node_ids": [],
+    "success": false,
+    "message": "OrchestrationError: The conjecture is numerically self-contradictory and cannot be proven because it is false. Evaluating the stated bound μ/(2(1-μ)² + μ²/π) at μ = 0.48 yields 0.48/(2·(0.52)² + (0.48"
+  }
+}

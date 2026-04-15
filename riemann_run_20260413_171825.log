@@ -1,0 +1,34 @@
+======================================================================
+Riemann Zeta - Discovery Zero (后台运行)
+======================================================================
+
+[1/2] 加载 seeds...
+  ✓ 初始超图已保存: riemann_zeta_run_20260413_171825
+
+[2/2] 启动 MCTS (100 次迭代, 2 小时)...
+SOFT_ENTAILMENT p1 clamped for edge 843fd55dd433: raw=0.420000 floor=0.501000 (p2=0.500000)
+SOFT_ENTAILMENT p1 clamped for edge 843fd55dd433: raw=0.420000 floor=0.501000 (p2=0.500000)
+SOFT_ENTAILMENT p1 clamped for edge 843fd55dd433: raw=0.420000 floor=0.501000 (p2=0.500000)
+Stream retry 1/4 after 1.0s
+Stream retry 2/4 after 2.3s
+Stream retry 3/4 after 4.4s
+Stream retry 4/4 after 8.4s
+Streaming LLM request failed, falling back to non-streaming: Stream failed after 5 attempts: HTTP 502
+SOFT_ENTAILMENT p1 clamped for edge 843fd55dd433: raw=0.420000 floor=0.501000 (p2=0.500000)
+BP marginal outside Cromwell band (check numerical stability): 298fc0012c08=0.99979626
+BP marginal outside Cromwell band (check numerical stability): 459f8aa298e4=0.99979626
+BP marginal outside Cromwell band (check numerical stability): 9d746b7cb3b0=0.99979626
+Stream retry 1/4 after 1.1s
+Stream retry 2/4 after 2.4s
+Stream retry 1/4 after 1.3s
+Edge 508f821ccd0c has no valid premises; skipping
+SOFT_ENTAILMENT p1 clamped for edge 843fd55dd433: raw=0.420000 floor=0.501000 (p2=0.500000)
+BP marginal outside Cromwell band (check numerical stability): 298fc0012c08=0.99979626
+BP marginal outside Cromwell band (check numerical stability): 459f8aa298e4=0.99979626
+BP marginal outside Cromwell band (check numerical stability): 9d746b7cb3b0=0.99979626
+Edge 508f821ccd0c has no valid premises; skipping
+SOFT_ENTAILMENT p1 clamped for edge 843fd55dd433: raw=0.420000 floor=0.501000 (p2=0.500000)
+BP marginal outside Cromwell band (check numerical stability): 298fc0012c08=0.99979627
+BP marginal outside Cromwell band (check numerical stability): 459f8aa298e4=0.99979627
+BP marginal outside Cromwell band (check numerical stability): 9d746b7cb3b0=0.99979627
+Stream retry 1/4 after 1.5s

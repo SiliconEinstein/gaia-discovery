@@ -1,0 +1,18 @@
+{
+  "iteration": 30,
+  "node_id": "eefa8f6949df",
+  "module": "lean",
+  "created_at": 1776065983.9704816,
+  "result": {
+    "action": "lean",
+    "target_node_id": "eefa8f6949df",
+    "selected_module": "lean",
+    "raw_output": null,
+    "normalized_output": null,
+    "judge_output": null,
+    "ingest_edge_id": null,
+    "created_node_ids": [],
+    "success": false,
+    "message": "OrchestrationError: Expected module 'lean', got 'logic'."
+  }
+}

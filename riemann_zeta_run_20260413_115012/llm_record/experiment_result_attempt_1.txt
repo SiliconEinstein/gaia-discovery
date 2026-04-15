@@ -1,0 +1,11 @@
+{
+  "stdout": "{\"passed\": true, \"trials\": 150, \"max_error\": null, \"counterexample\": null, \"summary\": \"GUE simulation: 9.46% of gaps < 0.48, min observed = 0.0330. Actual zeta zeros (n=1..50): min d_n = 0.6335, 0 gaps < 0.48, 0 gaps < 0.51. GUE theory predicts small gaps exist but are rare.\"}\n",
+  "stderr": "",
+  "result": {
+    "passed": true,
+    "trials": 150,
+    "max_error": null,
+    "counterexample": null,
+    "summary": "GUE simulation: 9.46% of gaps < 0.48, min observed = 0.0330. Actual zeta zeros (n=1..50): min d_n = 0.6335, 0 gaps < 0.48, 0 gaps < 0.51. GUE theory predicts small gaps exist but are rare."
+  }
+}

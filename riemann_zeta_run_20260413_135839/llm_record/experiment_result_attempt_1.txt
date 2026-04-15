@@ -1,0 +1,11 @@
+{
+  "stdout": "{\"passed\": true, \"trials\": 15, \"max_error\": 0.7578, \"counterexample\": null, \"summary\": \"Tested 15 cases: 15 passed, 0 failed. Selberg mean-value formula verified within asymptotic tolerance.\"}\n",
+  "stderr": "",
+  "result": {
+    "passed": true,
+    "trials": 15,
+    "max_error": 0.7578,
+    "counterexample": null,
+    "summary": "Tested 15 cases: 15 passed, 0 failed. Selberg mean-value formula verified within asymptotic tolerance."
+  }
+}

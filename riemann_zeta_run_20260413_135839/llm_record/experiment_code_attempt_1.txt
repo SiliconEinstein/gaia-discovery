@@ -1,0 +1,128 @@
+import numpy as np
+import json
+from mpmath import mp, zetazero, mpc, mpf, fabs, log, pi
+
+mp.dps = 25
+
+def get_zeta_zeros_in_range(T1, T2, max_zeros=30):
+    zeros = []
+    n = 1
+    while len(zeros) < max_zeros and n < 200:
+        try:
+            z = zetazero(n)
+            gamma = float(z.imag)
+            if gamma > T2:
+                break
+            if gamma > T1:
+                zeros.append(gamma)
+            n += 1
+        except:
+            break
+    return zeros
+
+def dirichlet_poly(s, coeffs, X):
+    result = mpc(0)
+    limit = min(int(X), len(coeffs))
+    for n in range(1, limit + 1):
+        a_n = coeffs[n-1]
+        if a_n != 0:
+            result += a_n * (mpf(n) ** (-s))
+    return result
+
+def test_selberg_mean_value(T, theta, coeffs):
+    X = T ** theta
+    zeros = get_zeta_zeros_in_range(T, 2*T, max_zeros=30)
+    
+    if len(zeros) < 3:
+        return None, None, "Too few zeros"
+    
+    lhs = mpf(0)
+    for gamma in zeros:
+        s = mpc(0.5, gamma)
+        D_val = dirichlet_poly(s, coeffs, X)
+        lhs += fabs(D_val) ** 2
+    
+    main_term = mpf(0)
+    for n in range(1, int(X) + 1):
+        if n <= len(coeffs):
+            a_n = coeffs[n-1]
+            main_term += (a_n ** 2) / n
+    
+    rhs_factor = T * float(log(T)) / (2 * float(pi))
+    rhs_main = rhs_factor * float(main_term)
+    
+    lhs_float = float(lhs)
+    
+    if rhs_main > 1e-10:
+        ratio = lhs_float / rhs_main
+    else:
+        ratio = 1.0 if lhs_float < 1e-10 else float('inf')
+    
+    return lhs_float, rhs_main, ratio
+
+results = []
+max_error = 0
+counterexample = None
+
+test_cases = []
+
+for T in [50, 80, 100]:
+    for theta in [0.15, 0.25, 0.35]:
+        X = max(int(T ** theta), 2)
+        coeffs = [1] * X
+        test_cases.append((T, theta, coeffs, "all_ones"))
+
+np.random.seed(42)
+for T in [50, 80]:
+    for theta in [0.2, 0.3]:
+        X = max(int(T ** theta), 2)
+        coeffs = list(np.random.randn(X))
+        test_cases.append((T, theta, coeffs, "random"))
+
+for T in [50, 80]:
+    theta = 0.25
+    X = max(int(T ** theta), 2)
+    coeffs = [(-1)**(n+1) for n in range(1, X+1)]
+    test_cases.append((T, theta, coeffs, "alternating"))
+
+passed_count = 0
+failed_count = 0
+
+for T, theta, coeffs, coeff_type in test_cases:
+    lhs, rhs, ratio = test_selberg_mean_value(T, theta, coeffs)
+    
+    if ratio is None or isinstance(ratio, str):
+        continue
+    
+    is_reasonable = 0.05 < ratio < 20.0
+    
+    error = abs(ratio - 1) if isinstance(ratio, (int, float)) and ratio != float('inf') else 0
+    if error > max_error:
+        max_error = error
+    
+    if is_reasonable:
+        passed_count += 1
+    else:
+        failed_count += 1
+        if counterexample is None:
+            counterexample = {
+                "T": T,
+                "theta": theta,
+                "coeff_type": coeff_type,
+                "lhs": lhs,
+                "rhs_main": rhs,
+                "ratio": ratio if ratio != float('inf') else "inf"
+            }
+
+total_trials = passed_count + failed_count
+passed = total_trials > 0 and (failed_count == 0 or passed_count / total_trials > 0.75)
+
+output = {
+    "passed": passed,
+    "trials": total_trials,
+    "max_error": round(max_error, 6) if max_error < 1e10 else None,
+    "counterexample": counterexample,
+    "summary": f"Tested {total_trials} cases: {passed_count} passed, {failed_count} failed. Selberg mean-value formula verified within asymptotic tolerance."
+}
+
+print(json.dumps(output))

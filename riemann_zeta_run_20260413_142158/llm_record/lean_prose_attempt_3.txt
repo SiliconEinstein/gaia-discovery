@@ -1,0 +1,21 @@
+```json
+{
+  "status": "failed",
+  "last_error": "The Montgomery pair correlation conjecture (even the restricted version proved by Montgomery in 1973 for Fourier support in (-1,1)) cannot be formally verified in Lean 4 / Mathlib. Mathlib currently lacks: (1) formal definitions of the non-trivial zeros of the Riemann zeta function and their enumeration ρ_n = 1/2 + iγ_n, (2) pair correlation sums over zeros, (3) the GUE pair correlation density 1 - (sin(πx)/(πx))², (4) the explicit formula connecting zero sums to primes, (5) mean-value estimates for Dirichlet polynomials required in Montgomery's proof. This is a deep result in analytic number theory from 1973 (Montgomery, 'The pair correlation of zeros of the zeta function', Proc. Symp. Pure Math. 24, 181–193) that depends on RH as a hypothesis and requires extensive Fourier-analytic machinery not yet available in Mathlib.",
+  "attempts": 5,
+  "suggestion": "This result should be recorded as 'literature_proven' (an accepted theorem in the mathematical literature, conditional on RH) rather than formally verified in Lean. Montgomery's 1973 theorem states: Assuming RH, for any test function f whose Fourier transform hat{f} has compact support in (-1,1), lim_{T→∞} (1/N(T)) Σ_{0<γ,γ'≤T, γ≠γ'} f((γ-γ') log T/(2π)) = ∫_{-∞}^{∞} f(x)(1 - (sin(πx)/(πx))²) dx. The right-hand side is precisely the GUE pair correlation integral. The proof relies on: (a) the explicit formula relating sums over zeros to sums over primes, (b) computing the function F(α,T) = (T log T)^{-1} |Σ_{γ≤T} T^{iαγ}|² and showing F(α,T) → 1 for |α| ≥ 1 (under RH), (c) for |α| < 1, showing F(α,T) → |α| + T^{-2α}log T (under RH) via mean-value estimates of Dirichlet polynomials. A formal Lean verification would require a multi-year formalization project building zeta zero infrastructure in Mathlib. The conjecture for Fourier support OUTSIDE (-1,1) remains open and is equivalent to strong forms of the Hardy-Littlewood prime k-tuple conjecture.",
+  "premises": [
+    {"id": "a7dd3845dc49", "statement": "Critical line Re(s) = 1/2; RH asserts all non-trivial zeros lie on it"},
+    {"id": "f1aeffdbb93b", "statement": "Zeros enumerated as ρ_n = 1/2 + iγ_n with 0 < γ_1 < γ_2 < ..."},
+    {"id": "4e247ff30682", "statement": "Zero counting function N(T) ~ (T/2π) log(T/2π) - T/2π"},
+    {"id": "5ad54c2821bd", "statement": "Montgomery pair correlation conjecture: normalized zero spacing statistics match GUE"},
+    {"id": "c5e6a6f5f56d", "statement": "Average normalized spacing is 2π/log(γ_n)"}
+  ],
+  "conclusion": {
+    "statement": "Cannot be formally verified in Lean/Mathlib at this time. Montgomery's 1973 theorem (assuming RH, for Fourier support in (-1,1)) is a proven result in the literature: the pair correlation of normalized zeta zeros matches the GUE prediction 1 - (sin(πx)/(πx))². This should be accepted as a literature-proven axiom in the knowledge graph.",
+    "formal_statement": "-- Not formalizable in current Mathlib. Literature reference: Montgomery 1973, Proc. Symp. Pure Math. 24, 181-193."
+  },
+  "module": "lean",
+  "domain": "number_theory"
+}
+```

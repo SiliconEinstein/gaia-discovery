@@ -1,0 +1,18 @@
+{
+  "iteration": 3,
+  "node_id": "4026bb222196",
+  "module": "lean",
+  "created_at": 1776086409.9416754,
+  "result": {
+    "action": "lean",
+    "target_node_id": "4026bb222196",
+    "selected_module": "lean",
+    "raw_output": null,
+    "normalized_output": null,
+    "judge_output": null,
+    "ingest_edge_id": null,
+    "created_node_ids": [],
+    "success": false,
+    "message": "OrchestrationError: Selberg's central limit theorem (1946) is a deep result in analytic number theory that is currently beyond Lean/Mathlib formalization capabilities. The theorem requires: (1) The Ri"
+  }
+}

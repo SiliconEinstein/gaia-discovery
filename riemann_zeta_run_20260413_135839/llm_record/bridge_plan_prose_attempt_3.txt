@@ -1,0 +1,406 @@
+# Bridge Plan Analysis
+
+Let me analyze the reasoning route and construct a complete bridge plan.
+
+## Understanding the Route
+
+The route attempts to prove that under RH, the optimal constant μ* = inf{μ : lim inf d_n < μ} equals 0, using Montgomery's partial pair correlation result. The key mechanism is:
+
+1. Montgomery proved F(α) = 1 - (sin πα/πα)² + o(1) for α ∈ [0,1]
+2. This implies ∫₀^μ F(α)dα > 0 for any μ > 0
+3. If all gaps were ≥ μ, pair correlations at separation < μ would be zero
+4. This contradiction implies arbitrarily small gaps exist
+
+## Key Propositions to Extract
+
+**Seeds (proven facts):**
+- Definition of critical line and RH
+- Zero counting function asymptotics
+- Montgomery's partial pair correlation (proven for α ≤ 1)
+- 2026 result: lim inf d_n < 0.50895
+
+**Bridge propositions (new mechanisms in route):**
+- Small-α expansion of F(α)
+- Integral formula ∫₀^μ F(α)dα = (π²/9)μ³ + O(μ⁵)
+- Selberg mean-value theorem for Dirichlet polynomials at zeros
+- Connection between gap lower bound and pair correlation constraint
+- Contradiction argument structure
+
+**Risk/Unresolved:**
+- The gap from "pair correlation constraint" to "consecutive gap constraint" is nontrivial
+- The route's Step 3-4 glosses over the distinction between consecutive and non-consecutive pairs
+
+## Grading Analysis
+
+- The integral computation ∫₀^μ F(α)dα is **C** (checkable by explicit computation)
+- Montgomery's formula expansion near α=0 is **C** (Taylor expansion, verifiable)
+- The Selberg mean-value theorem is a known result, grade **A** for the statement
+- The contradiction argument has a logical gap: pair correlation counts ALL pairs, not just consecutive ones - this is **D** (risky)
+- The final conclusion μ* = 0 depends on resolving this gap
+
+## Identifying the Critical Logical Gap
+
+The route claims: "If all consecutive gaps d_n ≥ μ, then pairs with separation < μ come only from non-consecutive zeros."
+
+But Montgomery's pair correlation counts ALL normalized pair separations, not just consecutive ones. The argument needs:
+- Either: show that small pair separations imply small consecutive gaps (not obvious!)
+- Or: use a different argument that directly addresses consecutive gaps
+
+This is a genuine **D-grade risk** that the route doesn't fully resolve.
+
+Now I will produce the JSON output:
+
+```json
+{
+  "target_statement": "分析 Riemann zeta 函数在临界线上零点的连续间距统计性质，特别是小间距（相对于平均间距）的分布和理论下界。在 RH 假设下，探索是否存在 μ < 1 使得 lim inf (γ_{n+1} - γ_n) / (2π/log γ_n) < μ，以及该常数的最优值。",
+  "propositions": [
+    {
+      "id": "P1",
+      "statement": "临界线定义为 Re(s) = 1/2。Riemann 假设 (RH) 断言所有非平凡零点都在临界线上",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": "Standard definition, proven in literature",
+      "formalization_notes": "Direct definition in Lean",
+      "experiment_notes": null
+    },
+    {
+      "id": "P2",
+      "statement": "设 ρ_n = 1/2 + iγ_n 为第 n 个非平凡零点（按虚部递增排序），其中 0 < γ_1 < γ_2 < γ_3 < ...",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": ["P1"],
+      "notes": "Standard ordering convention for zeta zeros",
+      "formalization_notes": "Requires well-ordering of zeros under RH",
+      "experiment_notes": null
+    },
+    {
+      "id": "P3",
+      "statement": "定义归一化间距 d_n := (γ_{n+1} - γ_n) · log(γ_n)/(2π)，使得渐近平均值 E[d_n] → 1",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": ["P2"],
+      "notes": "Standard normalization from zero counting asymptotics",
+      "formalization_notes": "Follows from N(T) ~ (T/2π)log(T/2π)",
+      "experiment_notes": null
+    },
+    {
+      "id": "P4",
+      "statement": "零点计数函数 N(T) := #{ρ : 0 < Im(ρ) ≤ T} 满足渐近公式 N(T) ~ (T/2π) log(T/2π) - T/2π",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": [],
+      "notes": "Riemann-von Mangoldt formula, unconditionally proven",
+      "formalization_notes": "Standard result, well-documented proofs exist",
+      "experiment_notes": null
+    },
+    {
+      "id": "P5",
+      "statement": "2026年最新结果证明了在 RH 假设下，lim inf d_n < 0.50895",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": ["P1", "P3"],
+      "notes": "Cited published result; establishes existence of μ < 1",
+      "formalization_notes": "External theorem reference",
+      "experiment_notes": null
+    },
+    {
+      "id": "P6",
+      "statement": "Montgomery (1973) proved under RH: F(α) = 1 - (sin πα / πα)² + o(1) for 0 ≤ α ≤ 1, where F(α) is the pair correlation function of normalized zeta zeros",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": ["P1"],
+      "notes": "Published theorem by Montgomery, valid only for α ∈ [0,1]",
+      "formalization_notes": "Requires careful statement of error term uniformity",
+      "experiment_notes": null
+    },
+    {
+      "id": "P7",
+      "statement": "For small α, the Montgomery function expands as F(α) = (π²/3)α² + O(α⁴), obtained by Taylor expansion of 1 - (sin πα / πα)²",
+      "role": "derived",
+      "grade": "C",
+      "depends_on": ["P6"],
+      "notes": "Direct Taylor expansion, should be verified computationally",
+      "formalization_notes": "Standard calculus",
+      "experiment_notes": "Verify Taylor coefficients: expand sin(πα)/(πα) = 1 - (πα)²/6 + (πα)⁴/120 - ..., then compute 1 - (...)²"
+    },
+    {
+      "id": "P8",
+      "statement": "The integral ∫₀^μ F(α)dα = (π²/9)μ³ + O(μ⁵) for small μ > 0, computed from the Taylor expansion of F(α)",
+      "role": "derived",
+      "grade": "C",
+      "depends_on": ["P7"],
+      "notes": "Integration of power series",
+      "formalization_notes": "Term-by-term integration",
+      "experiment_notes": "Numerically verify: ∫₀^0.1 [1-(sin(πα)/(πα))²]dα ≈ (π²/9)(0.1)³ ≈ 0.001097"
+    },
+    {
+      "id": "P9",
+      "statement": "For any μ ∈ (0,1], we have ∫₀^μ F(α)dα > 0, since F(α) > 0 for α ∈ (0,1]",
+      "role": "derived",
+      "grade": "C",
+      "depends_on": ["P6", "P8"],
+      "notes": "F(α) = 1 - (sin πα/πα)² and |sin πα/πα| < 1 for α ∈ (0,1]",
+      "formalization_notes": "Requires showing sinc function bound",
+      "experiment_notes": "Plot F(α) for α ∈ [0,1] to verify positivity"
+    },
+    {
+      "id": "P10",
+      "statement": "The pair correlation function F(α) counts normalized pair separations: #{(m,n) : T < γ_m, γ_n < 2T, |(γ_m - γ_n)log T/2π| ∈ [α, α+dα]} ~ F(α) · N(T) · dα as T → ∞",
+      "role": "bridge",
+      "grade": "B",
+      "depends_on": ["P4", "P6"],
+      "notes": "Interpretation of pair correlation as counting function",
+      "formalization_notes": "Requires precise asymptotic statement",
+      "experiment_notes": null
+    },
+    {
+      "id": "P11",
+      "statement": "Selberg's mean-value theorem: For Dirichlet polynomial D(s) = Σ_{n≤X} a_n n^{-s} with X = T^θ (θ < 1/2), the sum Σ_{T<γ_n<2T} |D(1/2+iγ_n)|² has an asymptotic expansion involving diagonal and off-diagonal terms, where off-diagonal terms involve F(α)",
+      "role": "seed",
+      "grade": "A",
+      "depends_on": ["P1"],
+      "notes": "Classical result in analytic number theory",
+      "formalization_notes": "Well-documented in literature (e.g., Iwaniec-Kowalski)",
+      "experiment_notes": null
+    },
+    {
+      "id": "P12",
+      "statement": "假设反证：若对所有充分大的 n 有 d_n ≥ μ（即所有归一化连续间距至少为 μ），则零点序列中相邻零点的归一化间距有下界 μ",
+      "role": "bridge",
+      "grade": "A",
+      "depends_on": ["P3"],
+      "notes": "Direct setup for contradiction argument",
+      "formalization_notes": "Logical negation of lim inf d_n < μ",
+      "experiment_notes": null
+    },
+    {
+      "id": "P13",
+      "statement": "若所有连续间距 d_n ≥ μ，则任意两个零点 γ_m < γ_n 的归一化间距 (γ_n - γ_m)log T/2π ≥ (n-m)μ，特别是所有配对间距至少为 μ",
+      "role": "derived",
+      "grade": "B",
+      "depends_on": ["P12"],
+      "notes": "Telescoping sum of consecutive gaps",
+      "formalization_notes": "Straightforward summation argument",
+      "experiment_notes": null
+    },
+    {
+      "id": "P14",
+      "statement": "If all pairwise normalized separations are ≥ μ, then the pair correlation count for separations in [0, μ) equals zero: #{(m,n) : |(γ_m - γ_n)log T/2π| < μ} = 0 (excluding m=n)",
+      "role": "derived",
+      "grade": "A",
+      "depends_on": ["P13"],
+      "notes": "Direct consequence of gap lower bound",
+      "formalization_notes": "Set-theoretic argument",
+      "experiment_notes": null
+    },
+    {
+      "id": "P15",
+      "statement": "Montgomery's pair correlation implies #{(m,n) : T < γ_m, γ_n < 2T, |(γ_m - γ_n)log T/2π| < μ} ~ N(T) · ∫₀^μ F(α)dα as T → ∞",
+      "role": "bridge",
+      "grade": "B",
+      "depends_on": ["P6", "P10"],
+      "notes": "Integration of pair correlation density over [0,μ]",
+      "formalization_notes": "Requires uniformity of Montgomery's result in the integration",
+      "experiment_notes": null
+    },
+    {
+      "id": "P16",
+      "statement": "从 P9 和 P15：对任意 μ ∈ (0,1]，当 T → ∞ 时配对计数 #{separations < μ} ~ N(T) · ∫₀^μ F(α)dα → ∞，因为 ∫₀^μ F(α)dα > 0",
+      "role": "derived",
+      "grade": "B",
+      "depends_on": ["P9", "P15"],
+      "notes": "Positive integral times growing N(T) diverges",
+      "formalization_notes": "Asymptotic argument",
+      "experiment_notes": null
+    },
+    {
+      "id": "P17",
+      "statement": "Contradiction: P14 says the pair count is 0 under assumption P12, but P16 says it goes to infinity. Hence the assumption d_n ≥ μ for all large n is false.",
+      "role": "derived",
+      "grade": "B",
+      "depends_on": ["P14", "P16"],
+      "notes": "Completes the contradiction argument",
+      "formalization_notes": "Proof by contradiction",
+      "experiment_notes": null
+    },
+    {
+      "id": "P18",
+      "statement": "Under RH + Montgomery's partial pair correlation (for α ∈ [0,1]), for any μ ∈ (0,1]: lim inf d_n < μ, i.e., there exist infinitely many n with d_n < μ",
+      "role": "derived",
+      "grade": "B",
+      "depends_on": ["P12", "P17"],
+      "notes": "Negation of P12 via contradiction",
+      "formalization_notes": "Standard proof-by-contradiction logic",
+      "experiment_notes": null
+    },
+    {
+      "id": "P19",
+      "statement": "The optimal constant μ* := inf{μ : lim inf d_n < μ under RH} equals 0, since P18 holds for arbitrarily small μ > 0",
+      "role": "derived",
+      "grade": "B",
+      "depends_on": ["P18"],
+      "notes": "Taking infimum over all μ ∈ (0,1]",
+      "formalization_notes": "Infimum argument",
+      "experiment_notes": null
+    },
+    {
+      "id": "P20",
+      "statement": "Quantitative bound: #{n ≤ N : d_n < μ} ≥ c · μ³ · N for some c > 0, following from the pair correlation density and the relation between consecutive and all pairs",
+      "role": "bridge",
+      "grade": "D",
+      "depends_on": ["P8", "P15"],
+      "notes": "This step is RISKY: converting pair count to consecutive gap count requires additional argument",
+      "formalization_notes": "Gap in route: pair correlation counts all pairs, need to extract consecutive gaps",
+      "experiment_notes": null
+    },
+    {
+      "id": "R1",
+      "statement": "UNRESOLVED GAP: The route assumes that a positive count of small pairwise separations implies a positive count of small consecutive gaps. This is plausible but not immediate: many small separations could come from non-consecutive pairs clustering.",
+      "role": "risk",
+      "grade": "D",
+      "depends_on": [],
+      "notes": "Critical logical gap in the route; needs separate lemma or different approach",
+      "formalization_notes": "Would require showing: if pair correlation gives ~cμ³N pairs at separation <μ, then Ω(μ³N) consecutive gaps are <μ",
+      "experiment_notes": "Could test empirically: for zeros up to height T, compare count of all pairs with separation <μ vs count of consecutive gaps <μ"
+    },
+    {
+      "id": "R2",
+      "statement": "METHODOLOGICAL NOTE: The 2026 result achieving μ < 0.50895 likely uses mollifier techniques (Bui-Conrey-Young style) rather than pure pair correlation, suggesting the pair correlation approach may not be optimal for quantitative bounds.",
+      "role": "risk",
+      "grade": "D",
+      "depends_on": [],
+      "notes": "Indicates the route's method may not achieve best constants",
+      "formalization_notes": null,
+      "experiment_notes": null
+    },
+    {
+      "id": "P21",
+      "statement": "GUE random matrix theory predicts the small gap density P(d_n < x) ~ (π²/6)x² as x → 0, consistent with μ* = 0",
+      "role": "experiment_support",
+      "grade": "B",
+      "depends_on": ["P6"],
+      "notes": "Heuristic support from RMT, not a proof",
+      "formalization_notes": null,
+      "experiment_notes": "Compare with Odlyzko's numerical data on gap distribution"
+    },
+    {
+      "id": "P22",
+      "statement": "分析 Riemann zeta 函数在临界线上零点的连续间距统计性质，特别是小间距（相对于平均间距）的分布和理论下界。在 RH 假设下，探索是否存在 μ < 1 使得 lim inf (γ_{n+1} - γ_n) / (2π/log γ_n) < μ，以及该常数的最优值。",
+      "role": "target",
+      "grade": "B",
+      "depends_on": ["P5", "P19", "P21"],
+      "notes": "Target is partially resolved: existence (μ<1) proven by P5; route argues μ*=0 via P19 but quantitative bound P20 has gap R1",
+      "formalization_notes": "Full formalization requires resolving R1 or using alternative approach",
+      "experiment_notes": "Numerical verification: compute d_n for large n, track min(d_n) and distribution"
+    }
+  ],
+  "chain": [
+    {
+      "id": "S1",
+      "statement": "从 RH 假设和 Montgomery 1973 定理，得到 α ∈ [0,1] 上的配对相关函数 F(α) = 1 - (sin πα/πα)² + o(1)",
+      "uses": ["P1", "P6"],
+      "concludes": ["P7"],
+      "grade": "A",
+      "notes": "Direct application of published theorem"
+    },
+    {
+      "id": "S2",
+      "statement": "对 F(α) 在 α=0 附近作 Taylor 展开，得到 F(α) = (π²/3)α² + O(α⁴)",
+      "uses": ["P7"],
+      "concludes": ["P8"],
+      "grade": "C",
+      "notes": "Requires explicit computation: sin(πα)/(πα) = 1 - (πα)²/6 + ..., then square and subtract from 1"
+    },
+    {
+      "id": "S3",
+      "statement": "积分得 ∫₀^μ F(α)dα = (π²/9)μ³ + O(μ⁵)，且对任意 μ ∈ (0,1] 此积分严格为正",
+      "uses": ["P8"],
+      "concludes": ["P9"],
+      "grade": "C",
+      "notes": "Numerical verification recommended for the coefficient π²/9"
+    },
+    {
+      "id": "S4",
+      "statement": "建立配对相关函数与配对计数的联系：F(α)dα 给出归一化间距在 [α, α+dα] 内的配对密度",
+      "uses": ["P4", "P6"],
+      "concludes": ["P10"],
+      "grade": "B",
+      "notes": "Standard interpretation of pair correlation"
+    },
+    {
+      "id": "S5",
+      "statement": "设立反证假设：假设存在 μ > 0 使得对所有充分大 n 有 d_n ≥ μ",
+      "uses": ["P3"],
+      "concludes": ["P12"],
+      "grade": "A",
+      "notes": "Logical setup for proof by contradiction"
+    },
+    {
+      "id": "S6",
+      "statement": "若连续间距 d_n ≥ μ 对所有大 n 成立，则任意配对的归一化间距也至少为 μ（由连续间距累加）",
+      "uses": ["P12"],
+      "concludes": ["P13"],
+      "grade": "B",
+      "notes": "Telescoping: (γ_n - γ_m) = Σ_{k=m}^{n-1} (γ_{k+1} - γ_k) ≥ (n-m)·μ·2π/log T"
+    },
+    {
+      "id": "S7",
+      "statement": "因此在反证假设下，归一化间距 < μ 的配对数为 0",
+      "uses": ["P13"],
+      "concludes": ["P14"],
+      "grade": "A",
+      "notes": "Direct set-theoretic consequence"
+    },
+    {
+      "id": "S8",
+      "statement": "将 Montgomery 配对相关在 [0,μ] 上积分，得到间距 < μ 的配对计数渐近为 N(T)·∫₀^μ F(α)dα",
+      "uses": ["P6", "P10"],
+      "concludes": ["P15"],
+      "grade": "B",
+      "notes": "Integration of density; requires uniformity in Montgomery's error term"
+    },
+    {
+      "id": "S9",
+      "statement": "由于 ∫₀^μ F(α)dα > 0 且 N(T) → ∞，配对计数趋于无穷",
+      "uses": ["P9", "P15"],
+      "concludes": ["P16"],
+      "grade": "B",
+      "notes": "Product of positive constant and divergent sequence"
+    },
+    {
+      "id": "S10",
+      "statement": "矛盾：P14 说配对计数为 0，P16 说配对计数趋于无穷。故反证假设 P12 不成立。",
+      "uses": ["P14", "P16"],
+      "concludes": ["P17"],
+      "grade": "A",
+      "notes": "Proof by contradiction completed"
+    },
+    {
+      "id": "S11",
+      "statement": "否定 P12：对任意 μ ∈ (0,1]，存在无穷多 n 使 d_n < μ，即 lim inf d_n < μ",
+      "uses": ["P12", "P17"],
+      "concludes": ["P18"],
+      "grade": "A",
+      "notes": "Negation of the assumption"
+    },
+    {
+      "id": "S12",
+      "statement": "由 P18 对所有 μ ∈ (0,1] 成立，取下确界得 μ* = inf{μ : lim inf d_n < μ} = 0",
+      "uses": ["P18"],
+      "concludes": ["P19"],
+      "grade": "B",
+      "notes": "Infimum over (0,1] of bounds that all work"
+    },
+    {
+      "id": "S13",
+      "statement": "结合 2026 结果 (P5: lim inf d_n < 0.50895) 和本路线推导的 μ* = 0 (P19)，得出完整结论：存在 μ < 1 使 lim inf d_n < μ（已证），且最优常数 μ* = 0（需 Montgomery 配对相关），但定量界 (P20) 有缺口 (R1)",
+      "uses": ["P5", "P19", "P21"],
+      "concludes": ["P22"],
+      "grade": "B",
+      "notes": "Synthesis of existence result and optimality argument"
+    }
+  ],
+  "summary": "The route establishes μ* = 0 (arbitrarily small normalized gaps exist under RH) via Montgomery's partial pair correlation, using a contradiction argument: if all d_n ≥ μ, then no pairs have separation < μ, contradicting ∫₀^μ F(α)dα > 0. The existence of μ < 1 is independently established by the 2026 result (μ < 0.50895). A critical gap (R1) remains: converting pair correlation bounds to consecutive-gap bounds for quantitative estimates. Key computational checks needed: verify F(α) Taylor expansion and integral coefficient (π²/9)."
+}
+```

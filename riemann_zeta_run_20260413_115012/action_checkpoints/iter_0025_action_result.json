@@ -1,0 +1,18 @@
+{
+  "iteration": 25,
+  "node_id": "ee847e4e92fb",
+  "module": "retrieve",
+  "created_at": 1776057995.3196347,
+  "result": {
+    "action": "retrieve",
+    "target_node_id": "ee847e4e92fb",
+    "selected_module": "retrieve",
+    "raw_output": null,
+    "normalized_output": null,
+    "judge_output": null,
+    "ingest_edge_id": null,
+    "created_node_ids": [],
+    "success": false,
+    "message": "knowledge retriever is not configured"
+  }
+}

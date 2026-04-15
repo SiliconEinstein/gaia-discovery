@@ -1,0 +1,11 @@
+{
+  "stdout": "Test 1: Standard precision integration\nscipy.quad result: 3.195016802596903e-01, error estimate: 1.25e-08\n\nTest 2: High precision integration with mpmath\nmpmath.quad result (50 digits): 0.31950168025969029081354581571437722756584158075762\n\nTest 3: Convergence test with varying precision\nPrecision 15 digits: 0.31950168025969\nPrecision 30 digits: 0.319501680259690290813545815714\nPrecision 50 digits: 0.31950168025969029081354581571437722756584158075762\nPrecision 100 digits: 0.3195016802596902908135458157143772275658415807576172577830538205871055040617522312465447158347201418\n\nTest 4: Relative differences between precision levels\nRelative diff (15 vs 30): 0.00e+00\nRelative diff (30 vs 50): 0.00e+00\nRelative diff (50 vs 100): 0.00e+00\n\nTest 5: Tail convergence test\nFailed for tail from 10: unsupported format string passed to mpf.__format__\nFailed for tail from 20: unsupported format string passed to mpf.__format__\nFailed for tail from 50: unsupported format string passed to mpf.__format__\nFailed for tail from 100: unsupported format string passed to mpf.__format__\n\n{\"passed\": false, \"trials\": 5, \"max_error\": 0, \"counterexample\": null, \"summary\": \"Numerical integration succeeded with standard precision (scipy) and arbitrary precision (mpmath up to 100 digits). Results converged across precision levels. The integral can be evaluated to arbitrary precision.\"}\n",
+  "stderr": "",
+  "result": {
+    "passed": false,
+    "trials": 5,
+    "max_error": 0,
+    "counterexample": null,
+    "summary": "Numerical integration succeeded with standard precision (scipy) and arbitrary precision (mpmath up to 100 digits). Results converged across precision levels. The integral can be evaluated to arbitrary precision."
+  }
+}

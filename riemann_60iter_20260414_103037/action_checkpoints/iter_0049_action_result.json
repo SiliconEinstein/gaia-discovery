@@ -1,0 +1,18 @@
+{
+  "iteration": 49,
+  "node_id": "989b53f34cd1",
+  "module": "experiment",
+  "created_at": 1776138813.3484359,
+  "result": {
+    "action": "experiment",
+    "target_node_id": "989b53f34cd1",
+    "selected_module": "experiment",
+    "raw_output": null,
+    "normalized_output": null,
+    "judge_output": null,
+    "ingest_edge_id": null,
+    "created_node_ids": [],
+    "success": false,
+    "message": "OrchestrationError: Experiment code repair exhausted. Last error: Experiment code produced no output."
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "iteration": 10,
+  "node_id": "557dce8ffce5",
+  "module": "plausible",
+  "created_at": 1776158063.009397,
+  "result": {
+    "action": "plausible",
+    "target_node_id": "557dce8ffce5",
+    "selected_module": "plausible",
+    "raw_output": "# Exploring a New Route via Local Repulsion and Extremal Test Functions\n\nLet me survey the context: We know RH places zeros on the critical line, Montgomery predicts GUE pair correlations, the current rigorous upper bound is lim inf < 0.50895, and numerical evidence suggests μ ≈ 0.5. Previous routes failed by assuming unproven higher-order correlations or by circular reasoning about consistency conditions.\n\nI'll consider several competing approaches:\n\n**Route A (Spectral form factor):** Use K(τ) = |Σ e^{iτγ_n}|² to detect deviations from GUE, but this is observational rather than proving bounds.\n\n**Route B (Linear programming with moments):** Formulate as SDP over gap distribution moments, but this requires rigorously establishing the admissible moment cone, which brings us back to the same problem.\n\n**Route C (Local obstruction from smoothed counting):** Use the explicit formula with carefully chosen test functions to show that gaps smaller than some threshold force detectable oscillation signatures that violate RH-compatible bounds.\n\n**Route D (Prékopa-Leindler for gap distributions):** Try to prove log-concavity or other convexity properties of the gap distribution that would force a minimum, but gap distributions are empirical, not necessarily convex.\n\nI'll pursue **Route C with a novel twist**: Rather than assuming global correlation hypotheses, I'll use the fact that under RH, the explicit formula ψ(x) = x - Σ_ρ x^ρ/ρ + O(1) provides a **pointwise constraint** on sums over zeros. If normalized gaps are systematically too small in a region, this creates phase alignments in the oscillatory sum that can be detected via carefully chosen smooth weight functions.\n\nThe key new object is a **phase interference detector**: a test function that amplifies the contribution from closely spaced zeros in the explicit formula.\n\n## The Mechanism\n\nWhen γ_{n+1} - γ_n is abnormally small (say, the normalized gap is δ << 1), the terms x^{iγ_n}/iγ_n and x^{iγ_{n+1}}/iγ_{n+1} oscillate nearly in phase for x in a certain range. If many such small gaps occur in [T, 2T], the cumulative effect in a weighted oscillatory sum can be bounded using RH-compatible variance estimates.\n\nThe new premise I need: there exists a computable function W_μ(t) such that if lim inf d_n < μ, then the weighted variance ∫ W_μ(t)|ψ(e^t) - e^t|² dt must grow faster than RH-compatible estimates allow.\n\n## Detailed Steps\n\n**Step 1:** Under RH, we have the explicit formula ψ(x) = x - Σ_{n=1}^∞ (x^{1/2 + iγ_n})/(1/2 + iγ_n) - Σ_{n=1}^∞ (x^{1/2 - iγ_n})/(1/2 - iγ_n) + O(1). Combining conjugate pairs: ψ(x) - x = -2Re[Σ_{n=1}^∞ x^{1/2 + iγ_n}/(1/2 + iγ_n)] + O(1).\n\n**Step 2:** For x = e^t, the oscillation is ψ(e^t) - e^t = -√e^t · Re[Σ_{n=1}^∞ e^{itγ_n} · e^{-t/2}/(1/2 + iγ_n)] + O(1). The weighted variance ∫_T^{2T} W(t)|ψ(e^t) - e^t|² dt can be expanded using Parseval-type identities.\n\n**Step 3 (Novel object):** Define the μ-dependent weight W_μ(t) = w_μ(log(γ(t)) · (γ_{n+1}(t) - γ_n(t))) where γ(t) is the zero nearest to t and w_μ is a smooth cutoff that equals 1 when the normalized gap d_n = (γ_{n+1} - γ_n)log(γ_n)/(2π) < μ, and decays to 0 for d_n > μ + ε. This weight **amplifies contributions from regions with small gaps**.\n\n**Step 4:** The cross-terms in the variance expansion ∫ W_μ(t)|Σ e^{itγ_n}/γ_n|² dt contain products (e^{itγ_n}/γ_n)(e^{-itγ_m}/γ_m). When γ_n and γ_{m} are close (normalized gap < μ), and W_μ is large, the oscillations e^{it(γ_n - γ_m)} remain near 1 over the integration window, creating constructive interference.\n\n**Step 5:** If lim inf d_n = μ_0 < μ, then infinitely many gaps satisfy d_n < (μ_0 + μ)/2. For these gaps, the weight W_μ is active, and the phase coherence persists. The variance integral receives a contribution proportional to the **density** of such small gaps times the square of the average gap log T.\n\n**Step 6:** Under RH, Montgomery-Odlyzko results give V(T) = ∫_T^{2T} |ψ(e^t) - e^t|² dt ≍ T³/² (up to log factors). For the weighted variance with W_μ, we need a refinement. The key insight: if a positive fraction of gaps in [T, 2T] have normalized size < μ, the weighted variance ∫ W_μ(t)|oscillation|² dt should be ≍ (fraction) × T³/².\n\n**Step 7:** However, the explicit formula also obeys **sum rules** from the functional equation and residue calculus. In particular, weighted sums Σ_n w(γ_n) where w is smooth and compactly supported satisfy asymptotic formulas with error terms. If we choose w(γ) = χ(d_n - μ) (indicator that gap < μ), we're counting exceptional gaps.\n\n**Step 8 (New mechanism - repulsion from variance optimization):** Assume lim inf d_n = μ_0 < 0.5. Consider the family of test functions f_μ(x) that are band-limited to [-1,1], even, f(0)=1, and f(x) ≤ 0 for |x| ≥ μ. By Beurling-Selberg theory, for each μ there's an extremal f_μ*. Now, apply this to the pair sum Σ_{n,m} f_μ((γ_n - γ_m)log R/(2π)) where R ≈ √(γ_n γ_m).\n\n**Step 9:** Montgomery's conjecture (assuming it's established) says this sum is asymptotic to the GUE prediction. For the GUE model, the minimum nearest-neighbor gap has a distribution. The median minimum gap in GUE for N eigenvalues is ≈ log(N)/N in the original scale. For normalized gaps d_n, GUE numerics suggest the minimum is bounded away from 0 with high probability.\n\n**Step 10 (The testable prediction):** Compute numerically: for the extremal function f_{0.5}* from Beurling-Selberg theory (band-limited, extremal for support parameter 0.5), evaluate Σ_{n,m} f_{0.5}*((γ_n - γ_m)log(γ_n)/(2π)) using verified zeros up to n = 10^9. Compare this to the GUE prediction ∫∫ f_{0.5}*(x - y) dμ_GUE(x) dμ_GUE(y). If the empirical sum **exceeds** the GUE value, this violates Montgomery (evidence against μ < 0.5). If it stays below for all tested μ ≥ 0.5 but exceeds for μ = 0.49, this suggests μ* ≈ 0.5.\n\n**Step 11:** The critical value μ* is defined as: the supremum over μ such that the extremal Beurling-Selberg function f_μ* satisfies the **repulsion inequality** Σ_{n,m: γ_n,γ_m ≤ T} f_μ*((γ_n - γ_m)log T/(2π)) ≤ (π(T)/2) · ∫∫ f_μ*(x-y) R_2(x-y) dx dy + o(π(T)²) where R_2 is the GUE pair correlation 1 - sinc²(πx).\n\n**Step 12:** This is **testable without assuming three-point correlations**. It only requires: (1) RH (zeros on the line), (2) Montgomery pair correlation (already in context), (3) numerical computation of extremal functions (doable via prolate spheroidal wave functions), (4) verified zero data (available to 10^13).\n\n## Conclusion Statement\n\nUnder RH and the Montgomery pair correlation conjecture, define μ* as the critical value: μ* = sup{μ ≥ 0 : the Beurling-Selberg extremal function f_μ* satisfies lim sup_{T→∞} (2/π(T)²)Σ_{γ_n,γ_m ≤ T} f_μ*((γ_n - γ_m)log T/(2π)) ≤ ∫∫ f_μ*(x-y) R_2(x-y) dx dy} where R_2(x) = 1 - sinc²(πx) is the GUE pair correlation. Then lim inf_{n→∞} (γ_{n+1} - γ_n)log(γ_n)/(2π) = μ*. The value of μ* can be computed numerically by: (a) solving the Beurling-Selberg extremal problem for a grid of μ values using prolate spheroidal wave function basis, (b) evaluating the double sum over computed zeros, (c) finding the transition point where the empirical sum first violates the GUE bound.\n\nThis route is novel because it introduces μ* as the solution to a variational problem (Beurling-Selberg extremal + Montgomery compatibility) rather than assuming it arises from higher-order correlations. The mechanism is: extremal functions f_μ* are optimized to detect gaps in the interval (-μ, μ), so if lim inf d_n < μ, infinitely many terms contribute positively to the sum, eventually violating the GUE upper bound from Montgomery's conjecture.",
+    "normalized_output": {
+      "premises": [
+        {
+          "id": null,
+          "statement": "RH holds, placing all non-trivial zeros on the critical line Re(s) = 1/2"
+        },
+        {
+          "id": null,
+          "statement": "Montgomery pair correlation conjecture: the normalized pair correlation of zeros converges to the GUE pair correlation R_2(x) = 1 - sinc²(πx)"
+        },
+        {
+          "id": null,
+          "statement": "Under RH, the explicit formula is ψ(x) = x - Σ_ρ x^ρ/ρ + O(1)"
+        },
+        {
+          "id": null,
+          "statement": "Current rigorous upper bound: lim inf (γ_{n+1} - γ_n) log(γ_n) / (2π) < 0.50895"
+        },
+        {
+          "id": null,
+          "statement": "Beurling-Selberg theory provides extremal band-limited functions f_μ* for each parameter μ"
+        },
+        {
+          "id": null,
+          "statement": "Verified zero data available up to height 10^13"
+        }
+      ],
+      "steps": [
+        "Express the explicit formula under RH: ψ(x) - x = -2Re[Σ_{n=1}^∞ x^{1/2 + iγ_n}/(1/2 + iγ_n)] + O(1)",
+        "For x = e^t, analyze oscillations: ψ(e^t) - e^t = -√e^t · Re[Σ_{n=1}^∞ e^{itγ_n} · e^{-t/2}/(1/2 + iγ_n)] + O(1)",
+        "Define μ-dependent weight W_μ(t) that amplifies contributions from regions where normalized gap d_n = (γ_{n+1} - γ_n)log(γ_n)/(2π) < μ",
+        "Analyze weighted variance ∫ W_μ(t)|Σ e^{itγ_n}/γ_n|² dt, noting that cross-terms create constructive interference when zeros are closely spaced",
+        "If lim inf d_n = μ_0 < μ, infinitely many gaps satisfy d_n < (μ_0 + μ)/2, causing persistent phase coherence",
+        "Under RH, variance estimates give V(T) = ∫_T^{2T} |ψ(e^t) - e^t|² dt ≍ T³/²",
+        "Introduce Beurling-Selberg extremal functions f_μ*(x) that are band-limited, even, f(0)=1, and f(x) ≤ 0 for |x| ≥ μ",
+        "Apply extremal function to pair sum: Σ_{n,m} f_μ((γ_n - γ_m)log R/(2π)) where R ≈ √(γ_n γ_m)",
+        "Under Montgomery conjecture, this sum is asymptotic to GUE prediction ∫∫ f_μ*(x-y) R_2(x-y) dx dy",
+        "Define critical value μ* as supremum over μ satisfying the repulsion inequality: lim sup_{T→∞} (2/π(T)²)Σ_{γ_n,γ_m ≤ T} f_μ*((γ_n - γ_m)log T/(2π)) ≤ ∫∫ f_μ*(x-y) R_2(x-y) dx dy",
+        "This formulation avoids assuming higher-order correlations by only using RH and Montgomery pair correlation",
+        "The value μ* can be computed numerically by: (a) solving Beurling-Selberg extremal problem for grid of μ values, (b) evaluating double sum over computed zeros, (c) finding transition point where empirical sum violates GUE bound"
+      ],
+      "conclusion": {
+        "statement": "Under RH and Montgomery pair correlation conjecture, lim inf_{n→∞} (γ_{n+1} - γ_n)log(γ_n)/(2π) = μ*, where μ* is the critical value defined as the supremum over μ such that the Beurling-Selberg extremal function f_μ* satisfies the repulsion inequality with the GUE pair correlation. Numerical evidence suggests μ* ≈ 0.5",
+        "formal_statement": "μ* = sup{μ ≥ 0 : lim sup_{T→∞} (2/π(T)²)Σ_{γ_n,γ_m ≤ T} f_μ*((γ_n - γ_m)log T/(2π)) ≤ ∫∫ f_μ*(x-y)(1 - sinc²(π(x-y))) dx dy} ⟹ lim inf_{n→∞} (γ_{n+1} - γ_n)log(γ_n)/(2π) = μ*"
+      },
+      "module": "plausible",
+      "confidence": 0.42,
+      "domain": "analytic number theory",
+      "review_confidence": 0.42
+    },
+    "judge_output": {
+      "confidence": 0.42,
+      "reasoning": "This reasoning attempts to connect Montgomery's pair correlation conjecture to the lim inf of zero gaps using Beurling-Selberg extremal functions. While the individual components (RH explicit formula, Montgomery conjecture, B-S functions) are well-established, the logical chain contains several significant gaps: (1) The crucial step is defining μ* via a repulsion inequality and claiming this equals lim inf of gaps, but no rigorous proof is provided that these quantities coincide. (2) The transition from analyzing weighted variance (steps 3-6) to the extremal function approach (steps 7-10) lacks clear justification. (3) Step 10's claim that 'this formulation avoids assuming higher-order correlations' is questionable—the connection between pair correlation and exact gap behavior typically requires understanding of higher-order structure. (4) The numerical suggestion μ* ≈ 0.5 contradicts the stated rigorous bound < 0.50895, and no explanation is given for why the method would achieve this.",
+      "concerns": [
+        "No rigorous proof that the defined μ* actually equals lim inf of normalized gaps",
+        "The connection between variance analysis (steps 3-6) and the extremal function approach (steps 7-10) is unclear",
+        "Claiming to avoid higher-order correlations while deriving exact gap behavior is suspect",
+        "The numerical prediction μ* ≈ 0.5 would contradict known upper bounds without explanation",
+        "Step 5's argument about 'persistent phase coherence' is hand-wavy",
+        "Step 9 assumes Montgomery conjecture applies directly to this weighted sum without justification",
+        "The supremum definition in step 10 may not uniquely characterize lim inf of gaps"
+      ],
+      "suggestion": "To strengthen this argument: (1) Provide a rigorous theorem connecting the supremum μ* to lim inf of gaps, or cite existing literature. (2) Clarify why pair correlation alone suffices—typically, understanding extreme gap behavior requires n-level correlation functions. (3) Explain the relationship between the variance approach and the extremal function approach. (4) Reconcile the prediction with known bounds or explain why the method might fail to saturate them. (5) Consider whether this is actually proposing a conjecture about μ* rather than deriving it from stated premises."
+    },
+    "ingest_edge_id": null,
+    "created_node_ids": [],
+    "success": true,
+    "message": "plausible planning complete"
+  }
+}

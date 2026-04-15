@@ -1,0 +1,18 @@
+{
+  "iteration": 17,
+  "node_id": "e052a8535b8f",
+  "module": "lean",
+  "created_at": 1776063537.8465707,
+  "result": {
+    "action": "lean",
+    "target_node_id": "e052a8535b8f",
+    "selected_module": "lean",
+    "raw_output": null,
+    "normalized_output": null,
+    "judge_output": null,
+    "ingest_edge_id": null,
+    "created_node_ids": [],
+    "success": false,
+    "message": "OrchestrationError: Skill output is missing 'module'."
+  }
+}
