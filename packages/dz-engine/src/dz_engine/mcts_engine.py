@@ -131,6 +131,7 @@ class MCTSDiscoveryEngine:
         llm_record_dir: Optional[Path] = None,
         bridge_path: Optional[Path] = None,
         lean_timeout: Optional[int] = None,
+        log_path: Optional[Path] = None,
     ) -> None:
         self.graph_path = graph_path
         self.target_node_id = target_node_id
@@ -139,6 +140,7 @@ class MCTSDiscoveryEngine:
         self.backend = backend
         self.llm_record_dir = llm_record_dir
         self.bridge_path = bridge_path
+        self.log_path = log_path
         self.search_state = SearchState()
         self.htps_state = HTPSState()
         self.novelty_tracker = novelty_tracker or NoveltyTracker()
@@ -197,6 +199,36 @@ class MCTSDiscoveryEngine:
         # Consecutive iterations where target node has no incoming support edges.
         self._target_isolation_streak: int = 0
 
+
+    def _utc_now(self) -> datetime:
+        """返回 UTC 时间"""
+        return datetime.now(timezone.utc)
+
+    def _snapshot(self, graph: Any, step: str) -> dict[str, Any]:
+        """创建 graph 的快照"""
+        return {
+            "step": step,
+            "nodes": {
+                nid: {
+                    "prior": round(node.prior, 6),
+                    "belief": round(node.belief, 6),
+                    "state": node.state,
+                    "statement": node.statement,
+                }
+                for nid, node in graph.nodes.items()
+            },
+            "edges": {
+                eid: {
+                    "module": edge.module.value,
+                    "edge_type": edge.edge_type,
+                    "confidence": edge.confidence,
+                    "conclusion_id": edge.conclusion_id,
+                    "premise_ids": edge.premise_ids,
+                }
+                for eid, edge in graph.edges.items()
+            },
+        }
+
     def run(
         self,
         *,
@@ -246,6 +278,73 @@ class MCTSDiscoveryEngine:
         post_action_budget_seconds = float(self.config.post_action_budget_seconds)
         checkpoint_dir = self.graph_path.parent / "action_checkpoints"
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
+        # ==== Exploration Log 初始化 ====
+        log = None
+        if self.log_path is not None:
+            log = {
+                "case_id": self.graph_path.parent.name,
+                "display_name": self.graph_path.parent.name,
+                "suite_id": "manual",
+                "metadata": {
+                    "model": self.model or "unknown",
+                    "engine": "mcts",
+                    "last_iteration": 0,
+                    "last_flush_at": self._utc_now().isoformat(),
+                    "started_at": self._utc_now().isoformat(),
+                    "llm_record_dir": str(self.llm_record_dir) if self.llm_record_dir else "",
+                    "backend": self.backend,
+                },
+                "steps": [],
+                "snapshots": [self._snapshot(graph, "seed")],
+                "node_ids": {"target": self.target_node_id},
+            }
+            # 保存初始日志
+            import json
+            with open(self.log_path, "w") as f:
+                json.dump(log, f, ensure_ascii=False, indent=2)
+
+        # 定义增量刷新函数
+        _flushed_steps = 0
+
+        def _flush_iteration_internal(iteration: int) -> None:
+            nonlocal _flushed_steps
+            if log is None:
+                return
+            # 添加新的 steps
+            new_steps = result.steps[_flushed_steps:]
+            if new_steps:
+                log["steps"].extend(new_steps)
+                _flushed_steps = len(result.steps)
+            # 添加 snapshot
+            try:
+                _g = load_graph(self.graph_path)
+                log["snapshots"].append({
+                    **self._snapshot(_g, f"iteration_{iteration}"),
+                    "iteration": iteration,
+                    "target_belief": round(
+                        float(_g.nodes[self.target_node_id].belief)
+                        if self.target_node_id in _g.nodes else 0.0, 6
+                    ),
+                })
+            except Exception:
+                pass
+            # 更新 metadata
+            log["metadata"]["last_iteration"] = iteration
+            log["metadata"]["last_flush_at"] = self._utc_now().isoformat()
+            # 保存到文件
+            with open(self.log_path, "w") as f:
+                json.dump(log, f, ensure_ascii=False, indent=2)
+
+        # 包装用户提供的回调
+        def _combined_callback(iteration: int, res: MCTSDiscoveryResult) -> None:
+            _flush_iteration_internal(iteration)
+            if on_iteration_complete is not None:
+                on_iteration_complete(iteration, res)
+
+        # 替换回调
+        _original_callback = on_iteration_complete
+        on_iteration_complete = _combined_callback
 
         for iteration in range(1, self.config.max_iterations + 1):
             iter_start = time.monotonic()
@@ -686,6 +785,24 @@ class MCTSDiscoveryEngine:
                     rolling_feedback = rolling_feedback + "\n\n" + planning_feedback
 
         result.elapsed_ms = (time.monotonic() - t0) * 1000
+
+        # ==== 保存最终日志 ====
+        if log is not None:
+            # 添加剩余的 steps
+            remaining_steps = result.steps[_flushed_steps:]
+            if remaining_steps:
+                log["steps"].extend(remaining_steps)
+            # 添加最终 snapshot
+            final_graph = load_graph(self.graph_path)
+            log["snapshots"].append(self._snapshot(final_graph, "after_mcts"))
+            # 更新 metadata
+            log["metadata"]["finished_at"] = self._utc_now().isoformat()
+            log["metadata"]["last_iteration"] = result.iterations_completed
+            # 保存最终日志
+            import json
+            with open(self.log_path, "w") as f:
+                json.dump(log, f, ensure_ascii=False, indent=2)
+
         graph = load_graph(self.graph_path)
         if self.target_node_id in graph.nodes:
             result.target_belief_final = float(graph.nodes[self.target_node_id].belief)
