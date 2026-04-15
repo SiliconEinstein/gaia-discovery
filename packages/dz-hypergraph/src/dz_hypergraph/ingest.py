@@ -108,7 +108,6 @@ def ingest_skill_output(
         # "weakened" — a strong belief penalty that still lets BP recover if
         # other evidence supports the claim.
         if module == Module.EXPERIMENT:
-            # 实验refutation：创建contradiction边而非硬性设置state=refuted
             penalty = float(output.get("confidence", 0.9))
             conclusion = output.get("conclusion")
             if not conclusion:
@@ -116,61 +115,21 @@ def ingest_skill_output(
             conclusion_statement = (
                 conclusion if isinstance(conclusion, str) else conclusion.get("statement", "")
             )
-            
-            # 1. 找到或创建conclusion节点
             existing = graph.find_node_ids_by_statement(conclusion_statement)
             if existing:
-                conclusion_id = existing[0]
-                node = graph.nodes[conclusion_id]
+                node = graph.nodes[existing[0]]
                 if not node.is_locked():
                     node.prior = max(CROMWELL_EPS, node.prior * (1.0 - penalty))
             else:
-                refuted_belief = CROMWELL_EPS
-                conclusion_node = graph.add_node(
+                weakened_belief = max(CROMWELL_EPS, 0.5 * (1.0 - penalty))
+                graph.add_node(
                     statement=conclusion_statement,
-                    belief=refuted_belief,
-                    prior=refuted_belief,
+                    belief=weakened_belief,
+                    prior=weakened_belief,
                     domain=output.get("domain"),
                     provenance=provenance,
                 )
-                conclusion_id = conclusion_node.id
-            
-            # 2. 创建实验结果evidence节点（强refutation）
-            experiment_statement = _build_experiment_evidence_statement(
-                outcome="refuted",
-                conclusion=conclusion_statement,
-                confidence=penalty,
-                summary=output.get("steps", ["Experiment contradicted the claim"])[0] if output.get("steps") else None
-            )
-            
-            evidence_node = graph.add_node(
-                statement=experiment_statement,
-                belief=penalty,
-                prior=penalty,
-                domain=output.get("domain"),
-                provenance=f"{provenance}_evidence",
-                state="proven",
-            )
-            
-            # 3. Idempotency检查
-            premise_set = {evidence_node.id}
-            already_exists = any(
-                set(e.premise_ids) == premise_set and e.conclusion_id == conclusion_id
-                for e in graph.edges.values()
-            )
-            if already_exists:
-                return None
-            
-            # 4. 创建edge
-            edge = graph.add_hyperedge(
-                premise_ids=[evidence_node.id],
-                conclusion_id=conclusion_id,
-                module=module,
-                steps=output.get("steps", []),
-                confidence=CROMWELL_EPS,
-                
-            )
-            return edge
+            return None
 
         conclusion = output.get("conclusion")
         if not conclusion:
@@ -202,61 +161,21 @@ def ingest_skill_output(
             conclusion if isinstance(conclusion, str) else conclusion.get("statement", "")
         )
         penalty = float(output.get("confidence", 0.3))
-        
-        # 1. 找到或创建conclusion节点
         existing = graph.find_node_ids_by_statement(conclusion_statement)
         if existing:
-            conclusion_id = existing[0]
-            node = graph.nodes[conclusion_id]
+            node = graph.nodes[existing[0]]
             if not node.is_locked():
                 node.prior = max(CROMWELL_EPS, node.prior * (1.0 - penalty))
         else:
             weakened_belief = max(CROMWELL_EPS, 0.5 * (1.0 - penalty))
-            conclusion_node = graph.add_node(
+            graph.add_node(
                 statement=conclusion_statement,
                 belief=weakened_belief,
                 prior=weakened_belief,
                 domain=output.get("domain"),
                 provenance=provenance,
             )
-            conclusion_id = conclusion_node.id
-        
-        # 2. 创建实验结果evidence节点
-        experiment_statement = _build_experiment_evidence_statement(
-            outcome="weakened",
-            conclusion=conclusion_statement,
-            confidence=penalty,
-            summary=output.get("steps", ["Experiment partially refuted the claim"])[0] if output.get("steps") else None
-        )
-        
-        evidence_node = graph.add_node(
-            statement=experiment_statement,
-            belief=penalty,
-            prior=penalty,
-            domain=output.get("domain"),
-            provenance=f"{provenance}_evidence",
-            state="proven",
-        )
-        
-        # 3. Idempotency检查
-        premise_set = {evidence_node.id}
-        already_exists = any(
-            set(e.premise_ids) == premise_set and e.conclusion_id == conclusion_id
-            for e in graph.edges.values()
-        )
-        if already_exists:
-            return None
-        
-        # 4. 创建edge
-        edge = graph.add_hyperedge(
-            premise_ids=[evidence_node.id],
-            conclusion_id=conclusion_id,
-            module=module,
-            steps=output.get("steps", []),
-            confidence=1.0 - penalty,
-            
-        )
-        return edge
+        return None
 
     if outcome == "inconclusive":
         # No evidence either way; do not modify the graph at all.
@@ -476,42 +395,3 @@ def ingest_verified_claim(
 def estimate_created_node_ids(before_node_ids: set[str], graph: HyperGraph) -> list[str]:
     """Return node IDs created since the caller captured ``before_node_ids``."""
     return [nid for nid in graph.nodes.keys() if nid not in before_node_ids]
-
-
-def _build_experiment_evidence_statement(
-    outcome: str,
-    conclusion: str,
-    confidence: float,
-    summary: str | None = None
-) -> str:
-    """构造实验结果evidence节点的statement。
-    
-    Args:
-        outcome: "supported", "weakened", 或 "refuted"
-        conclusion: 被验证的命题statement
-        confidence: 实验confidence/penalty值
-        summary: 可选的实验总结（来自steps[0]）
-    
-    Returns:
-        格式化的evidence statement
-    """
-    if outcome == "supported":
-        prefix = f"EXPERIMENTAL VERIFICATION (confidence={confidence:.2f})"
-    elif outcome == "weakened":
-        prefix = f"EXPERIMENTAL PARTIAL REFUTATION (penalty={confidence:.2f})"
-    elif outcome == "refuted":
-        prefix = f"EXPERIMENTAL CONTRADICTION (confidence={confidence:.2f})"
-    else:
-        prefix = f"EXPERIMENTAL RESULT ({outcome})"
-    
-    # 截断conclusion避免过长
-    conclusion_short = conclusion[:150] + "..." if len(conclusion) > 150 else conclusion
-    
-    statement = f"{prefix}: {conclusion_short}"
-    
-    if summary:
-        # 添加实验summary作为补充信息
-        summary_short = summary[:100] + "..." if len(summary) > 100 else summary
-        statement += f" | {summary_short}"
-    
-    return statement
