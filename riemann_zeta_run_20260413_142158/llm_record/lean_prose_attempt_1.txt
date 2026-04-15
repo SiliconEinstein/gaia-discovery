@@ -1,8 +1,0 @@
-```json
-{
-  "status": "failed",
-  "last_error": "The Montgomery pair correlation conjecture (even the restricted version for Fourier support in (-1,1)) cannot be formally verified in Lean/Mathlib. This is a deep analytic number theory result from 1973 that requires: (1) Formal definitions of the Riemann zeta function's non-trivial zeros and their ordering, (2) Definition of pair correlation functions for zeros, (3) The GUE pair correlation density 1 - (sin(πx)/(πx))², (4) Montgomery's theorem relating the Fourier-restricted pair correlation to GUE. Mathlib currently lacks the infrastructure for zeta zeros enumeration, pair correlation sums, and the sophisticated Fourier analysis required. Montgomery's original proof uses the explicit formula, mean-value estimates for Dirichlet polynomials, and delicate analytic techniques not yet formalized.",
-  "attempts": 1,
-  "suggestion": "This result should be marked as 'proven in literature' rather than formally verified. The theorem was proved by Hugh Montgomery in 1973 for test functions with Fourier transform supported in (-1,1). A formal Lean proof would require first formalizing: (1) the enumeration of zeta zeros γ_n, (2) pair correlation sums F(α,T) = Σ_{0<γ,γ'≤T} T^{iα(γ-γ')} w(γ-γ'), (3) the explicit formula connecting F to primes, (4) Montgomery's main theorem that F(α,T)/N(T) → |α| for |α| ≤ 1 (under RH). This is a multi-year formalization project."
-}
-```
