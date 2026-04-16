@@ -164,9 +164,13 @@ python .cursor/skills/dz-verify-reasoning/scripts/validate.py
 python .cursor/skills/dz-belief-propagation/scripts/validate.py
 python .cursor/skills/dz-discovery/scripts/validate.py
 python .cursor/skills/dz-mcp-server/scripts/validate.py
+python .cursor/skills/gaia-hypergraph/scripts/validate.py
+python .cursor/skills/gaia-verify/scripts/validate.py
+python .cursor/skills/gaia-discovery/scripts/validate.py
+python .cursor/skills/gaia-mcp-bridge/scripts/validate.py
 ```
 
-四个脚本应全部输出 `ALL CHECKS PASSED`。
+上述脚本应全部输出 `ALL CHECKS PASSED`。
 
 ---
 
@@ -500,9 +504,25 @@ save_gaia_artifacts(graph, Path("output/"))
 ├── dz-discovery/            # MCTS 发现技能
 │   ├── SKILL.md
 │   └── scripts/validate.py
-└── dz-mcp-server/           # MCP 服务管理技能
+├── dz-mcp-server/           # MCP 服务管理技能
+│   ├── SKILL.md
+│   └── scripts/validate.py
+├── gaia-hypergraph/         # 超图与 Gaia IR / BP（本仓库生态）
+│   ├── SKILL.md
+│   ├── scripts/validate.py
+│   └── references/
+├── gaia-verify/             # Claim 提取与多路径验证
+│   ├── SKILL.md
+│   ├── scripts/validate.py
+│   └── references/
+├── gaia-discovery/          # MCTS 科学发现与 Bridge 规划
+│   ├── SKILL.md
+│   ├── scripts/validate.py
+│   └── references/
+└── gaia-mcp-bridge/         # MCP 桥接与客户端集成
     ├── SKILL.md
-    └── scripts/validate.py
+    ├── scripts/validate.py
+    └── references/
 ```
 
 每个 SKILL.md 包含完整的 API 文档、代码示例和工作流程指引。
@@ -521,6 +541,10 @@ python .cursor/skills/dz-verify-reasoning/scripts/validate.py
 python .cursor/skills/dz-belief-propagation/scripts/validate.py
 python .cursor/skills/dz-discovery/scripts/validate.py
 python .cursor/skills/dz-mcp-server/scripts/validate.py
+python .cursor/skills/gaia-hypergraph/scripts/validate.py
+python .cursor/skills/gaia-verify/scripts/validate.py
+python .cursor/skills/gaia-discovery/scripts/validate.py
+python .cursor/skills/gaia-mcp-bridge/scripts/validate.py
 
 # 类型检查
 python -m mypy packages/dz-hypergraph/src packages/dz-verify/src packages/dz-engine/src
