@@ -164,9 +164,13 @@ python .cursor/skills/dz-verify-reasoning/scripts/validate.py
 python .cursor/skills/dz-belief-propagation/scripts/validate.py
 python .cursor/skills/dz-discovery/scripts/validate.py
 python .cursor/skills/dz-mcp-server/scripts/validate.py
+python skill/gaia-hypergraph/scripts/validate.py
+python skill/gaia-verify/scripts/validate.py
+python skill/gaia-discovery/scripts/validate.py
+python skill/gaia-mcp-bridge/scripts/validate.py
 ```
 
-四个脚本应全部输出 `ALL CHECKS PASSED`。
+上述脚本应全部输出 `ALL CHECKS PASSED`。
 
 ---
 
@@ -487,7 +491,9 @@ save_gaia_artifacts(graph, Path("output/"))
 
 ## Cursor Skill（智能体技能）
 
-将 `.cursor/skills/` 目录复制到你的项目中，Cursor Agent 会在合适的时机自动识别和调用：
+将技能目录复制到你的项目中，Cursor Agent 会在合适的时机自动识别和调用。
+
+**DZ 技能**（文档约定路径 `.cursor/skills/`，与 Cursor 默认技能目录一致）：
 
 ```
 .cursor/skills/
@@ -503,6 +509,28 @@ save_gaia_artifacts(graph, Path("output/"))
 └── dz-mcp-server/           # MCP 服务管理技能
     ├── SKILL.md
     └── scripts/validate.py
+```
+
+**Gaia 生态技能**（本仓库根目录 `skill/`，与 `.cursor/skills/` 分立，避免与 Cursor 内置布局混在一起）：
+
+```
+skill/
+├── gaia-hypergraph/         # 超图与 Gaia IR / BP
+│   ├── SKILL.md
+│   ├── scripts/validate.py
+│   └── references/
+├── gaia-verify/             # Claim 提取与多路径验证
+│   ├── SKILL.md
+│   ├── scripts/validate.py
+│   └── references/
+├── gaia-discovery/          # MCTS 科学发现与 Bridge 规划
+│   ├── SKILL.md
+│   ├── scripts/validate.py
+│   └── references/
+└── gaia-mcp-bridge/         # MCP 桥接与客户端集成
+    ├── SKILL.md
+    ├── scripts/validate.py
+    └── references/
 ```
 
 每个 SKILL.md 包含完整的 API 文档、代码示例和工作流程指引。
@@ -521,6 +549,10 @@ python .cursor/skills/dz-verify-reasoning/scripts/validate.py
 python .cursor/skills/dz-belief-propagation/scripts/validate.py
 python .cursor/skills/dz-discovery/scripts/validate.py
 python .cursor/skills/dz-mcp-server/scripts/validate.py
+python skill/gaia-hypergraph/scripts/validate.py
+python skill/gaia-verify/scripts/validate.py
+python skill/gaia-discovery/scripts/validate.py
+python skill/gaia-mcp-bridge/scripts/validate.py
 
 # 类型检查
 python -m mypy packages/dz-hypergraph/src packages/dz-verify/src packages/dz-engine/src
