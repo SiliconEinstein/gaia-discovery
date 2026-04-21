@@ -336,14 +336,14 @@ class MCTSDiscoveryEngine:
             with open(self.log_path, "w") as f:
                 json.dump(log, f, ensure_ascii=False, indent=2)
 
-        # 包装用户提供的回调
+        # 包装用户提供的回调（先保存原始引用，避免闭包循环引用）
+        _original_callback = on_iteration_complete
+
         def _combined_callback(iteration: int, res: MCTSDiscoveryResult) -> None:
             _flush_iteration_internal(iteration)
-            if on_iteration_complete is not None:
-                on_iteration_complete(iteration, res)
+            if _original_callback is not None:
+                _original_callback(iteration, res)
 
-        # 替换回调
-        _original_callback = on_iteration_complete
         on_iteration_complete = _combined_callback
 
         for iteration in range(1, self.config.max_iterations + 1):
