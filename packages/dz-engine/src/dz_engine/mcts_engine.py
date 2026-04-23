@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from dz_engine.bridge import BridgePlan
 
 from dz_hypergraph.inference import SignalAccumulator, propagate_beliefs, propagate_verification_signals
+from dz_hypergraph.ingest import ingest_skill_output
 from dz_hypergraph.ingest import ingest_verified_claim
 from dz_hypergraph.memo import ResearchMemo, VerificationResult
 from dz_hypergraph.models import HyperGraph, Module
@@ -54,6 +55,12 @@ from dz_engine.orchestrator import (
     run_plausible_action,
 )
 from dz_engine.problem_variants import ProblemVariantGenerator
+from dz_engine.phase_gate import (
+    Phase,
+    PhaseGate,
+    _resolve_best_path_confidence,
+    should_attempt_lean,
+)
 from dz_engine.search import RMaxTSSearch, SearchState, rank_frontiers, select_module_ucb
 from dz_hypergraph.tools.retrieval import HypergraphRetrievalIndex
 
@@ -198,6 +205,10 @@ class MCTSDiscoveryEngine:
         self._recent_module_history: list[tuple[Module, bool]] = []
         # Consecutive iterations where target node has no incoming support edges.
         self._target_isolation_streak: int = 0
+        self._phase_gate: Optional[PhaseGate] = (
+            PhaseGate() if getattr(_cfg, "bridge_gate_mode", "hard") == "hard" else None
+        )
+        self._latest_lean_gate: Optional[dict[str, Any]] = None
 
 
     def _utc_now(self) -> datetime:
@@ -911,6 +922,7 @@ class MCTSDiscoveryEngine:
         target_node = graph.nodes.get(self.target_node_id)
         target_belief = float(target_node.belief) if target_node is not None else 0.0
         node_id_for_ucb, module, path = self._default_select(graph)
+        node_id_for_ucb, module = self._apply_bridge_gate(node_id_for_ucb, module)
         if self._is_module_globally_failing(module):
             if module != Module.PLAUSIBLE:
                 module = Module.PLAUSIBLE
@@ -949,8 +961,18 @@ class MCTSDiscoveryEngine:
                     crit_module = self._module_for_claim_type(
                         graph.nodes[crit_id].statement
                     )
-                    return crit_id, crit_module, path
+                    gated_node_id, gated_module = self._apply_bridge_gate(crit_id, crit_module)
+                    return gated_node_id, gated_module, path
         return node_id_for_ucb, module, path
+
+    def _apply_bridge_gate(self, node_id: str, module: Module) -> tuple[str, Module]:
+        if self._phase_gate is None:
+            return node_id, module
+        if module in (Module.LEAN, Module.DECOMPOSE) and not self._phase_gate.can_enter(
+            Phase.LEAN_DECOMPOSE
+        ):
+            return self.target_node_id, Module.PLAUSIBLE
+        return node_id, module
 
     def _record_recent_module_outcome(self, module: Module, success: bool) -> None:
         self._recent_module_history.append((module, bool(success)))
@@ -1872,6 +1894,9 @@ class MCTSDiscoveryEngine:
                     result.best_bridge_node_map = node_map
                     if self.bridge_path is not None:
                         self.bridge_path.write_text(plan.model_dump_json(indent=2), encoding="utf-8")
+                if self._phase_gate is not None:
+                    self._phase_gate.complete(Phase.PLAUSIBLE)
+                    self._phase_gate.complete(Phase.BRIDGE_PLAN)
                 result.steps.append(
                     {
                         "phase": "bridge_plan_mcts",
@@ -1894,6 +1919,72 @@ class MCTSDiscoveryEngine:
         if plan is not None:
             try:
                 from dz_hypergraph.config import CONFIG as _cfg
+                from dz_engine.orchestrator import plan_bridge_consumption
+
+                decision = plan_bridge_consumption(plan)
+                best_path_confidence = max(
+                    float((action_result.judge_output or {}).get("confidence", 0.0)),
+                    _resolve_best_path_confidence(result.steps),
+                )
+                lean_decision = should_attempt_lean(
+                    bridge_plan=plan,
+                    best_path_confidence=best_path_confidence,
+                    strict_mode=decision.strict_mode,
+                    has_decomposition_plan=decision.decomposition_bridge_plan is not None,
+                    has_strict_target=decision.strict_focus_proposition_id is not None,
+                    mode=str(self.lean_policy.get("mode", "selective")),
+                    enable_decomposition=bool(
+                        self.lean_policy.get(
+                            "enable_decomposition",
+                            getattr(_cfg, "lean_enable_decomposition", False),
+                        )
+                    ),
+                    enable_strict_lean=bool(
+                        self.lean_policy.get(
+                            "enable_strict_lean",
+                            self.lean_policy.get(
+                                "enable_strict",
+                                getattr(_cfg, "lean_enable_strict", True),
+                            ),
+                        )
+                    ),
+                    min_path_confidence=float(
+                        self.lean_policy.get(
+                            "min_path_confidence",
+                            getattr(_cfg, "lean_min_confidence", 0.85),
+                        )
+                    ),
+                    max_grade_d_ratio=float(
+                        self.lean_policy.get(
+                            "max_grade_d_ratio",
+                            getattr(_cfg, "lean_max_grade_d_ratio", 0.15),
+                        )
+                    ),
+                    allowed_strict_modes=set(
+                        self.lean_policy.get(
+                            "allowed_strict_modes",
+                            getattr(_cfg, "lean_allowed_strict_modes", ["direct_proof", "lemma"]),
+                        )
+                    ),
+                )
+                self._latest_lean_gate = lean_decision.as_dict()
+                result.steps.append(
+                    {
+                        "phase": "lean_gate_decision",
+                        "best_path_confidence": round(best_path_confidence, 6),
+                        **self._latest_lean_gate,
+                    }
+                )
+                if self._phase_gate is not None:
+                    self._phase_gate.complete(Phase.BRIDGE_CONSUMPTION)
+                    if lean_decision.attempt_decomposition:
+                        self._phase_gate.complete(Phase.LEAN_DECOMPOSE)
+                    else:
+                        self._phase_gate.invalidate(Phase.LEAN_DECOMPOSE)
+                    if lean_decision.attempt_strict_lean:
+                        self._phase_gate.complete(Phase.STRICT_LEAN)
+                    else:
+                        self._phase_gate.invalidate(Phase.STRICT_LEAN)
 
                 if getattr(_cfg, "spec_decomp_enabled", False):
                     from dz_hypergraph.session import GraphSession
@@ -1952,22 +2043,122 @@ class MCTSDiscoveryEngine:
                 )
             try:
                 from dz_hypergraph.config import CONFIG as _cfg
-                from dz_engine.orchestrator import plan_bridge_consumption as _pbc
-                _decision = _pbc(plan)
-                _delegated_count = len(_decision.experiment_proposition_ids)
-                _max_rounds = max(1, min(_delegated_count, getattr(_cfg, "max_bridge_followup_rounds", 5)))
-                followups = execute_bridge_followups(
-                    self.graph_path,
-                    self.target_node_id,
-                    action_result.normalized_output,
-                    plan=plan,
-                    raw_bridge=raw_bridge,
-                    judge_output=action_result.judge_output,
-                    model=self.model,
-                    backend=self.backend,
-                    max_rounds=_max_rounds,
-                    record_dir=self.llm_record_dir,
-                )
+                if getattr(_cfg, "use_bridge_executor", False):
+                    from dz_engine.bridge_executor import BridgeExecutor
+                    from dz_hypergraph.session import GraphSession
+
+                    session = GraphSession(graph.model_copy(deep=True))
+
+                    def _run_bp(local_graph: HyperGraph) -> None:
+                        propagate_beliefs(
+                            local_graph,
+                            warmstart=(getattr(_cfg, "bp_backend", "gaia") != "gaia_v2"),
+                        )
+
+                    def _run_plausible(node_id: str, _prop: Any) -> dict[str, Any]:
+                        try:
+                            _raw, normalized, _judge = run_plausible_action(
+                                session.graph,
+                                node_id,
+                                model=self.model,
+                                feedback=feedback,
+                                record_dir=self.llm_record_dir,
+                            )
+                            if normalized is None:
+                                return {"success": False, "error": "empty plausible output"}
+                            ingest_skill_output(
+                                session.graph,
+                                normalized,
+                                target_node_id=self.target_node_id if node_id == self.target_node_id else None,
+                            )
+                            return {"success": True}
+                        except Exception as exc:
+                            return {"success": False, "error": str(exc)}
+
+                    def _run_experiment(node_id: str, _prop: Any) -> dict[str, Any]:
+                        try:
+                            _raw, normalized, _judge = run_experiment_action(
+                                session.graph,
+                                node_id,
+                                model=self.model,
+                                feedback=feedback,
+                                record_dir=self.llm_record_dir,
+                            )
+                            if normalized is None:
+                                return {"success": False, "error": "empty experiment output"}
+                            ingest_skill_output(
+                                session.graph,
+                                normalized,
+                                target_node_id=self.target_node_id if node_id == self.target_node_id else None,
+                            )
+                            return {"success": True}
+                        except Exception as exc:
+                            return {"success": False, "error": str(exc)}
+
+                    def _run_lean(node_id: str, _prop: Any) -> dict[str, Any]:
+                        try:
+                            _raw, normalized, _judge = run_lean_action(
+                                session.graph,
+                                node_id,
+                                model=self.model,
+                                timeout=self._lean_timeout,
+                                prompt_feedback=feedback,
+                                record_dir=self.llm_record_dir,
+                            )
+                            if normalized is None:
+                                return {"success": False, "error": "empty lean output"}
+                            ingest_skill_output(
+                                session.graph,
+                                normalized,
+                                target_node_id=self.target_node_id if node_id == self.target_node_id else None,
+                            )
+                            return {"success": True}
+                        except Exception as exc:
+                            return {"success": False, "error": str(exc)}
+
+                    bridge_executor = BridgeExecutor(
+                        session=session,
+                        plan=plan,
+                        target_node_id=self.target_node_id,
+                        run_plausible_fn=_run_plausible,
+                        run_experiment_fn=_run_experiment,
+                        run_lean_fn=_run_lean,
+                        run_incremental_bp_fn=_run_bp,
+                        max_parallel=1,
+                        lean_gate_min_belief=float(
+                            getattr(_cfg, "lean_gate_min_belief", 0.6),
+                        ),
+                    )
+                    bridge_exec_result = bridge_executor.execute(
+                        max_passes=max(1, int(getattr(_cfg, "engine_bridge_max_passes", 5))),
+                    )
+                    save_graph(session.graph, self.graph_path)
+                    result.steps.append(
+                        {
+                            "phase": "bridge_executor",
+                            **bridge_exec_result.to_dict(),
+                        }
+                    )
+                else:
+                    from dz_engine.orchestrator import plan_bridge_consumption as _pbc
+
+                    _decision = _pbc(plan)
+                    _delegated_count = len(_decision.experiment_proposition_ids)
+                    _max_rounds = max(
+                        1, min(_delegated_count, getattr(_cfg, "max_bridge_followup_rounds", 5))
+                    )
+                    followups = execute_bridge_followups(
+                        self.graph_path,
+                        self.target_node_id,
+                        action_result.normalized_output,
+                        plan=plan,
+                        raw_bridge=raw_bridge,
+                        judge_output=action_result.judge_output,
+                        model=self.model,
+                        backend=self.backend,
+                        max_rounds=_max_rounds,
+                        record_dir=self.llm_record_dir,
+                    )
             except Exception as exc:
                 result.steps.append({"phase": "bridge_consumption", "error": str(exc)})
 
