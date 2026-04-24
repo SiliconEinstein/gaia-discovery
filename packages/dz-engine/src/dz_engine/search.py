@@ -301,13 +301,13 @@ def select_module_ucb(
         claim_type = _infer_claim_type(node.statement)
         if claim_type == "quantitative":
             belief_prior = {
-                Module.PLAUSIBLE: 0.08,
-                Module.EXPERIMENT: 0.48,
-                Module.LEAN: 0.10,
-                Module.ANALOGY: 0.08,
-                Module.DECOMPOSE: 0.07,
-                Module.SPECIALIZE: 0.07,
-                Module.RETRIEVE: 0.12,
+                Module.PLAUSIBLE: 0.18,
+                Module.EXPERIMENT: 0.18,
+                Module.LEAN: 0.12,
+                Module.ANALOGY: 0.15,
+                Module.DECOMPOSE: 0.12,
+                Module.SPECIALIZE: 0.08,
+                Module.RETRIEVE: 0.17,
             }
         elif claim_type == "structural":
             belief_prior = {
@@ -404,7 +404,7 @@ def select_module_ucb(
 
         if ms.attempts == 0:
             # Cold-start: use prior directly + small bonus for unexplored
-            score = prior + 0.1 * c_explore
+            score = prior + 0.3 * c_explore  # 增强diversity
         else:
             q = ms.mean_reward
             n = ms.attempts
