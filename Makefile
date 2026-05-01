@@ -1,18 +1,39 @@
-PYTHON ?= python
-PIP ?= $(PYTHON) -m pip
+.PHONY: install-all test lint run-verify run-explore clean fmt
 
-.PHONY: install-all test lint
+PY := python3
+PIP := pip
+ROOT := /root/personal/gaia-discovery-v3
 
 install-all:
-	$(PIP) install -e /personal/gaia-bp
-	$(PIP) install -e packages/dz-hypergraph
-	$(PIP) install -e packages/dz-verify
-	$(PIP) install -e packages/dz-engine
-	$(PIP) install -e packages/dz-mcp
-	$(PIP) install pytest pytest-cov ruff
+	$(PIP) install -e /root/Gaia
+	$(PIP) install -e /root/gaia-discovery/packages/dz-hypergraph
+	$(PIP) install -e $(ROOT)[dev]
 
 test:
-	$(PYTHON) -m pytest -q
+	cd $(ROOT) && $(PY) -m pytest -q
+
+test-unit:
+	cd $(ROOT) && $(PY) -m pytest -q -m "not e2e and not claude_cli and not llm and not lean"
+
+test-e2e:
+	cd $(ROOT) && $(PY) -m pytest -q -m e2e
 
 lint:
-	$(PYTHON) -m ruff check packages tests
+	cd $(ROOT) && ruff check src tests
+
+fmt:
+	cd $(ROOT) && ruff format src tests
+
+run-verify:
+	cd $(ROOT) && $(PY) -m gd.cli verify-server --port 8092
+
+run-explore:
+	@echo "用法: cd projects/<problem_id> && gd explore --max-iter 8"
+
+doctor:
+	cd $(ROOT) && $(PY) -m gd.cli doctor
+
+clean:
+	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name .pytest_cache -exec rm -rf {} + 2>/dev/null || true
+	rm -rf build dist *.egg-info

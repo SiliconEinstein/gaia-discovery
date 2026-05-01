@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "gd-verify": {
+      "command": "python",
+      "args": ["-m", "gd.mcp_server"],
+      "env": {}
+    }
+  }
+}

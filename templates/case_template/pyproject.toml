@@ -1,0 +1,15 @@
+[project]
+name = "discovery-{{__PROBLEM_ID__}}-gaia"
+version = "0.1.0"
+description = "gaia-discovery-v3 case for open problem {{__PROBLEM_ID__}}"
+requires-python = ">=3.12"
+dependencies = ["gaia-lang"]
+
+[tool.gaia]
+type = "knowledge-package"
+namespace = "discovery"
+uuid = "{{__PKG_UUID__}}"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
