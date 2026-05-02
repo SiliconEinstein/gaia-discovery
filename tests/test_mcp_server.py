@@ -19,14 +19,14 @@ def test_mcp_tools_registered():
     assert names == ["list_actions", "verify", "verify_claim"]
 
 
-def test_list_actions_returns_17():
+def test_list_actions_returns_8():
     out = list_actions_tool()
     assert sorted(out["actions"]) == sorted(out["router_map"].keys())
-    assert len(out["actions"]) == 17
+    assert len(out["actions"]) == 8
     qs = sum(1 for v in out["router_map"].values() if v == "quantitative")
     ss = sum(1 for v in out["router_map"].values() if v == "structural")
     hs = sum(1 for v in out["router_map"].values() if v == "heuristic")
-    assert (qs, ss, hs) == (4, 3, 10)
+    assert (qs, ss, hs) == (1, 1, 6)
 
 
 # --------------------------------------------------------------------------- #

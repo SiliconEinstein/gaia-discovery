@@ -376,16 +376,10 @@ class GpugeekBackend:
     CODE_BLOCK_RE = re.compile(r"```(\w+)\s*\n(.*?)```", re.S)
 
     LANG_BY_ACTION_KIND: dict[str, str] = {
-        # experiment-style: 跑 sandbox python
-        "experiment": "python",
-        "extrapolation": "python",
+        # quantitative：induction 走 sandbox python（数值/采样验证）
         "induction": "python",
-        "plausible": "python",
-        # Lean-style: 跑 Lean 验证
+        # structural：deduction 走 Lean 形式化
         "deduction": "lean",
-        "mathematical_induction": "lean",
-        "lean": "lean",
-        "lean_decompose": "lean",
     }
 
     def __init__(

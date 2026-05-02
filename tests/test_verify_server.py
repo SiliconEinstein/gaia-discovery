@@ -36,10 +36,10 @@ from gd.verify_server.server import create_app
 # schemas
 # ---------------------------------------------------------------------------
 
-def test_schemas_action_count_17():
-    assert len(STRATEGY_ACTIONS) == 13
+def test_schemas_action_count_8():
+    assert len(STRATEGY_ACTIONS) == 4
     assert len(OPERATOR_ACTIONS) == 4
-    assert len(ALL_ACTIONS) == 17
+    assert len(ALL_ACTIONS) == 8
     assert ALL_ACTIONS == STRATEGY_ACTIONS | OPERATOR_ACTIONS
     assert set(ACTION_KIND_TO_ROUTER) == ALL_ACTIONS
 
@@ -48,9 +48,9 @@ def test_schemas_router_distribution():
     by_router: dict[RouterKind, int] = {}
     for r in ACTION_KIND_TO_ROUTER.values():
         by_router[r] = by_router.get(r, 0) + 1
-    assert by_router[RouterKind.QUANTITATIVE] == 4
-    assert by_router[RouterKind.STRUCTURAL] == 3
-    assert by_router[RouterKind.HEURISTIC] == 10
+    assert by_router[RouterKind.QUANTITATIVE] == 1
+    assert by_router[RouterKind.STRUCTURAL] == 1
+    assert by_router[RouterKind.HEURISTIC] == 6
 
 
 def test_schemas_reject_unknown_action(tmp_path):
@@ -330,7 +330,7 @@ def test_health_endpoint(client):
     body = r.json()
     assert body["status"] == "ok"
     assert isinstance(body["lean_available"], bool)
-    assert len(body["supported_actions"]) == 17
+    assert len(body["supported_actions"]) == 8
 
 
 def test_verify_endpoint_routes_quantitative(client, tmp_path):

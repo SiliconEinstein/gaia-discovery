@@ -35,7 +35,7 @@
 
 ## gaia DSL 硬约束（违反 → 编译失败 → 整轮 dispatch 作废）
 
-- **`reason` 与 `prior` 必须配对**：strategy 调用（`support` / `deduction` / `abduction` / `induction` / `analogy` / `case_analysis` / `extrapolation` / `compare` / `elimination` / `mathematical_induction` / `composite` / `fills` / `infer`）若给了 `reason=` 就必须给 `prior=`，反之亦然——要么都给，要么都不给。
+- **`reason` 与 `prior` 必须配对**：strategy 调用（`support` / `deduction` / `abduction` / `induction`）若给了 `reason=` 就必须给 `prior=`，反之亦然——要么都给，要么都不给。
 - **`claim()` 用 `metadata={...}` 透传**：`prior_justification` / `provenance` / `action` / `args` 等都放进 `metadata`，不能当顶层 kwarg。
 - **prior 严格 ∈ (0, 1)**：Cromwell 边界 [0.001, 0.999]，禁止 `prior=1.0` 或 `0.0`；确信极强用 0.99，反之 0.01。
 - **每个 `claim()` 必带 `metadata.prior_justification`**（一句话即可）；缺则 review 会把它列为 publish_blocker。

@@ -7,7 +7,7 @@
 - 超时 → inconclusive
 - 编译成功 → verified；error 输出 → inconclusive（沿用 dz 规则：错误不 refute，只有显式
   `theorem … : False := by …` 之类的失败模式才能算 refuted，单纯编译报错 = 证明未完成）
-- decompose / case_analysis / mathematical_induction 走同一通道（均要求 .lean artifact）
+- 仅 deduction 通道（要求 .lean artifact）；本路由不接 induction（quantitative 通道）
 """
 from __future__ import annotations
 

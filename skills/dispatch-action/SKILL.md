@@ -7,10 +7,11 @@ description: 给一个 claim/strategy/operator 加 metadata.action 派 sub-agent
 ## 何时用
 plan.gaia.py 里有一个节点（claim/strategy/operator）你不会做或没时间做，需要让 sub-agent 接手。
 
-## 22 个可派 action_kind
-- strategy 类（13）：support, deduction, abduction, induction, mathematical_induction, analogy, case_analysis, extrapolation, compare, elimination, composite, fills, infer
-- operator 类（4）：contradiction, equivalence, complement, disjunction
-- runner 类（5）：plausible, experiment, lean, bridge_planning, lean_decompose
+## 8 个可派 action_kind
+- strategy 类（4，kwargs 风格 premises/conclusion）：support, deduction, abduction, induction
+- operator 类（4，positional 风格 op(k_a, k_b)）：contradiction, equivalence, complement, disjunction
+
+权威白名单：`src/gd/verify_server/schemas.py::ALL_ACTIONS`。
 
 ## 流程
 1. Edit 节点的 metadata，添加：

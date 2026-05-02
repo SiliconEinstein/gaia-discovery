@@ -1,10 +1,10 @@
-"""verify_server 的 pydantic 模型与 22 action_kind → router 路由表。
+"""verify_server 的 pydantic 模型与 8 action_kind → router 路由表。
 
 设计：
 - VerifyRequest 由 orchestrator 构造，对应一次 sub-agent 派遣完成后对 artifact 的独立校验请求。
 - VerifyResponse 是 verify_server 给出的 verdict（独立、可审计），orchestrator 据此用 belief_ingest
   把结果回写为 plan.gaia.py 的 AST patch。
-- 22 个 action_kind 严格对齐 plan：13 strategy + 4 operator + 5 dz runner。
+- 8 个 action_kind 严格对齐 plan：4 strategy（kwargs：premises/conclusion）+ 4 operator（positional：k_a, k_b ...）。
 - router 路由由 ACTION_KIND_TO_ROUTER 决定，不允许 sub-agent 自选 router（避免绕过 Lean 走 quantitative 之类）。
 """
 from __future__ import annotations
@@ -17,14 +17,15 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 # ---------------------------------------------------------------------------
-# 17 action_kinds（与 dispatcher.ALLOWED_ACTIONS 必须保持一致）
+# 8 action_kinds（与 dispatcher.ALLOWED_ACTIONS 必须保持一致）
+#   strategy（4，kwargs 风格 premises=[...], conclusion=...）：
+#     support / deduction / abduction / induction
+#   operator（4，positional 风格 op(k_a, k_b)）：
+#     contradiction / equivalence / complement / disjunction
 # ---------------------------------------------------------------------------
 
 STRATEGY_ACTIONS: frozenset[str] = frozenset({
     "support", "deduction", "abduction", "induction",
-    "mathematical_induction", "analogy", "case_analysis",
-    "extrapolation", "compare", "elimination", "composite",
-    "fills", "infer",
 })
 
 OPERATOR_ACTIONS: frozenset[str] = frozenset({
@@ -42,24 +43,15 @@ class RouterKind(str, Enum):
     HEURISTIC = "heuristic"        # 把 sub-agent 产出的 Gaia DSL 片段 compile + run_review
 
 
-# 17 个 action 的 router 归属（与 plan §"verify_server 三 router 按 action_kind 路由"完全对齐）
+# 8 个 action 的 router 归属（与 plan §"verify_server 三 router 按 action_kind 路由"完全对齐）
 ACTION_KIND_TO_ROUTER: dict[str, RouterKind] = {
-    # quantitative
-    "extrapolation": RouterKind.QUANTITATIVE,
+    # quantitative：归纳类 claim 必须靠数值/采样验证
     "induction": RouterKind.QUANTITATIVE,
-    "compare": RouterKind.QUANTITATIVE,
-    "elimination": RouterKind.QUANTITATIVE,
-    # structural
+    # structural：deduction 走 Lean 形式化
     "deduction": RouterKind.STRUCTURAL,
-    "mathematical_induction": RouterKind.STRUCTURAL,
-    "case_analysis": RouterKind.STRUCTURAL,
-    # heuristic
+    # heuristic：support / abduction + 4 operator
     "support": RouterKind.HEURISTIC,
     "abduction": RouterKind.HEURISTIC,
-    "analogy": RouterKind.HEURISTIC,
-    "composite": RouterKind.HEURISTIC,
-    "fills": RouterKind.HEURISTIC,
-    "infer": RouterKind.HEURISTIC,
     "contradiction": RouterKind.HEURISTIC,
     "equivalence": RouterKind.HEURISTIC,
     "complement": RouterKind.HEURISTIC,
@@ -67,7 +59,7 @@ ACTION_KIND_TO_ROUTER: dict[str, RouterKind] = {
 }
 
 assert set(ACTION_KIND_TO_ROUTER.keys()) == set(ALL_ACTIONS), (
-    "ACTION_KIND_TO_ROUTER 必须严格覆盖 17 个 action_kind"
+    "ACTION_KIND_TO_ROUTER 必须严格覆盖 8 个 action_kind"
 )
 
 
@@ -108,7 +100,7 @@ class VerifyRequest(BaseModel):
 
     action_id: str = Field(..., min_length=4, max_length=64,
                            description="dispatcher 派出的 ActionSignal.action_id（唯一）")
-    action_kind: str = Field(..., description="22 个 action_kind 之一")
+    action_kind: str = Field(..., description="8 个 action_kind 之一")
     project_dir: str = Field(..., description="探索项目根目录绝对路径")
     claim_qid: str | None = Field(None, description="本 action 关联的 IR 节点 qid（若有）")
     claim_text: str | None = Field(None, description="原 claim/strategy/operator 文本，便于审计")
@@ -122,7 +114,7 @@ class VerifyRequest(BaseModel):
     def _check_action(cls, v: str) -> str:
         if v not in ALL_ACTIONS:
             raise ValueError(
-                f"action_kind={v!r} 不在 17 个允许集合内：{sorted(ALL_ACTIONS)}"
+                f"action_kind={v!r} 不在 8 个允许集合内：{sorted(ALL_ACTIONS)}"
             )
         return v
 

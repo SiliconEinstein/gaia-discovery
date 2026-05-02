@@ -56,5 +56,5 @@ curl -sL "https://api.crossref.org/works?query=KEYWORD&rows=10&select=DOI,title,
 3. 全文 PDF / 关键段落可下载到 `task_results/refs/<slug>.{pdf,md}`（不是核心代码区）
 
 ## sub-agent 共用
-本 skill 不只主 agent 用——subagent 类型为 `support` / `abduction` / `analogy` /
-`bridge_planning` 时也优先调用本 skill 而非凭直觉编引用。
+本 skill 不只主 agent 用——subagent 类型为 `support` / `abduction` 时也优先
+调用本 skill 而非凭直觉编引用。

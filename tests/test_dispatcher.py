@@ -59,10 +59,10 @@ def cleanup_modules():
 
 
 def test_action_kind_count():
-    """17 = 13 strategy + 4 operator（已删 5 dz runner）。"""
-    assert len(ALLOWED_STRATEGY_ACTIONS) == 13
+    """8 = 4 strategy + 4 operator。"""
+    assert len(ALLOWED_STRATEGY_ACTIONS) == 4
     assert len(ALLOWED_OPERATOR_ACTIONS) == 4
-    assert len(ALLOWED_ACTIONS) == 17
+    assert len(ALLOWED_ACTIONS) == 8
     assert ALLOWED_ACTIONS == ALLOWED_STRATEGY_ACTIONS | ALLOWED_OPERATOR_ACTIONS
 
 

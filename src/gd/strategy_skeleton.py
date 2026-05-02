@@ -1,4 +1,4 @@
-"""strategy_skeleton: 把 22 action_kinds 映射到 gaia.ir.StrategyType，调用
+"""strategy_skeleton: 把 8 action_kinds 映射到 gaia.ir.StrategyType，调用
 gaia.ir.formalize_named_strategy 得到 FormalStrategy IR 骨架。
 
 用途：sub-agent 返回 markdown + 结构化字段（premise_qids/conclusion_qid/strategy_kind）
@@ -6,11 +6,10 @@ gaia.ir.formalize_named_strategy 得到 FormalStrategy IR 骨架。
 该 IR 可直接灌进 LocalCanonicalGraph 给 run_review 做结构性校验，
 而不是 v3 自己用 claude -p 二次 NL→DSL（那一步保留作 fallback）。
 
-gaia.ir.formalize_named_strategy 只支持 9 种命名 strategy：
-  DEDUCTION, ELIMINATION, MATHEMATICAL_INDUCTION, CASE_ANALYSIS,
-  ABDUCTION, ANALOGY, EXTRAPOLATION, SUPPORT, COMPARE
-其余 13 个 action_kinds（experiment/lean/contradiction/...）走 fallback 返回 None；
-caller 按需走 NL→DSL formalize 或直接 quantitative router。
+8 个 action 的处理方针：
+  strategy（4）：support/deduction/abduction → 走 gaia 原生 named template；
+                 induction → gaia 无对应 template，None（fallback NL→DSL 或 quantitative 直跑）。
+  operator（4）：contradiction/equivalence/complement/disjunction → operator 不是 strategy，None。
 """
 from __future__ import annotations
 
@@ -24,33 +23,18 @@ from gaia.ir.formalize import FormalizationResult
 logger = logging.getLogger(__name__)
 
 
-# 22 action_kinds → gaia.ir.StrategyType 映射；None ⇒ 不可 formalize（走 fallback）
+# 8 action_kinds → gaia.ir.StrategyType 映射；None ⇒ 不可 formalize（走 fallback）
 ACTION_TO_STRATEGY: dict[str, StrategyType | None] = {
-    # A. DSL Strategy actions（13 种） —— gaia 原生支持 9 个
+    # A. strategy 类（4 种，kwargs 风格 premises/conclusion）
     "support": StrategyType.SUPPORT,
     "deduction": StrategyType.DEDUCTION,
     "abduction": StrategyType.ABDUCTION,
     "induction": None,                             # gaia 无 induction template
-    "mathematical_induction": StrategyType.MATHEMATICAL_INDUCTION,
-    "analogy": StrategyType.ANALOGY,
-    "case_analysis": StrategyType.CASE_ANALYSIS,
-    "extrapolation": StrategyType.EXTRAPOLATION,
-    "compare": StrategyType.COMPARE,
-    "elimination": StrategyType.ELIMINATION,
-    "composite": None,                             # 复合：递归展开各子 strategy
-    "fills": None,                                 # gaia 无 fills template
-    "infer": None,                                 # 通用 fallback，无 named template
-    # B. DSL Operator actions（4 种）—— operator 不是 strategy，无 formalize
+    # B. operator 类（4 种，positional 风格 op(k_a, k_b)）—— operator 不是 strategy
     "contradiction": None,
     "equivalence": None,
     "complement": None,
     "disjunction": None,
-    # C. DZ Runner actions（5 种）—— 全部走 quantitative/structural，不需要 IR
-    "plausible": StrategyType.SUPPORT,             # plausible NL ≈ support
-    "experiment": None,                            # quantitative，无 IR formalize
-    "lean": StrategyType.DEDUCTION,                # lean 证明本质是演绎
-    "bridge_planning": None,                       # 多步规划：composite 类
-    "lean_decompose": None,                        # 拆 lemma：递归 caller 处理
 }
 
 

@@ -8,9 +8,7 @@
 """
 from gaia.lang import (
     claim, setting, question,
-    support, deduction, abduction, induction, mathematical_induction,
-    analogy, case_analysis, extrapolation, compare, elimination,
-    composite, fills, infer,
+    support, deduction, abduction, induction,
     contradiction, equivalence, complement, disjunction,
 )
 
@@ -40,7 +38,7 @@ q_main = question(
 #     },
 # )
 #
-# 然后用 strategy 连接（kwargs 风格，13 种）：
+# 然后用 strategy 连接（kwargs 风格，4 种）：
 #
 # deduction(premises=[lemma_a, lemma_b], conclusion=t)
 #

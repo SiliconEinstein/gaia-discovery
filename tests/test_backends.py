@@ -118,7 +118,7 @@ def test_gpugeek_run_agent_writes_artifact_and_python(monkeypatch, tmp_path):
         artifact_path=artifact_path,
         log_path=log_path,
         timeout=10,
-        extras_in={"action_kind": "experiment"},
+        extras_in={"action_kind": "induction"},
     )
 
     assert res.success is True
@@ -136,7 +136,7 @@ def test_gpugeek_run_agent_writes_artifact_and_python(monkeypatch, tmp_path):
     assert rec["type"] == "gpt_response"
     assert rec["model"] == "Vendor2/GPT-5.4"
     assert any(b["lang"] == "python" for b in rec["code_blocks"])
-    assert rec["action_kind"] == "experiment"
+    assert rec["action_kind"] == "induction"
 
 
 def test_gpugeek_run_agent_lean_action(monkeypatch, tmp_path):
@@ -207,7 +207,7 @@ def test_run_subagent_uses_gpugeek_when_env_set(monkeypatch, tmp_path):
     project.mkdir()
 
     sig = ActionSignal(
-        action_id="act_xy", action_kind="experiment",
+        action_id="act_xy", action_kind="induction",
         node_qid="q1", node_kind="claim", node_label="C1",
         node_content="some claim", args={}, metadata={},
     )
@@ -219,7 +219,7 @@ def test_run_subagent_uses_gpugeek_when_env_set(monkeypatch, tmp_path):
     )
     assert res.success is True
     assert res.artifact_exists is True
-    assert res.action_kind == "experiment"
+    assert res.action_kind == "induction"
     # cmd[0] 是 backend.name 时（gpugeek 没有真正的 cmd 数组），允许 "gpugeek"
     # 或保留兼容；至少不该是 "claude"
     assert res.cmd[0] != "claude"

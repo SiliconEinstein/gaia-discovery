@@ -5,7 +5,7 @@
 
 派发规则（严格）：
   metadata 必须含 "action" 字符串字段，且 action_status 缺失或 == "pending"。
-  action 必须 ∈ ALLOWED_ACTIONS（17 种：13 strategy + 4 operator）。
+  action 必须 ∈ ALLOWED_ACTIONS（8 种：4 strategy + 4 operator）。
   args 可选，缺失即空 dict。
 
 ActionSignal 是不可变值对象；mark_dispatched / set_action_status 这类
@@ -70,7 +70,7 @@ def _validate_metadata(metadata: dict[str, Any] | None) -> tuple[str, dict[str, 
         return None
     if action not in ALLOWED_ACTIONS:
         raise ValueError(
-            f"未知 action {action!r}，必须 ∈ ALLOWED_ACTIONS（17 种）"
+            f"未知 action {action!r}，必须 ∈ ALLOWED_ACTIONS（8 种）"
         )
     status = metadata.get("action_status", "pending")
     if status != "pending":

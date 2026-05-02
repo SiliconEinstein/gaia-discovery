@@ -1,4 +1,4 @@
-"""strategy_skeleton 单测：覆盖 22 action_kinds → gaia.ir.StrategyType 映射 +
+"""strategy_skeleton 单测：覆盖 8 action_kinds → gaia.ir.StrategyType 映射 +
 formalize_named_strategy 实调成功 / fallback / 错误路径。"""
 from __future__ import annotations
 
@@ -12,53 +12,30 @@ from gd.strategy_skeleton import (
 )
 
 
-def test_action_to_strategy_covers_22_kinds():
-    """22 个 action_kinds 全部映射（即使 None 也是显式登记）。"""
+def test_action_to_strategy_covers_8_kinds():
+    """8 个 action_kinds 全部映射（即使 None 也是显式登记）。"""
     expected_kinds = {
-        # A. Strategy (13)
+        # A. Strategy（4，kwargs 风格）
         "support", "deduction", "abduction", "induction",
-        "mathematical_induction", "analogy", "case_analysis",
-        "extrapolation", "compare", "elimination",
-        "composite", "fills", "infer",
-        # B. Operator (4)
+        # B. Operator（4，positional 风格）
         "contradiction", "equivalence", "complement", "disjunction",
-        # C. Runner (5)
-        "plausible", "experiment", "lean", "bridge_planning", "lean_decompose",
     }
     assert set(ACTION_TO_STRATEGY.keys()) == expected_kinds
-    assert len(ACTION_TO_STRATEGY) == 22
+    assert len(ACTION_TO_STRATEGY) == 8
 
 
 def test_can_formalize_split():
-    """gaia 命名 strategy 9 个：deduction/elimination/math_ind/case_an/abduction/
-    analogy/extrapolation/support/compare；plausible→support；lean→deduction。"""
+    """v3 当前白名单中能被 gaia.ir.formalize_named_strategy 接受的有 3 个：
+    support / deduction / abduction。induction（无 gaia native template）和
+    4 个 operator 都 fallback 到 None。"""
     formalizable = {k for k in ACTION_TO_STRATEGY if can_formalize(k)}
-    assert formalizable == {
-        "support", "deduction", "abduction", "mathematical_induction",
-        "analogy", "case_analysis", "extrapolation", "compare", "elimination",
-        "plausible", "lean",
-    }
+    assert formalizable == {"support", "deduction", "abduction"}
 
 
 @pytest.mark.parametrize("kind,premises,conclusion", [
     ("deduction", ["discovery:test::p1", "discovery:test::p2"], "discovery:test::c"),
     ("support", ["discovery:test::p1", "discovery:test::p2"], "discovery:test::c"),
     ("abduction", ["discovery:test::p1", "discovery:test::p2"], "discovery:test::c"),
-    ("analogy", ["discovery:test::p1", "discovery:test::p2"], "discovery:test::c"),
-    # case_analysis 要 [Exhaustiveness, Case1, Support1, Case2, Support2, ...]
-    ("case_analysis",
-     ["discovery:test::ex", "discovery:test::c1", "discovery:test::s1",
-      "discovery:test::c2", "discovery:test::s2"], "discovery:test::c"),
-    # extrapolation 必须恰好 2 premise
-    ("extrapolation", ["discovery:test::p1", "discovery:test::p2"], "discovery:test::c"),
-    # compare 必须 [pred_h, pred_alt, observation]
-    ("compare",
-     ["discovery:test::ph", "discovery:test::pa", "discovery:test::ob"],
-     "discovery:test::c"),
-    # elimination 同 case_analysis 形态
-    ("elimination",
-     ["discovery:test::ex", "discovery:test::c1", "discovery:test::e1",
-      "discovery:test::c2", "discovery:test::e2"], "discovery:test::c"),
 ])
 def test_formalize_named_strategies_succeed(kind, premises, conclusion):
     sk = formalize_strategy_for_action(
@@ -75,22 +52,10 @@ def test_formalize_named_strategies_succeed(kind, premises, conclusion):
     assert sk.operators_count >= 1
 
 
-def test_formalize_mathematical_induction():
-    """MATHEMATICAL_INDUCTION 需要至少 base + step 两条 premise。"""
-    sk = formalize_strategy_for_action(
-        action_kind="mathematical_induction",
-        premise_qids=["discovery:test::base", "discovery:test::step"],
-        conclusion_qid="discovery:test::for_all_n",
-        namespace="discovery",
-        package_name="test",
-    )
-    assert sk is not None
-    assert sk.strategy_type == "mathematical_induction"
-
-
 def test_formalize_returns_none_for_non_formalizable():
-    for kind in ["experiment", "contradiction", "complement",
-                 "fills", "infer", "induction", "composite"]:
+    """v3 白名单中无 gaia native template 的 5 个 kind：induction + 4 operator。"""
+    for kind in ["induction", "contradiction", "equivalence",
+                 "complement", "disjunction"]:
         sk = formalize_strategy_for_action(
             action_kind=kind,
             premise_qids=["x"],
