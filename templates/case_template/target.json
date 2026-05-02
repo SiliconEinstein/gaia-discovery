@@ -1,0 +1,5 @@
+{
+    "target_qid": "discovery:{{__PROBLEM_ID__}}::t",
+    "threshold": 0.7,
+    "strict_publish": true
+}

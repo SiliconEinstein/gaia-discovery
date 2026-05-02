@@ -1,0 +1,16 @@
+# gd 主 agent 配置示例
+#
+# 把此文件复制为 gd.toml 放在仓库根、项目目录、或 ~/.config/gd/config.toml
+# 优先级：环境变量 GD_CLAUDE_MODEL  >  cwd 上溯 gd.toml  >  ~/.config/gd/config.toml
+# 没有任何配置时，不向 claude CLI 注入 --model，行为由 ~/.claude/settings.json 决定。
+
+[main_agent]
+# 主 agent 调用 claude CLI 时使用的模型 ID。
+#
+# 常见取值：
+#   - 官方 Anthropic API：
+#         model = "claude-sonnet-4-5"
+#   - gpugeek 代理（必须用 Sonnet，GPT-5.4 与 stream-json 不兼容）：
+#         model = "Vendor2/Claude-4.5-Sonnet"
+#   - 自建中转：用你中转支持的 model 名
+model = "claude-sonnet-4-5"
