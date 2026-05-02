@@ -1,10 +1,10 @@
-# CLAUDE.md — gaia-discovery v3 仓库根
+# CLAUDE.md — gaia-discovery v0.x 仓库根
 
 > 本仓库代码全部要求工业级。不允许任何形式的模拟、虚拟、简化、省略、默认通过。
 
 ## 仓库角色
 
-`gaia-discovery v3` 是 Claude Code 驱动的数学/科学发现系统：
+`gaia-discovery v0.x` 是 Claude Code 驱动的数学/科学发现系统：
 
 - **主 agent** (这个 Claude Code session) 在每个 `projects/<problem_id>/` 目录里编辑 `plan.gaia.py` —— 这份文件**同时是** Gaia 知识包源码（编译进 IR）和探索路径文档（git diff 即可读）
 - **sub-agent** 是 `claude -p` 子进程，主 agent 在 `plan.gaia.py` 上标 `metadata={"action": ..., "args": {...}}` 派遣

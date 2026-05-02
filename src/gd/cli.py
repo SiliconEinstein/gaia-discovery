@@ -1,4 +1,4 @@
-"""gaia-discovery v3 CLI 入口。
+"""gaia-discovery v0.x CLI 入口。
 
 子命令:
   - init        创建一个新探索 case (scaffold)
@@ -27,7 +27,7 @@ console = Console()
 def doctor() -> None:
     """检查依赖、外部命令、服务可用性。"""
     issues: list[str] = []
-    table = Table(title="gaia-discovery v3 doctor")
+    table = Table(title="gaia-discovery v0.x doctor")
     table.add_column("check", style="cyan")
     table.add_column("status", style="green")
     table.add_column("detail")

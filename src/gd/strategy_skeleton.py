@@ -4,7 +4,7 @@ gaia.ir.formalize_named_strategy 得到 FormalStrategy IR 骨架。
 用途：sub-agent 返回 markdown + 结构化字段（premise_qids/conclusion_qid/strategy_kind）
 后，verify-heuristic 与 belief_ingest 调本模块拿到 gaia 原生 FormalStrategy；
 该 IR 可直接灌进 LocalCanonicalGraph 给 run_review 做结构性校验，
-而不是 v3 自己用 claude -p 二次 NL→DSL（那一步保留作 fallback）。
+而不是 gaia-discovery 自己用 claude -p 二次 NL→DSL（那一步保留作 fallback）。
 
 gaia.ir.formalize_named_strategy 只支持 9 种命名 strategy：
   DEDUCTION, ELIMINATION, MATHEMATICAL_INDUCTION, CASE_ANALYSIS,

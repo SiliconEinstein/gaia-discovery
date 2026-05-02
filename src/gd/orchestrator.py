@@ -1,4 +1,4 @@
-"""orchestrator: gaia-discovery v3 主循环（CONTEXT/THINK/DISPATCH/VERIFY/INGEST/BP/REVIEW/ASSESS）。
+"""orchestrator: gaia-discovery v0.x 主循环（CONTEXT/THINK/DISPATCH/VERIFY/INGEST/BP/REVIEW/ASSESS）。
 
 每一轮 = run_iteration(project_dir, iter_id) ：
 
@@ -153,7 +153,7 @@ def build_main_prompt(
     """
     project_dir = Path(project_dir).resolve()
     return (
-        f"# Iteration {iter_id} \u2014 gaia-discovery-v3 \u4e3b agent\n\n"
+        f"# Iteration {iter_id} \u2014 gaia-discovery v0.x \u4e3b agent\n\n"
         f"\u5de5\u4f5c\u76ee\u5f55\uff1a{project_dir}\n"
         f"\u76ee\u6807\uff1atarget_qid={target.target_qid or '(\u672a\u8bbe\u7f6e)'}, "
         f"threshold={target.threshold}\n\n"

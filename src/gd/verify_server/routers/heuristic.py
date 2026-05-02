@@ -50,7 +50,7 @@ def set_judge_hook(fn) -> None:
 
 
 # gaia 原生支持的 strategy 类型（formalize_named_strategy 已实现的 9 种）
-# 见 /root/Gaia/gaia/ir/formalize.py:562-570 _BUILDERS 表
+# 见 Gaia 源码 gaia/ir/formalize.py 的 _BUILDERS 表
 _GAIA_NATIVE_STRATEGY_TYPES = frozenset({
     "deduction", "elimination", "mathematical_induction", "case_analysis",
     "abduction", "analogy", "extrapolation", "support", "compare",

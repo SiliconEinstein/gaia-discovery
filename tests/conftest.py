@@ -1,4 +1,4 @@
-"""Pytest fixtures for gaia-discovery v3."""
+"""Pytest fixtures for gaia-discovery v0.x."""
 from __future__ import annotations
 
 import shutil

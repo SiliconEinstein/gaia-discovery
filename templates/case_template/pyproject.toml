@@ -1,7 +1,7 @@
 [project]
 name = "discovery-{{__PROBLEM_ID__}}-gaia"
 version = "0.1.0"
-description = "gaia-discovery-v3 case for open problem {{__PROBLEM_ID__}}"
+description = "gaia-discovery v0.x case for open problem {{__PROBLEM_ID__}}"
 requires-python = ">=3.12"
 dependencies = ["gaia-lang"]
 

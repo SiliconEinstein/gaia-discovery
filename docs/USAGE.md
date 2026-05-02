@@ -1,13 +1,13 @@
-# gaia-discovery-v3 使用指南
+# gaia-discovery v0.x 使用指南
 
 ## 1. 环境准备
 
 ```bash
-git clone <repo-url> gaia-discovery-v3
-cd gaia-discovery-v3
+git clone <repo-url> gaia-discovery
+cd gaia-discovery
 
-# 安装 Gaia（需先 clone gaia 仓库到 /root/Gaia 或调整路径）
-pip install -e /root/Gaia
+# 安装 Gaia（需先 clone Gaia 仓库并调整为你的本地路径）
+pip install -e /path/to/Gaia
 
 # 安装本项目
 pip install -e .
@@ -127,7 +127,7 @@ gd explore . --max-iter 8 --max-time 1h --target-belief 0.7
 ### 6a. baseline：纯 GPT-5.4 直答
 
 ```bash
-cd /root/personal/gaia-discovery-v3
+cd /path/to/gaia-discovery
 
 python eval/frontierscience/fs_run_baseline.py \
     --workers 6 \
@@ -148,45 +148,31 @@ python eval/frontierscience/fs_judge.py \
 
 已知 baseline：**60.23%**（physics 52.08% / chemistry 62.09% / biology 66.59%）。
 
-### 6c. v3：每题跑完整 gd explore
+### 6c. v0.x：每题跑完整 gd explore
 
-```bash
-# 确保 verify server 已启动（见第 4 节）
-# 确保 GD_SUBAGENT_BACKEND 已设（见第 2 节）
+当前 v0.x 最小发行保留了 baseline runner 与 judge；批量候选 runner 尚未提交。
+跑候选结果时，应让 runner 对每题执行 `gd init + gd explore`，并输出与 baseline 相同 schema 的 `responses_v0x_research.jsonl`。
 
-python eval/frontierscience/fs_v3_runner.py \
-    --workers 2 \
-    --max-iter 5 \
-    --max-time 30m \
-    --output eval/frontierscience/results/responses_v3_research.jsonl
-```
-
-`fs_v3_runner.py` 对每题执行 `gd init + gd explore`，把 `blueprint_verified.md` 或 `plan.gaia.py` 终态作为 answer 提交给 judge。
-
-### 6d. v3 评分
+### 6d. v0.x 评分
 
 ```bash
 python eval/frontierscience/fs_judge.py \
-    --responses eval/frontierscience/results/responses_v3_research.jsonl \
-    --output    eval/frontierscience/results/scores_v3_research.jsonl \
-    --summary   eval/frontierscience/results/summary_v3_research.json \
+    --responses eval/frontierscience/results/responses_v0x_research.jsonl \
+    --output    eval/frontierscience/results/scores_v0x_research.jsonl \
+    --summary   eval/frontierscience/results/summary_v0x_research.json \
     --workers 4
 ```
 
 ### 6e. 横评
 
-```bash
-python eval/frontierscience/fs_compare.py \
-    --baseline eval/frontierscience/results/summary_gpt54_research.json \
-    --v3       eval/frontierscience/results/summary_v3_research.json
-```
+比较 `summary_gpt54_research.json` 与 `summary_v0x_research.json` 的 `overall_pct` 和 `by_subject` 字段。
 
 ---
 
 ## 7. 目录结构
 
 ```
-gaia-discovery-v3/
+gaia-discovery/
 ├── src/gd/
 │   ├── backends.py          # LLM transport 抽象
 │   ├── orchestrator.py      # 8 步探索循环
@@ -223,7 +209,7 @@ gaia-discovery-v3/
 ## 9. 测试
 
 ```bash
-# 单元测试（全量 240）
+# 单元测试
 pytest tests/
 
 # backend 切换烟测

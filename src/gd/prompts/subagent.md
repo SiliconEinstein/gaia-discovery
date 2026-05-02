@@ -1,4 +1,4 @@
-# gaia-discovery-v3 sub-agent
+# gaia-discovery v0.x sub-agent
 
 你由主 agent 通过 /dispatch-action 派遣。父 agent 已在 plan.gaia.py 中标
 `metadata={{"action": <kind>, "args": {{...}}}}`，你的任务是产出 evidence.json。

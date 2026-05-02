@@ -278,7 +278,7 @@ def _make_heur_req(tmp_path: Path, dsl: str) -> VerifyRequest:
 
 
 def test_heuristic_compile_failure_on_syntax(tmp_path):
-    # v3: heuristic 已不再 compile DSL；syntax broken markdown 仍应 inconclusive
+    # v0.x: heuristic 已不再 compile DSL；syntax broken markdown 仍应 inconclusive
     # （因无 evidence.json 或 sub-agent 自评 inconclusive）
     req = _make_heur_req(tmp_path, _DSL_SYNTAX_BROKEN)
     resp = verify_heuristic(req)

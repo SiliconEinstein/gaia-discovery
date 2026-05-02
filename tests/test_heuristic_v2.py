@@ -1,4 +1,4 @@
-"""verify-heuristic v3 单测：LLM judge 路径，通过 set_judge_hook 注入 fake judge。"""
+"""verify-heuristic v0.x 单测：LLM judge 路径，通过 set_judge_hook 注入 fake judge。"""
 from __future__ import annotations
 
 import json

@@ -1,4 +1,4 @@
-# gaia-discovery v3
+# gaia-discovery v0.x
 
 **Claude Code 驱动的 Gaia DSL 探索系统**
 
@@ -6,7 +6,7 @@
 
 ## 前置条件
 
-1. **Python 3.11+**（`tomllib` 内置）
+1. **Python 3.12+**
 2. **Gaia**（Anthropic-private）：`pip install -e /path/to/Gaia`
 3. **claude CLI**：能裸跑 `claude --version`；`~/.claude/settings.json` 里配好 API key
 
@@ -102,7 +102,7 @@ verify 路由由 `ACTION_KIND_TO_ROUTER` 静态派发到 `quantitative / structu
 ## 测试
 
 ```bash
-pytest tests/                                    # 246 单元/集成
+pytest tests/                                    # 单元/集成
 pytest tests/e2e/test_riemann_zeta_smoke.py      # e2e 烟测
 ```
 

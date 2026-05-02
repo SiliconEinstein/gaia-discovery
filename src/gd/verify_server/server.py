@@ -35,7 +35,7 @@ logger = logging.getLogger("gd.verify_server")
 def create_app() -> FastAPI:
     app = FastAPI(
         title="gd-verify",
-        description="gaia-discovery-v3 verify_server: 独立 verdict adjudicator",
+        description="gaia-discovery v0.x verify_server: 独立 verdict adjudicator",
         version="0.1.0",
     )
 

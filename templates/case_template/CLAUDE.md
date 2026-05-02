@@ -1,4 +1,4 @@
-# {{__PROBLEM_ID__}} — gaia-discovery-v3 case
+# {{__PROBLEM_ID__}} — gaia-discovery v0.x case
 
 你是这个 case 的主 agent。
 本目录由 `gd init {{__PROBLEM_ID__}}` 创建。

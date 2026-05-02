@@ -26,7 +26,7 @@ def _make_fake_bin(tmp_path: Path, body: str, name: str = "fakeclaude") -> Path:
 
 
 def _make_project(tmp_path: Path) -> Path:
-    """构造一个最小 v3 project_dir：plan.gaia.py + .gaia/state + memory/。"""
+    """构造一个最小 v0.x project_dir：plan.gaia.py + .gaia/state + memory/。"""
     proj = tmp_path / "proj"
     proj.mkdir()
     (proj / "pyproject.toml").write_text("[project]\nname='proj'\n", encoding="utf-8")

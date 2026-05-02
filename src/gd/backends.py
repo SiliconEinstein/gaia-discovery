@@ -360,7 +360,7 @@ class GpugeekBackend:
     name = "gpugeek"
 
     AGENT_SYSTEM_FIXED = (
-        "You are a sub-agent in gaia-discovery-v3. Output a markdown artifact "
+        "You are a sub-agent in gaia-discovery v0.x. Output a markdown artifact "
         "with EXACTLY four sections, in this order:\n"
         "## 结论 — one line: verified | refuted | inconclusive + brief reason\n"
         "## 论证 — derivation / experiment outline / retrieval steps\n"

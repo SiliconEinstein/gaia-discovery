@@ -1,11 +1,11 @@
 ---
 name: verify-claim
-description: 对一条结构化 claim 打给 v3 verify_server（HTTP），得到 verdict + confidence。临时 / 自检用，不写图不写盘。
+description: 对一条结构化 claim 打给 v0.x verify_server（HTTP），得到 verdict + confidence。临时 / 自检用，不写图不写盘。
 ---
 
 # Verify Claim
 
-调 v3 本地 verify_server（HTTP）对一条 claim 跑 verify。
+调 v0.x 本地 verify_server（HTTP）对一条 claim 跑 verify。
 
 ## 何时用
 

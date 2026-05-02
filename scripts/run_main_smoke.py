@@ -5,12 +5,15 @@ from pathlib import Path
 
 os.environ["GD_SUBAGENT_BACKEND"] = "gpugeek"
 os.environ["GD_SUBAGENT_MODEL"] = "Vendor2/GPT-5.4"
-os.environ["GPUGEEK_API_KEY"] = "d0ziwmolmvx8t401000dhan1gs02h2a7e0q2p5to"
+os.environ.setdefault("GPUGEEK_API_KEY", "")
 os.environ["GPUGEEK_BASE_URL"] = "https://api.gpugeek.com"
 os.environ["NO_PROXY"] = "127.0.0.1,localhost"
 os.environ["no_proxy"] = "127.0.0.1,localhost"
-sys.path.insert(0, "/root/Gaia")
-sys.path.insert(0, "/root/personal/gaia-discovery-v3/src")
+REPO_ROOT = Path(__file__).resolve().parents[1]
+GAIA_ROOT = os.environ.get("GAIA_ROOT")
+if GAIA_ROOT:
+    sys.path.insert(0, GAIA_ROOT)
+sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from gd.orchestrator import run_iteration, TargetSpec
 from gd.prompts.loader import default_subagent_prompt_for, load_main_explorer
@@ -39,7 +42,7 @@ def in_process_verify(body: dict) -> dict:
             "error": f"unrouted action_kind: {action_kind}"}
 
 
-PROJECT_DIR = Path("/root/personal/gaia-discovery-v3/projects/fs_smoke_naclkcl")
+PROJECT_DIR = Path(os.environ.get("GD_SMOKE_PROJECT", str(REPO_ROOT / "projects" / "fs_smoke_naclkcl")))
 ITER_ID = sys.argv[1] if len(sys.argv) > 1 else "iter_01"
 
 target = TargetSpec.load(PROJECT_DIR)

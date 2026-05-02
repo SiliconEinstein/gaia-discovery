@@ -2,11 +2,13 @@
 
 PY := python3
 PIP := pip
-ROOT := /root/personal/gaia-discovery-v3
+ROOT := $(CURDIR)
+GAIA_ROOT ?= /path/to/Gaia
+DZ_HYPERGRAPH_ROOT ?=
 
 install-all:
-	$(PIP) install -e /root/Gaia
-	$(PIP) install -e /root/gaia-discovery/packages/dz-hypergraph
+	$(PIP) install -e $(GAIA_ROOT)
+	@if [ -n "$(DZ_HYPERGRAPH_ROOT)" ]; then $(PIP) install -e "$(DZ_HYPERGRAPH_ROOT)"; fi
 	$(PIP) install -e $(ROOT)[dev]
 
 test:

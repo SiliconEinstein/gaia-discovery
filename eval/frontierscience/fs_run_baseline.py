@@ -78,7 +78,7 @@ def run_one(idx: int, item: dict, out_path: Path) -> dict:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--input", default="/root/datasets/frontierscience/research/test.jsonl")
-    ap.add_argument("--output", default="/root/personal/gaia-discovery-v3/eval/frontierscience/results/responses_gpt54_research.jsonl")
+    ap.add_argument("--output", default="eval/frontierscience/results/responses_gpt54_research.jsonl")
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--resume", action="store_true")
