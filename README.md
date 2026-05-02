@@ -84,11 +84,11 @@ projects/<id>/plan.gaia.py    ← 主 agent 直接编辑（IR 源码 + 探索路
    belief_snapshot.json + run_review → next iteration
 ```
 
-## 17 种可派发 action
+## 可派发 action
 
-- **13 strategy**（kwargs 风格，接 `premises=[...] / conclusion=...`）：
-  `support / deduction / abduction / induction / mathematical_induction / analogy / case_analysis / extrapolation / compare / elimination / composite / fills / infer`
-- **4 operator**（positional 风格，**不接** `premises/conclusion`，签名形如 `contradiction(k_a, k_b)`）：
+- **strategy**（kwargs 风格，接 `premises=[...] / conclusion=...`）：
+  `support / deduction / abduction / induction`
+- **operator**（positional 风格，**不接** `premises/conclusion`，签名形如 `contradiction(k_a, k_b)`）：
   `contradiction / equivalence / complement / disjunction`
 
 权威白名单：`src/gd/verify_server/schemas.py::ALL_ACTIONS`。
