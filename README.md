@@ -99,6 +99,20 @@ verify 路由由 `ACTION_KIND_TO_ROUTER` 静态派发到 `quantitative / structu
 > `reason=` 与 `prior=` 在 strategy/operator 上**必须成对**给出（全给或全不给），单给一个会触发 `_validate_reason_prior` 抛 `ValueError`。
 > 每个 `claim()` 必带 `prior=` 与 `metadata.prior_justification`，否则 review 会列入 `publish_blockers`（详见 AGENTS.md §`claim()` 硬约束）。
 
+## 近期增强（2026-05）
+
+- **inquiry-event 层接入** — `belief_ingest._apply_verdict_locked` 成功 patch plan 后会把 FSM transition 同步写进 gaia.inquiry：
+  - 全部成功 verdict → `append_tactic(event="claim_state_transition", payload={...})` 落 tactics.jsonl
+  - `new_state ∈ {refuted, contested}` → `push_rejection(target_strategy=action_id, content=...)` 关闭该分支
+  - `new_state == stale` → `push_obligation(target_qid, diagnostic_kind="other", anchor=...)` 让 reviewer 重审
+  - emit 失败只 log warning，不回滚 plan（plan 已落盘是既成事实）
+
+- **inconclusive 状态机闭合** — `verdict × old_state × backend_rank` 真值表：高 rank backend（lean_lake > sandbox_python > inquiry_review > heuristic）能 override 低 rank 的 proven，反之变 contested。权威实现：`src/gd/belief_ingest.py::StateDecision`。
+
+- **task_results 迭代归档** — Archon-style：每轮 iter 开始前，`orchestrator._archive_prev_task_results` 把上一 iter 的 `task_results/act_*.{md,evidence.json,lean,py}` + `_judge/` 移到 `runs/<prev_iter>/task_results/`。flat 目录跨 iter 不再累积。
+
+- **sub-agent MCP 注入 + outcome taxonomy** — `subagent.py` 每次 spawn 都注入 `.mcp.json`（verify-claim skill 能调 MCP）；返回结果按 `SubAgentResult.outcome ∈ {completed, timeout, crashed, invalid_output}` 分类，dispatcher 按 outcome 决定是否重试/降 prior。
+
 ## 测试
 
 ```bash
