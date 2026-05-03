@@ -3,13 +3,18 @@
 工作流（与原 8 步主循环对齐）：
 - DISPATCH 第一次扫到 pending claim → 调 stamp_action_ids 把 action_id 写进 metadata
 - VERIFY 完成后 → orchestrator 调 apply_verdict(project_dir, action_id=..., verdict=...)
-- 本模块用 libcst 找含 action_id=... 的 claim 调用，按 verdict + backend 改写：
-    * verified + lean_lake     → prior=0.99, action_status="done", state="proven"
-    * verified + sandbox_python → prior=0.85, action_status="done"
-    * verified + inquiry_review → prior=0.70, action_status="done"
-    * refuted                  → prior=0.00, action_status="done", state="refuted"
-    * inconclusive             → action_status="failed" (不动 prior)
-  并在 metadata.provenance 追加 {source, action_id, evidence}
+- 本模块用 libcst 找含 action_id=... 的 claim 调用，按
+  (old_state × new_verdict × backend_rank) 状态机改写（详见 _transition_state）：
+    * verified + lean_lake on fresh    → prior=0.99, state="proven", action_status="done"
+    * verified + heuristic on fresh    → prior=0.70 (state 不动), action_status="done"
+    * verified 且老 prior 更高          → 不回退 prior, state 升级
+    * refuted on lean-proven by 弱 backend → state="contested", prior 减半（不归零）
+    * refuted on 同级/无 proven        → state="refuted", prior=0.0
+    * inconclusive on proven 同级或更强 backend → state="stale", prior 减半
+    * inconclusive on proven 更弱 backend → 维持 proven（弱 backend 无权 invalidate 强证）
+    * inconclusive on fresh             → 仅 action_status="failed"，state/prior 不动
+  action_status 永远跟新 verdict（dispatcher 调度信号），与 lifecycle 解耦。
+  并在 verify_history 追加 {source, action_id, verdict, confidence, evidence}
 - 改写后立即 round-trip compile 校验：失败则回滚源码，IngestResult.error 上报
 
 工业级：
@@ -88,6 +93,142 @@ _BACKEND_TO_CAP: dict[str, float] = {
     "inquiry_review": PRIOR_CAP_HEURISTIC,
     "unavailable": PRIOR_CAP_HEURISTIC,
 }
+
+
+# ---------------------------------------------------------------------------
+# 状态机：verdict × old_state × backend_rank → (new_state, new_prior)
+# ---------------------------------------------------------------------------
+#
+# gaia DSL 的 claim() 不约束 state 字段 —— state 是 v3 自治的 lifecycle metadata。
+# BP（gaia/bp/）只消费 prior ∈ [0,1]。我们在这里集中定义 state vocabulary 与转移。
+#
+# state 取值：
+#   None        —— 默认，未 verify / 未确证（conjectured）
+#   "proven"    —— 已被强 backend（lean_lake）证过
+#   "refuted"   —— 已被证伪
+#   "stale"     —— 曾 proven，后被同级或更强 backend 判 inconclusive → prior 减半
+#   "contested" —— 跨 backend 结论冲突（proven→refuted 或 refuted→verified）
+#
+# backend rank 沿用 _BACKEND_TO_CAP 的权威隐序（lean > sandbox > review > heuristic）。
+# 核心不变式：**弱 backend 的 inconclusive 不能 invalidate 强 backend 的证明**。
+
+VALID_STATES: frozenset[str] = frozenset({"proven", "refuted", "stale", "contested"})
+
+BACKEND_RANK: dict[str, int] = {
+    "lean_lake": 4,
+    "sandbox_python": 3,
+    "inquiry_review": 2,
+    "heuristic": 1,
+    "unavailable": 1,
+}
+
+
+def _rank(backend: str | None) -> int:
+    if backend is None:
+        return 0
+    return BACKEND_RANK.get(backend, 0)
+
+
+@dataclass
+class StateDecision:
+    """transition 返回：要写回 plan.gaia.py 的 state/prior 目标值。
+
+    None 表示"不修改对应字段"（既不写也不清）。action_status 独立由 verdict 决定，
+    与本决策正交。
+    """
+    new_state: str | None  # None=不动
+    new_prior: float | None  # None=不动
+    reason: str  # 便于审计日志/diff_summary
+    clear_state: bool = False  # True 时显式把 state 改写为 None（目前不用到，预留）
+
+
+def _transition_state(
+    *,
+    old_state: str | None,
+    old_backend: str | None,
+    old_prior: float | None,
+    new_verdict: str,
+    new_backend: str,
+) -> StateDecision:
+    """决策新 state/prior。详见模块头注释。
+
+    只在 belief_ingest 内部调用，不对外导出（测试通过 __all__ 可见）。
+    """
+    new_rank = _rank(new_backend)
+    old_rank = _rank(old_backend)
+
+    if new_verdict == "verified":
+        cap = _BACKEND_TO_CAP.get(new_backend, PRIOR_CAP_HEURISTIC)
+        if old_state == "refuted":
+            # 跨 backend 翻案：标 contested，prior 给新 cap（但保留审计痕迹）
+            return StateDecision(
+                new_state="contested",
+                new_prior=cap,
+                reason=f"verified({new_backend}) overturns refuted → contested",
+            )
+        # lean 证过才主动写 proven；其他 backend 的 verified 只升 prior 不改 state
+        new_state = "proven" if new_backend == "lean_lake" else None
+        # prior 取 max(old, cap) —— 避免强 backend 的历史 prior 被弱 backend 覆写回退
+        if old_prior is not None and old_prior > cap:
+            return StateDecision(
+                new_state=new_state,
+                new_prior=None,  # 不回退
+                reason=f"verified({new_backend}) but old_prior={old_prior:.2f} > cap={cap:.2f}",
+            )
+        return StateDecision(
+            new_state=new_state,
+            new_prior=cap,
+            reason=f"verified({new_backend}) → prior={cap:.2f}",
+        )
+
+    if new_verdict == "refuted":
+        if old_state == "proven" and old_rank > new_rank:
+            # 强 backend 的 proven 被弱 backend 推翻 → 标 contested + prior 减半不归零
+            halved = max(0.3, (old_prior if old_prior is not None else 0.5) * 0.5)
+            return StateDecision(
+                new_state="contested",
+                new_prior=halved,
+                reason=(
+                    f"refuted({new_backend}, rank={new_rank}) cannot fully invalidate "
+                    f"proven({old_backend}, rank={old_rank}) → contested, prior halved"
+                ),
+            )
+        return StateDecision(
+            new_state="refuted",
+            new_prior=PRIOR_FLOOR_REFUTED,
+            reason=f"refuted({new_backend}) → prior=0",
+        )
+
+    if new_verdict == "inconclusive":
+        if old_state == "proven":
+            if new_rank >= old_rank:
+                # 同级或更强的 backend 判不清 → 降级 stale
+                halved = (old_prior if old_prior is not None else 0.99) * 0.5
+                return StateDecision(
+                    new_state="stale",
+                    new_prior=halved,
+                    reason=(
+                        f"inconclusive({new_backend}, rank={new_rank}) ≥ "
+                        f"proven({old_backend}, rank={old_rank}) → stale, prior halved"
+                    ),
+                )
+            # 弱 backend 判不清，不能 invalidate 强 backend 的证明 —— 维持原状
+            return StateDecision(
+                new_state=None,
+                new_prior=None,
+                reason=(
+                    f"inconclusive({new_backend}, rank={new_rank}) < "
+                    f"proven({old_backend}, rank={old_rank}) → keep proven (weak backend cannot invalidate)"
+                ),
+            )
+        # 默认（None/refuted/stale/contested）：state/prior 不动，仅 action_status=failed
+        return StateDecision(
+            new_state=None,
+            new_prior=None,
+            reason=f"inconclusive on state={old_state!r} → no state change",
+        )
+
+    raise IngestError(f"未知 verdict: {new_verdict!r}")
 
 
 # ---------------------------------------------------------------------------
@@ -394,20 +535,86 @@ def _sync_metadata_action_status(call: cst.Call, new_status: str) -> cst.Call:
     return _replace_or_add_kwarg(call, "metadata", new_dict)
 
 
+def _read_kwarg_str_value(call: cst.Call, name: str) -> str | None:
+    """读 keyword=name 处的 SimpleString 字面量值；非字符串字面量返 None。"""
+    arg = _find_keyword(call, name)
+    if arg is None or not isinstance(arg.value, cst.SimpleString):
+        return None
+    return arg.value.evaluated_value
+
+
+def _read_kwarg_float_value(call: cst.Call, name: str) -> float | None:
+    """读 keyword=name 处的 Float/Integer 字面量；其他形式（表达式/变量）返 None。"""
+    arg = _find_keyword(call, name)
+    if arg is None:
+        return None
+    val = arg.value
+    if isinstance(val, cst.Float):
+        try:
+            return float(val.value)
+        except ValueError:
+            return None
+    if isinstance(val, cst.Integer):
+        try:
+            return float(val.value)
+        except ValueError:
+            return None
+    return None
+
+
+def _read_last_backend_from_history(call: cst.Call) -> str | None:
+    """从 verify_history list[dict] 读最后一条的 source 提取 backend 名。
+
+    source 形如 ``"verify:lean_lake"`` —— 取冒号后的 backend 标识。空 list 或无该 kwarg 返 None。
+    """
+    arg = _find_keyword(call, "verify_history")
+    if arg is None or not isinstance(arg.value, cst.List):
+        return None
+    if not arg.value.elements:
+        return None
+    last_el = arg.value.elements[-1]
+    if not isinstance(last_el.value, cst.Dict):
+        return None
+    for de in last_el.value.elements:
+        if not isinstance(de, cst.DictElement):
+            continue
+        if not (isinstance(de.key, cst.SimpleString) and de.key.evaluated_value == "source"):
+            continue
+        if not isinstance(de.value, cst.SimpleString):
+            return None
+        source = de.value.evaluated_value
+        if source.startswith("verify:"):
+            return source[len("verify:"):]
+        return source
+    return None
+
+
 class _VerdictTransformer(cst.CSTTransformer):
-    """找 metadata.action_id == target_action_id 的 claim 调用，按 update_kwargs 改写。"""
+    """找 metadata.action_id == target 的 claim 调用，按 verdict×old_state×backend 状态机改写。
+
+    与旧版差异：transformer 不再接 pre-computed update_kwargs；它在每个匹配 call 上
+    先读 old_state/old_prior/old_backend，再调 _transition_state 算 (new_state, new_prior)，
+    最后据 verdict 决定 action_status。这样保证状态决策 100% 取决于源码当前真实状态，
+    不会被 stale 的 caller-side 计算覆盖。
+    """
 
     def __init__(
         self,
         target_action_id: str,
-        update_kwargs: dict[str, cst.BaseExpression],
+        verdict: str,
+        new_backend: str,
         provenance_entry: dict[str, str] | None,
     ) -> None:
         super().__init__()
         self._target = target_action_id
-        self._updates = update_kwargs
+        self._verdict = verdict
+        self._new_backend = new_backend
         self._provenance = provenance_entry
         self.matched: int = 0
+        # 单 action_id 应唯一匹配；若多于 1 上层会报错。这里记录最后一次决策即可。
+        self.decision: StateDecision | None = None
+        self.new_status: str = "failed" if verdict == "inconclusive" else "done"
+        self.applied_updates: list[str] = []  # 实际写入的 kwarg 名（审计用）
 
     def leave_Call(self, original_node: cst.Call, updated_node: cst.Call) -> cst.Call:
         fname = _call_func_name(updated_node)
@@ -418,56 +625,54 @@ class _VerdictTransformer(cst.CSTTransformer):
             or _has_action_id_in_metadata_dict(updated_node, self._target)
         ):
             return updated_node
-        # 区分 action claim（有 action_status kwarg）与 evidence claim（metadata 里只是引用了 action_id）
+        # 区分 action claim（有 action_status kwarg）与 evidence claim（仅 metadata 里引用 action_id）
         if _find_keyword(updated_node, "action_status") is None:
             return updated_node
+
         self.matched += 1
+
+        old_state = _read_kwarg_str_value(updated_node, "state")
+        old_prior = _read_kwarg_float_value(updated_node, "prior")
+        old_backend = _read_last_backend_from_history(updated_node)
+
+        decision = _transition_state(
+            old_state=old_state,
+            old_backend=old_backend,
+            old_prior=old_prior,
+            new_verdict=self._verdict,
+            new_backend=self._new_backend,
+        )
+        self.decision = decision
+
         new_call = updated_node
-        for k, v in self._updates.items():
-            new_call = _replace_or_add_kwarg(new_call, k, v)
+        applied: list[str] = []
+
+        # action_status 永远跟 verdict（dispatcher 调度信号）
+        new_call = _replace_or_add_kwarg(
+            new_call, "action_status", _str_literal(self.new_status)
+        )
+        applied.append("action_status")
+
+        if decision.new_state is not None:
+            new_call = _replace_or_add_kwarg(
+                new_call, "state", _str_literal(decision.new_state)
+            )
+            applied.append("state")
+        if decision.new_prior is not None:
+            new_call = _replace_or_add_kwarg(
+                new_call, "prior", _float_literal(decision.new_prior)
+            )
+            applied.append("prior")
+
         if self._provenance is not None:
             new_call = _append_provenance(new_call, self._provenance)
-        # 同步 metadata.action_status，避免 dispatcher 下轮重派
-        sync_status = self._updates.get('action_status')
-        if sync_status is not None and isinstance(sync_status, cst.SimpleString):
-            new_call = _sync_metadata_action_status(new_call, sync_status.evaluated_value)
+            applied.append("verify_history")
+
+        new_call = _sync_metadata_action_status(new_call, self.new_status)
+        applied.append("metadata.action_status")
+
+        self.applied_updates = applied
         return new_call
-
-
-def _verdict_to_updates(
-    verdict: str,
-    backend: str,
-) -> tuple[dict[str, cst.BaseExpression], str, str | None, float | None]:
-    """返回 (kwargs 改写映射, new_action_status, new_state | None, new_prior | None)。"""
-    if verdict == "verified":
-        cap = _BACKEND_TO_CAP.get(backend, PRIOR_CAP_HEURISTIC)
-        new_state = "proven" if backend == "lean_lake" else None
-        updates: dict[str, cst.BaseExpression] = {
-            "prior": _float_literal(cap),
-            "action_status": _str_literal("done"),
-        }
-        if new_state is not None:
-            updates["state"] = _str_literal(new_state)
-        return updates, "done", new_state, cap
-    if verdict == "refuted":
-        return (
-            {
-                "prior": _float_literal(PRIOR_FLOOR_REFUTED),
-                "action_status": _str_literal("done"),
-                "state": _str_literal("refuted"),
-            },
-            "done",
-            "refuted",
-            PRIOR_FLOOR_REFUTED,
-        )
-    if verdict == "inconclusive":
-        return (
-            {"action_status": _str_literal("failed")},
-            "failed",
-            None,
-            None,
-        )
-    raise IngestError(f"未知 verdict: {verdict!r}")
 
 
 def apply_verdict(
@@ -529,13 +734,11 @@ def _apply_verdict_locked(
             error=f"libcst 解析失败: {exc}",
         )
 
-    try:
-        updates, new_status, new_state, new_prior = _verdict_to_updates(verdict, backend)
-    except IngestError as exc:
+    if verdict not in ("verified", "refuted", "inconclusive"):
         return IngestResult(
             action_id=action_id, file=str(plan_path), patched=False,
             new_prior=None, new_action_status="-", new_state=None,
-            error=str(exc),
+            error=f"未知 verdict: {verdict!r}",
         )
 
     provenance_entry: dict[str, str] = {
@@ -546,7 +749,12 @@ def _apply_verdict_locked(
         "evidence": evidence[:200].replace("\n", " "),
     }
 
-    transformer = _VerdictTransformer(action_id, updates, provenance_entry)
+    transformer = _VerdictTransformer(
+        target_action_id=action_id,
+        verdict=verdict,
+        new_backend=backend,
+        provenance_entry=provenance_entry,
+    )
     new_module = module.visit(transformer)
 
     if transformer.matched == 0:
@@ -562,12 +770,20 @@ def _apply_verdict_locked(
             error=f"action_id={action_id} 在源码中出现 {transformer.matched} 次（应唯一）",
         )
 
+    decision = transformer.decision  # 单匹配后必非 None
+    new_status = transformer.new_status
+
     new_src = new_module.code
     if new_src == src_before:
         return IngestResult(
             action_id=action_id, file=str(plan_path), patched=False,
-            new_prior=new_prior, new_action_status=new_status, new_state=new_state,
-            diff_summary={"note": "noop (already in target state)"},
+            new_prior=decision.new_prior if decision else None,
+            new_action_status=new_status,
+            new_state=decision.new_state if decision else None,
+            diff_summary={
+                "note": "noop (already in target state)",
+                "transition": decision.reason if decision else None,
+            },
         )
 
     plan_path.write_text(new_src, encoding="utf-8")
@@ -577,17 +793,22 @@ def _apply_verdict_locked(
         plan_path.write_text(src_before, encoding="utf-8")
         return IngestResult(
             action_id=action_id, file=str(plan_path), patched=False,
-            new_prior=new_prior, new_action_status=new_status, new_state=new_state,
+            new_prior=decision.new_prior if decision else None,
+            new_action_status=new_status,
+            new_state=decision.new_state if decision else None,
             error=f"改写后编译失败，已回滚: {exc}",
             rolled_back=True,
         )
 
     return IngestResult(
         action_id=action_id, file=str(plan_path), patched=True,
-        new_prior=new_prior, new_action_status=new_status, new_state=new_state,
+        new_prior=decision.new_prior if decision else None,
+        new_action_status=new_status,
+        new_state=decision.new_state if decision else None,
         diff_summary={
             "matched_calls": transformer.matched,
-            "updates": sorted(updates.keys()),
+            "updates": sorted(set(transformer.applied_updates)),
+            "transition": decision.reason if decision else None,
             "provenance_appended": True,
         },
     )
@@ -989,4 +1210,5 @@ __all__ = [
     "IngestError", "IngestResult",
     "PRIOR_CAP_LEAN", "PRIOR_CAP_EXPERIMENT", "PRIOR_CAP_HEURISTIC", "PRIOR_FLOOR_REFUTED",
     "locate_plan_source", "stamp_action_ids", "apply_verdict", "append_evidence_subgraph",
+    "_transition_state", "StateDecision", "VALID_STATES", "BACKEND_RANK",
 ]
