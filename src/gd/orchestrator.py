@@ -135,6 +135,65 @@ def _runs_dir(project_dir: Path, iter_id: str) -> Path:
     return d
 
 
+_ARTIFACT_SUFFIXES = (".md", ".evidence.json", ".lean", ".py", ".json", ".txt")
+
+
+def _archive_prev_task_results(project_dir: Path, current_iter_id: str) -> dict[str, Any]:
+    """把上一 iter 的 task_results/ 产物移到 runs/<prev>/task_results/。
+
+    时机：本 iter dispatch 开始前。上一 iter = runs/ 下按字典序小于 current_iter_id
+    且还没有 task_results/ 子目录的最大 iter 目录。若 task_results/ 为空或找不到
+    上一 iter，整个操作 no-op。
+
+    Archon `state.py:215 archive_task_results()` 风格，解决 v3 task_results/ 跨
+    iter flat 累积难审计的问题。每 action 新开 sub-agent 的约束不变——归档只动
+    上一 iter 的产物，当前 iter 仍写 flat task_results/。
+    """
+    tr = project_dir / "task_results"
+    if not tr.is_dir():
+        return {"archived": 0, "reason": "no task_results dir"}
+
+    # 收集候选：act_*.{md,evidence.json,lean,py,json,txt} 以及 _judge 子目录
+    candidates = [p for p in tr.iterdir()
+                  if p.is_file() and p.name.startswith("act_")]
+    judge_dir = tr / "_judge"
+    if judge_dir.is_dir() and any(judge_dir.iterdir()):
+        candidates.append(judge_dir)
+
+    if not candidates:
+        return {"archived": 0, "reason": "task_results empty"}
+
+    runs_root = project_dir / "runs"
+    if not runs_root.is_dir():
+        return {"archived": 0, "reason": "no runs dir"}
+
+    prev_iters = sorted(
+        (d for d in runs_root.iterdir()
+         if d.is_dir() and d.name < current_iter_id
+         and not (d / "task_results").exists()),
+        key=lambda d: d.name,
+    )
+    if not prev_iters:
+        return {"archived": 0, "reason": "no prev iter to archive into"}
+
+    dest_dir = prev_iters[-1] / "task_results"
+    dest_dir.mkdir(parents=True, exist_ok=True)
+
+    archived: list[str] = []
+    for item in candidates:
+        try:
+            target = dest_dir / item.name
+            if target.exists():
+                # 同名冲突（几乎不可能，action_id 12 字节 hash）— 带时间戳保留
+                target = dest_dir / f"{item.stem}.dup{int(time.time())}{item.suffix}"
+            item.rename(target)
+            archived.append(item.name)
+        except OSError as exc:
+            logger.warning("archive_task_results: %s → %s failed: %s", item, dest_dir, exc)
+
+    return {"archived": len(archived), "dest": str(dest_dir), "items": archived}
+
+
 # --------------------------------------------------------------------------- #
 # Prompt 拼装                                                                  #
 # --------------------------------------------------------------------------- #
@@ -278,6 +337,11 @@ def run_iteration(
         raise FileNotFoundError(f"非 gaia 包目录（缺 pyproject.toml）: {project_dir}")
 
     runs = _runs_dir(project_dir, iter_id)
+    # Archon-style: 上一 iter 的 task_results/ 产物归档进 runs/<prev>/task_results/
+    archive_info = _archive_prev_task_results(project_dir, iter_id)
+    if archive_info.get("archived", 0) > 0:
+        logger.info("archived %d item(s) from task_results/ to %s",
+                    archive_info["archived"], archive_info.get("dest"))
     target = target or TargetSpec.load(project_dir)
     if verify_post is None:
         verify_post = _default_verify_inproc() if not verify_url else _default_verify_http(verify_url, verify_timeout)
