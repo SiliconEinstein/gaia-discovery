@@ -117,12 +117,14 @@ def verify_quantitative(req: VerifyRequest) -> VerifyResponse:
         )
 
     if not py_path.is_file() or py_path.suffix != ".py":
-        return _make_response(
-            req, verdict="inconclusive", confidence=0.0,
-            evidence="未提交可执行 .py 脚本",
-            raw={"resolved": str(py_path)}, started=started,
-            error="missing .py artifact",
-        )
+        # 软降级：无 .py 脚本时走 heuristic 路径评估 evidence.json，
+        # 由 LLM judge 基于论证链产出 verdict，不再因缺艺术品直接 inconclusive。
+        from gd.verify_server.routers.heuristic import verify_heuristic
+        resp = verify_heuristic(req)
+        if isinstance(resp.raw, dict):
+            resp.raw["fallback_from"] = "quantitative"
+            resp.raw["fallback_reason"] = "no .py artifact; delegated to heuristic"
+        return resp
 
     memory_bytes = req.memory_limit_mb * 1024 * 1024
     cpu_seconds = max(int(req.timeout_s) + 5, 10)

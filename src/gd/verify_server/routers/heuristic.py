@@ -284,31 +284,35 @@ def _parse_judge_output(text: str) -> dict | None:
 
 
 def _call_judge_backend(prompt: str, *, action_id: str, project_dir: Path, timeout: float) -> tuple[str | None, str | None, dict[str, Any]]:
-    """走 backend.run()，返回 (raw_text, error, extras)。"""
+    """走 backend.chat()（单轮，无工具循环），返回 (raw_text, error, extras)。
+
+    judge 任务本质是"读 evidence/markdown → 返回单个 JSON"，不需要 agent 模式
+    （Read/Bash/Edit 等工具没用武之地），用 chat() 直接拿 stdout 即可，避免依赖
+    sub-agent 主动落盘的语义。
+
+    为了可追溯，把 raw_text 持久化到 task_results/_judge/<action_id>.judge.md。
+    """
     from gd.backends import get_backend
     backend = get_backend()
     judge_dir = project_dir / "task_results" / "_judge"
     judge_dir.mkdir(parents=True, exist_ok=True)
     artifact_path = judge_dir / f"{action_id}.judge.md"
-    log_path = judge_dir / f"{action_id}.judge.{backend.name}.jsonl"
 
-    res = backend.run_agent(
+    res = backend.chat(
         prompt=prompt,
         system="You are a strict scientific reviewer. Output only the JSON object as instructed.",
-        project_dir=project_dir,
-        artifact_path=artifact_path,
-        log_path=log_path,
         timeout=timeout,
         env=None,
     )
     if not res.success:
         return None, res.error or "judge backend failed", res.extras or {}
-    if not artifact_path.is_file():
-        return None, "judge artifact not written", res.extras or {}
+    text = (res.text or "").strip()
+    if not text:
+        return None, "judge backend returned empty text", res.extras or {}
     try:
-        text = artifact_path.read_text(encoding="utf-8")
-    except OSError as exc:
-        return None, f"judge artifact read error: {exc}", res.extras or {}
+        artifact_path.write_text(text, encoding="utf-8")
+    except OSError:
+        pass  # 持久化失败不影响 verdict 提取
     return text, None, res.extras or {}
 
 

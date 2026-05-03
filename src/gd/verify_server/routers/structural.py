@@ -95,19 +95,22 @@ def verify_structural(req: VerifyRequest) -> VerifyResponse:
         )
 
     if not lean_path.is_file() or lean_path.suffix != ".lean":
-        return _make_response(
-            req, verdict="inconclusive", backend="unavailable", confidence=0.0,
-            evidence="未提交 .lean artifact", raw={"resolved": str(lean_path)},
-            started=started, error="missing .lean artifact",
-        )
+        # 软降级：无 .lean 时走 heuristic 路径评估 evidence.json
+        from gd.verify_server.routers.heuristic import verify_heuristic
+        resp = verify_heuristic(req)
+        if isinstance(resp.raw, dict):
+            resp.raw["fallback_from"] = "structural"
+            resp.raw["fallback_reason"] = "no .lean artifact; delegated to heuristic"
+        return resp
 
     if lake is None or lean is None:
-        return _make_response(
-            req, verdict="inconclusive", backend="unavailable", confidence=0.0,
-            evidence="本机未安装 lake/lean，无法做结构性校验",
-            raw={"lake": lake, "lean": lean}, started=started,
-            error="lean toolchain not found",
-        )
+        # 软降级：lean 工具链缺失时走 heuristic 路径评估 evidence.json
+        from gd.verify_server.routers.heuristic import verify_heuristic
+        resp = verify_heuristic(req)
+        if isinstance(resp.raw, dict):
+            resp.raw["fallback_from"] = "structural"
+            resp.raw["fallback_reason"] = "lean toolchain unavailable; delegated to heuristic"
+        return resp
 
     # 在临时 workspace 跑 lake build
     import tempfile

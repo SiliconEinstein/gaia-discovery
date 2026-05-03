@@ -117,6 +117,8 @@ def test_quantitative_refuted(tmp_path):
 
 
 def test_quantitative_missing_py_artifact(tmp_path):
+    # 无 .py 时应降级到 heuristic 路径；裸场景（无 evidence.json 也无 markdown）
+    # → heuristic 返回 inconclusive + neither markdown nor evidence.json found
     req = VerifyRequest(
         action_id="act_abc123def456",
         action_kind="induction",
@@ -125,7 +127,10 @@ def test_quantitative_missing_py_artifact(tmp_path):
     )
     resp = verify_quantitative(req)
     assert resp.verdict == "inconclusive"
-    assert resp.error == "missing .py artifact"
+    # 降级路径：router 字段由 heuristic 覆盖；raw 里有 fallback 标记
+    assert isinstance(resp.raw, dict)
+    assert resp.raw.get("fallback_from") == "quantitative"
+    assert "no .py artifact" in resp.raw.get("fallback_reason", "")
 
 
 def test_quantitative_path_escape(tmp_path):
@@ -204,21 +209,26 @@ def _make_struct_req(tmp_path: Path, *, lean_src: str | None) -> VerifyRequest:
 
 
 def test_structural_unavailable_when_lean_missing(tmp_path, monkeypatch):
-    # 强制 toolchain 缺失
+    # toolchain 缺失时降级到 heuristic 路径，由 LLM judge 评估 evidence
     import gd.verify_server.routers.structural as struct_mod
     monkeypatch.setattr(struct_mod, "_detect_toolchain", lambda: (None, None))
     req = _make_struct_req(tmp_path, lean_src="theorem foo : True := trivial\n")
     resp = verify_structural(req)
+    # 裸场景（无 evidence.json/markdown）→ heuristic inconclusive
     assert resp.verdict == "inconclusive"
-    assert resp.backend == "unavailable"
-    assert "lean toolchain" in (resp.error or "").lower()
+    assert isinstance(resp.raw, dict)
+    assert resp.raw.get("fallback_from") == "structural"
+    assert "toolchain" in resp.raw.get("fallback_reason", "").lower()
 
 
 def test_structural_missing_lean_artifact(tmp_path):
+    # 无 .lean 时应降级到 heuristic 路径；裸场景 → heuristic inconclusive
     req = _make_struct_req(tmp_path, lean_src=None)
     resp = verify_structural(req)
     assert resp.verdict == "inconclusive"
-    assert resp.error == "missing .lean artifact"
+    assert isinstance(resp.raw, dict)
+    assert resp.raw.get("fallback_from") == "structural"
+    assert "no .lean artifact" in resp.raw.get("fallback_reason", "")
 
 
 def test_structural_path_escape(tmp_path):
@@ -373,3 +383,76 @@ def test_verify_endpoint_relative_project_dir_rejected(client, tmp_path):
     }
     r = client.post("/verify", json=body)
     assert r.status_code == 422
+
+# ── 软降级路径：缺 .py/.lean 但有 evidence.json，fallback 到 heuristic ──────────
+
+def _make_evidence_for_fallback(tmp_path, action_id, action_kind):
+    import json
+    tr = tmp_path / "task_results"
+    tr.mkdir(exist_ok=True)
+    (tr / f"{action_id}.evidence.json").write_text(
+        json.dumps({
+            "schema_version": 1,
+            "action_id": action_id,
+            "stance": "support",
+            "summary": "Claim is well-supported.",
+            "premises": [
+                {"text": "Premise A is established.", "confidence": 0.9, "source": "literature"},
+                {"text": "Premise B follows from A.", "confidence": 0.8, "source": "reasoning"},
+            ],
+            "counter_evidence": [],
+            "uncertainty": "Low.",
+        }),
+        encoding="utf-8",
+    )
+    (tr / f"{action_id}.md").write_text("Investigation notes.", encoding="utf-8")
+
+
+def test_quantitative_fallback_to_heuristic_with_evidence(tmp_path):
+    """缺 .py 但有 evidence.json → 降级到 heuristic，judge 给 verified。"""
+    from gd.verify_server.routers import heuristic as heur_mod
+    aid = "act_qfallback00"
+    _make_evidence_for_fallback(tmp_path, aid, "induction")
+    heur_mod.set_judge_hook(
+        lambda c, e, m, k: {"verdict": "verified", "confidence": 0.9, "reasoning": "ok"}
+    )
+    try:
+        req = VerifyRequest(
+            action_id=aid,
+            action_kind="induction",
+            project_dir=str(tmp_path),
+            claim_text="x.",
+            artifact=VerifyArtifact(path=f"task_results/{aid}.md"),
+        )
+        resp = verify_quantitative(req)
+        assert resp.verdict == "verified"
+        assert isinstance(resp.raw, dict)
+        assert resp.raw.get("fallback_from") == "quantitative"
+    finally:
+        heur_mod.set_judge_hook(None)
+
+
+def test_structural_fallback_to_heuristic_with_evidence(tmp_path, monkeypatch):
+    """缺 .lean 但有 evidence.json → 降级到 heuristic，judge 给 verified。"""
+    from gd.verify_server.routers import heuristic as heur_mod
+    import gd.verify_server.routers.structural as struct_mod
+    monkeypatch.setattr(struct_mod, "_detect_toolchain", lambda: (None, None))
+    aid = "act_sfallback00"
+    _make_evidence_for_fallback(tmp_path, aid, "deduction")
+    heur_mod.set_judge_hook(
+        lambda c, e, m, k: {"verdict": "verified", "confidence": 0.92, "reasoning": "ok"}
+    )
+    try:
+        req = VerifyRequest(
+            action_id=aid,
+            action_kind="deduction",
+            project_dir=str(tmp_path),
+            claim_text="x.",
+            artifact=VerifyArtifact(path=f"task_results/{aid}.md"),
+        )
+        resp = verify_structural(req)
+        assert resp.verdict == "verified"
+        assert isinstance(resp.raw, dict)
+        assert resp.raw.get("fallback_from") == "structural"
+    finally:
+        heur_mod.set_judge_hook(None)
