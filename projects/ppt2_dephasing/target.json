@@ -1,0 +1,5 @@
+{
+    "target_qid": "discovery:ppt2_dephasing::t",
+    "threshold": 0.7,
+    "strict_publish": true
+}

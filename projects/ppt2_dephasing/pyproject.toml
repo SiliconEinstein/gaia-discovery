@@ -1,0 +1,15 @@
+[project]
+name = "discovery-ppt2_dephasing-gaia"
+version = "0.1.0"
+description = "gaia-discovery-v3 case for open problem ppt2_dephasing"
+requires-python = ">=3.12"
+dependencies = ["gaia-lang"]
+
+[tool.gaia]
+type = "knowledge-package"
+namespace = "discovery"
+uuid = "782fc839-e321-4d26-9580-ecbce192f90c"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

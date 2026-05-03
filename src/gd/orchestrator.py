@@ -693,6 +693,11 @@ def _build_verify_artifact(
         cand = base / f"{sig.action_id}.{ext}"
         if cand.is_file():
             payload[key] = cand.relative_to(project_dir).as_posix()
+    # 若 payload 含 lean 且设置 GD_LAKE_PROJECT_DIR，则注入 lake_project_dir，
+    # 启用 structural router 的 lake_inplace 模式（复用 mathlib cache）
+    lake_proj = os.environ.get("GD_LAKE_PROJECT_DIR", "").strip()
+    if lake_proj and "lean" in payload:
+        payload["lake_project_dir"] = lake_proj
     if payload:
         artifact["payload_files"] = payload
     return artifact
