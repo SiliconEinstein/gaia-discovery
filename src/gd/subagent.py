@@ -224,6 +224,15 @@ class SubAgentResult:
     rolled_back: bool = False
     # 回滚失败条目（写回失败 / 删除失败 / sha256 复检不一致）；空 = 干净恢复
     restore_failed: list[str] = field(default_factory=list)
+    # 结果分类（直通 verify-server inconclusive_reason）：
+    #   success            — rc=0 + artifact 存在 + 无越界
+    #   timeout            — rc=-9（claude CLI / backend 超时）
+    #   binary_not_found   — rc=-127（claude 二进制不可用）
+    #   empty_output       — rc=0 但 task_results/<id>.md 缺
+    #   boundary_violation — 改了 protected 路径已回滚（rc=-2）
+    #   restore_failed     — 回滚失败（rc=-3，最严重，需人介入）
+    #   backend_failure    — 其它非 0 rc / backend 报错
+    outcome: str = "success"
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -359,6 +368,22 @@ def run_subagent(
             elif rc == 0:
                 rc = -2
 
+    # 推断 outcome（顺序敏感：先严重的，后轻微的）
+    if restore_failed:
+        outcome = "restore_failed"
+    elif violations:
+        outcome = "boundary_violation"
+    elif rc == -9:
+        outcome = "timeout"
+    elif rc == -127:
+        outcome = "binary_not_found"
+    elif rc == 0 and not artifact_path.exists():
+        outcome = "empty_output"
+    elif rc != 0:
+        outcome = "backend_failure"
+    else:
+        outcome = "success"
+
     return SubAgentResult(
         action_id=signal.action_id,
         action_kind=signal.action_kind,
@@ -374,6 +399,7 @@ def run_subagent(
         boundary_violations=violations,
         rolled_back=rolled_back,
         restore_failed=restore_failed,
+        outcome=outcome,
     )
 
 

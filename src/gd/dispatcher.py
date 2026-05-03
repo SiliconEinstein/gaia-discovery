@@ -68,13 +68,14 @@ def _validate_metadata(metadata: dict[str, Any] | None) -> tuple[str, dict[str, 
     action = metadata.get("action")
     if not isinstance(action, str):
         return None
+    # 先看 status：已完成/失败的历史 action 直接跳过（包括旧 kind 迁移残留）
+    status = metadata.get("action_status", "pending")
+    if status != "pending":
+        return None
     if action not in ALLOWED_ACTIONS:
         raise ValueError(
             f"未知 action {action!r}，必须 ∈ ALLOWED_ACTIONS（8 种）"
         )
-    status = metadata.get("action_status", "pending")
-    if status != "pending":
-        return None
     args = metadata.get("args", {})
     if not isinstance(args, dict):
         raise ValueError(

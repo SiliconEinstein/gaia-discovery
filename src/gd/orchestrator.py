@@ -380,6 +380,34 @@ def run_iteration(
     # ------------------------------------------------------------------ 4. VERIFY
     verify_payloads: list[dict[str, Any]] = []
     for sig, sr in zip(signals, sub_results):
+        # sub-agent 失败短路：直接产生 inconclusive，不再调 verify-server
+        # （outcome → inconclusive_reason 精准归因，避免一律 tool_unavailable）
+        if sr.outcome != "success":
+            resp = {
+                "verdict": "inconclusive",
+                "inconclusive_reason": _outcome_to_inconclusive_reason(sr.outcome),
+                "backend": "subagent",
+                "confidence": 0.0,
+                "evidence": (sr.error or "")[:500],
+                "error": f"subagent outcome={sr.outcome}",
+            }
+            resp["_request"] = {"action_id": sig.action_id, "action_kind": sig.action_kind, "claim_qid": sig.node_label, "node_qid": sig.node_qid}
+            verify_payloads.append(resp)
+            gd_memory.append(
+                project_dir, "verification_reports",
+                {
+                    "action_id": sig.action_id, "action_kind": sig.action_kind,
+                    "verdict": "inconclusive",
+                    "inconclusive_reason": resp["inconclusive_reason"],
+                    "backend": "subagent",
+                    "confidence": 0.0,
+                    "evidence": (sr.error or "")[:300],
+                    "error": resp["error"],
+                },
+                iter_id=iter_id,
+            )
+            continue
+
         body = {
             "action_id": sig.action_id,
             "action_kind": sig.action_kind,
@@ -604,6 +632,22 @@ def _build_verify_artifact(
     if payload:
         artifact["payload_files"] = payload
     return artifact
+
+
+def _outcome_to_inconclusive_reason(outcome: str) -> str:
+    """SubAgentResult.outcome → VerificationOutput.inconclusive_reason。
+
+    映射策略：把 sub-agent 端的故障精准归因到 verify-server 已枚举的 4 类原因，
+    避免 belief_ingest 看到一坨 'tool_unavailable' 无法区分超时与证据不足。
+    """
+    return {
+        "timeout": "timeout",
+        "binary_not_found": "tool_unavailable",
+        "boundary_violation": "tool_unavailable",
+        "restore_failed": "tool_unavailable",
+        "empty_output": "insufficient_evidence",
+        "backend_failure": "tool_unavailable",
+    }.get(outcome, "ambiguous")
 
 
 def _decide_status(status: IterationStatus, target: TargetSpec) -> str:

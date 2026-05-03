@@ -147,6 +147,34 @@ def resolve_claude_model(cwd: Path | None = None) -> str | None:
     return None
 
 
+def resolve_mcp_config(cwd: Path | None = None) -> str | None:
+    """按优先级解析 claude CLI 用的 --mcp-config 路径。
+
+    1. 环境变量 GD_MCP_CONFIG（绝对路径）
+    2. cwd 起向上找最近的 .mcp.json（项目级 MCP 注册）
+    3. None → 不注入 --mcp-config（claude CLI 走 settings.json 默认）
+
+    历史 bug：v3 早期 sub-agent 不传 --mcp-config，导致 validate_verification_output /
+    write_verification_output / memory_* 系列 MCP 工具调用直接 missing tool；
+    schema 化 evidence.json 写入路径退化为子 agent 自己 tee 的非验证写入。
+    统一注入项目级 .mcp.json 修。
+    """
+    env_path = os.environ.get("GD_MCP_CONFIG")
+    if env_path:
+        p = Path(env_path)
+        if p.is_file():
+            return str(p.resolve())
+    cur = Path(cwd or Path.cwd()).resolve()
+    for _ in range(8):
+        cand = cur / ".mcp.json"
+        if cand.is_file():
+            return str(cand.resolve())
+        if cur.parent == cur:
+            break
+        cur = cur.parent
+    return None
+
+
 # --------------------------------------------------------------------------- #
 # Claude CLI backend                                                           #
 # --------------------------------------------------------------------------- #
@@ -198,6 +226,11 @@ class ClaudeCliBackend:
         cmd = [self.binary]
         if _model:
             cmd += ["--model", _model]
+        # --mcp-config 注入（项目级 .mcp.json 注册 gd-verify / memory_* 工具）
+        _has_mcp = "--mcp-config" in self.extra_args
+        _mcp = None if _has_mcp else resolve_mcp_config()
+        if _mcp:
+            cmd += ["--mcp-config", _mcp]
         cmd += list(self.CHAT_FLAGS) + [full_prompt] + list(self.extra_args)
         sub_env = {**os.environ, **(env or {})}
         # root 用户下 claude CLI 拒 --dangerously-skip-permissions；IS_SANDBOX=1 兜底（无 root 也无副作用）
@@ -263,6 +296,11 @@ class ClaudeCliBackend:
         cmd = [self.binary]
         if _model:
             cmd += ["--model", _model]
+        # --mcp-config 注入（按 project_dir 解析 .mcp.json）
+        _has_mcp = "--mcp-config" in self.extra_args
+        _mcp = None if _has_mcp else resolve_mcp_config(project_dir)
+        if _mcp:
+            cmd += ["--mcp-config", _mcp]
         cmd += list(self.AGENT_FLAGS) + [full_prompt] + list(self.extra_args)
         sub_env = {**os.environ, **(env or {})}
         # root 用户下 claude CLI 拒 --dangerously-skip-permissions；IS_SANDBOX=1 兜底（无 root 也无副作用）
@@ -610,4 +648,6 @@ __all__ = (
     "ClaudeCliBackend",
     "GpugeekBackend",
     "get_backend",
+    "resolve_claude_model",
+    "resolve_mcp_config",
 )
