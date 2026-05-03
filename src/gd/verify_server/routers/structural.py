@@ -112,7 +112,99 @@ def verify_structural(req: VerifyRequest) -> VerifyResponse:
             resp.raw["fallback_reason"] = "lean toolchain unavailable; delegated to heuristic"
         return resp
 
-    # 在临时 workspace 跑 lake build
+    # --- lake_inplace 模式 ---
+    # payload_files['lake_project_dir'] 指向现成 lake 项目（含 mathlib cache），
+    # 则把 sub-agent 的 .lean 丢进 <project>/_gd_sandbox/V_<aid>.lean，
+    # 走 `lake env lean FILE` 直接验证（不重建整个 mathlib）。
+    lake_proj_raw = req.artifact.payload_files.get("lake_project_dir")
+    if lake_proj_raw:
+        lake_proj = Path(lake_proj_raw)
+        if not lake_proj.is_absolute():
+            lake_proj = (project_dir / lake_proj_raw).resolve()
+        lakefile_candidates = ["lakefile.lean", "lakefile.toml"]
+        if not lake_proj.is_dir() or not any(
+            (lake_proj / f).is_file() for f in lakefile_candidates
+        ):
+            return _make_response(
+                req, verdict="inconclusive", backend="unavailable", confidence=0.0,
+                evidence=f"lake_project_dir 无效（非目录或缺 lakefile）: {lake_proj}",
+                raw={"lake_project_dir": str(lake_proj)}, started=started,
+                error="invalid lake_project_dir",
+            )
+        sandbox = lake_proj / "_gd_sandbox"
+        sandbox.mkdir(exist_ok=True)
+        target = sandbox / f"V_{req.action_id}.lean"
+        try:
+            shutil.copyfile(lean_path, target)
+            cmd = [lake, "env", "lean", str(target.relative_to(lake_proj))]
+            env = {
+                "PATH": os.environ.get("PATH", ""),
+                "HOME": os.environ.get("HOME", "/tmp"),
+                "LANG": os.environ.get("LANG", "C.UTF-8"),
+                "ELAN_HOME": os.environ.get("ELAN_HOME", ""),
+            }
+            try:
+                proc = subprocess.run(
+                    cmd,
+                    cwd=str(lake_proj),
+                    env=env,
+                    capture_output=True,
+                    text=True,
+                    timeout=req.timeout_s,
+                    check=False,
+                )
+            except subprocess.TimeoutExpired as exc:
+                return _make_response(
+                    req, verdict="inconclusive", backend="lean_lake", confidence=0.0,
+                    evidence=f"lake env lean 超时 {req.timeout_s}s",
+                    raw={"mode": "inplace",
+                         "stdout": (exc.stdout or "")[-2000:],
+                         "stderr": (exc.stderr or "")[-2000:]},
+                    started=started, error="timeout",
+                )
+            except OSError as exc:
+                return _make_response(
+                    req, verdict="inconclusive", backend="unavailable", confidence=0.0,
+                    evidence="无法启动 lake 子进程",
+                    raw={"cmd": cmd, "mode": "inplace"}, started=started,
+                    error=f"OSError: {exc}",
+                )
+        finally:
+            try:
+                target.unlink(missing_ok=True)
+            except OSError:
+                pass
+        stdout = (proc.stdout or "")[-4000:]
+        stderr = (proc.stderr or "")[-4000:]
+        raw: dict[str, Any] = {
+            "mode": "inplace", "lake_project_dir": str(lake_proj),
+            "returncode": proc.returncode,
+            "stdout_tail": stdout, "stderr_tail": stderr,
+        }
+        # 单文件 `lake env lean` 编译成功：stdout/stderr 里不会有 "error:" 且 rc=0
+        has_error = ("error:" in stdout) or ("error:" in stderr)
+        sorry_warn = ("declaration uses `sorry`" in stdout) or                      ("declaration uses `sorry`" in stderr)
+        if proc.returncode == 0 and not has_error:
+            if sorry_warn:
+                # 有 sorry → 证明未完成，不算 verified
+                return _make_response(
+                    req, verdict="inconclusive", backend="lean_lake", confidence=0.5,
+                    evidence="lake env lean 成功但 proof 含 sorry",
+                    raw=raw, started=started, error="proof_incomplete_sorry",
+                )
+            return _make_response(
+                req, verdict="verified", backend="lean_lake", confidence=0.99,
+                evidence="lake env lean 成功，proof 编译通过（无 sorry）",
+                raw=raw, started=started, error=None,
+            )
+        return _make_response(
+            req, verdict="inconclusive", backend="lean_lake", confidence=0.3,
+            evidence=f"lake env lean 失败（rc={proc.returncode}），proof 未完成",
+            raw=raw, started=started,
+            error=f"lean inplace failed: rc={proc.returncode}",
+        )
+
+    # 在临时 workspace 跑 lake build（默认隔离模式）
     import tempfile
 
     with tempfile.TemporaryDirectory(prefix=f"gd_verify_lean_{req.action_id}_") as work_str:

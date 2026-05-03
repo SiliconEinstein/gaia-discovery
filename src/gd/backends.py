@@ -623,6 +623,82 @@ class GpugeekBackend:
         )
 
 
+class DeepSeekBackend(GpugeekBackend):
+    """DeepSeek reasoner/v3 chat-completions（OpenAI 兼容）。
+
+    - base_url 默认 ``https://api.deepseek.com``；endpoint ``/v1/chat/completions``
+    - model 默认 ``deepseek-reasoner``（最高能力推理模型）
+    - API key 走 ``DEEPSEEK_API_KEY``
+    - deepseek-reasoner 返回 ``message.content`` + ``message.reasoning_content``
+      两字段，本 backend 仅取 content（reasoning_content 只作 extras 透传）
+    """
+
+    name = "deepseek"
+
+    def __init__(
+        self,
+        *,
+        model: str | None = None,
+        base_url: str | None = None,
+        api_key: str | None = None,
+        max_tokens: int = 8192,
+        max_retries: int = 3,
+    ) -> None:
+        self.model = model or os.environ.get(
+            "GD_SUBAGENT_MODEL", "deepseek-reasoner",
+        )
+        base = (base_url or os.environ.get(
+            "DEEPSEEK_BASE_URL", "https://api.deepseek.com",
+        )).rstrip("/")
+        self.endpoint = f"{base}/v1/chat/completions"
+        self.api_key = api_key or os.environ.get("DEEPSEEK_API_KEY")
+        self.max_tokens = max_tokens
+        self.max_retries = max_retries
+
+    def _post(
+        self,
+        *,
+        system: str,
+        prompt: str,
+        timeout: float,
+        temperature: float = 0.0,
+    ) -> tuple[bool, "dict[str, Any] | str"]:
+        if not self.api_key:
+            return False, "DEEPSEEK_API_KEY 未设置"
+        messages = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "max_tokens": self.max_tokens,
+        }
+        # deepseek-reasoner 禁用 temperature/top_p（官方文档明示）；
+        # 非 reasoner 模型才透 temperature
+        if not self.model.startswith("deepseek-reasoner"):
+            payload["temperature"] = temperature
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+        last_err: Exception | None = None
+        for attempt in range(self.max_retries):
+            try:
+                r = requests.post(
+                    self.endpoint, headers=headers, json=payload, timeout=timeout,
+                )
+                r.raise_for_status()
+                return True, r.json()
+            except Exception as exc:
+                last_err = exc
+                logger.warning(
+                    "deepseek call failed attempt=%d: %r", attempt, exc,
+                )
+                time.sleep(2 ** attempt)
+        return False, repr(last_err)
+
+
 # --------------------------------------------------------------------------- #
 # Factory                                                                       #
 # --------------------------------------------------------------------------- #
@@ -637,8 +713,10 @@ def get_backend(name: str | None = None) -> LLMBackend:
         return ClaudeCliBackend()
     if chosen in ("gpugeek", "openai", "gpt"):
         return GpugeekBackend()
+    if chosen in ("deepseek", "deepseek-reasoner", "ds"):
+        return DeepSeekBackend()
     raise ValueError(
-        f"unknown GD_SUBAGENT_BACKEND={chosen!r}; expected claude|gpugeek"
+        f"unknown GD_SUBAGENT_BACKEND={chosen!r}; expected claude|gpugeek|deepseek"
     )
 
 
@@ -647,6 +725,7 @@ __all__ = (
     "LLMBackend",
     "ClaudeCliBackend",
     "GpugeekBackend",
+    "DeepSeekBackend",
     "get_backend",
     "resolve_claude_model",
     "resolve_mcp_config",
