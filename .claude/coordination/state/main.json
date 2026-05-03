@@ -1,0 +1,10 @@
+{
+  "branch": "main",
+  "purpose": "v3 production baseline",
+  "status": "idle",
+  "touching": [],
+  "lastUpdate": null,
+  "readyToMerge": false,
+  "accomplishments": [],
+  "nextAction": "Pick a project from projects/ and run gd explore"
+}

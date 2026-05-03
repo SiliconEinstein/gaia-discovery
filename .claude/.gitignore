@@ -1,0 +1,4 @@
+# EARS 运行时产物 — 每次 session 生成，不入库
+state/current.yaml
+state/current.yaml.lock
+state/archive/*.yaml

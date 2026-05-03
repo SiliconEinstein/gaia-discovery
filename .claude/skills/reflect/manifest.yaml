@@ -1,0 +1,62 @@
+id: reflect
+name: Reflect
+version: 1.0.0
+description: >
+  Extract lessons learned from the current session and write them to
+  structured memory files (.claude/memory/). This is the critical feedback
+  loop that makes the evolution system work.
+
+triggers:
+  commands:
+    - /reflect
+    - /lesson
+  patterns:
+    - "what did we learn"
+    - "extract lessons"
+    - "update memory"
+    - "session end"
+
+inputs:
+  - name: scope
+    type: enum
+    values: [session, file, project]
+    default: session
+    description: What scope to reflect on
+
+outputs:
+  - name: pitfalls
+    type: array
+    description: New pitfalls discovered (things that broke)
+  - name: patterns
+    type: array
+    description: New patterns confirmed (workflows that work)
+  - name: decisions
+    type: array
+    description: New decisions recorded (architectural choices)
+
+depends_on:
+  required: []
+  optional:
+    - id: distill
+      reason: "Can distill traces before reflecting"
+
+requires:
+  - tool: git
+    reason: "For diff context and change detection"
+
+compatibility:
+  project_types: [any]
+  tags: [workflow, evolution, memory, session-management]
+
+author:
+  name: Playground Team
+
+license: MIT
+extensible: true
+
+test:
+  expectations:
+    - given: "A session with one bug fix"
+      then: "At least one pitfall is extracted"
+    - given: "A session with repeated workflow"
+      then: "A pattern is proposed"

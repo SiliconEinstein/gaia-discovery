@@ -1,0 +1,87 @@
+# Patterns — Confirmed Ways to Do Things in This Project
+# Each entry is a checklist for a common task. Follow these to avoid pitfalls.
+# Lifecycle: expires 6 months after date.
+
+- id: pat-001
+  date: 2026-05-01
+  title: gd explore 单轮 6-phase 工作流
+  domain: workflow
+  when_to_use: |
+    运行 `gd explore --project <id>` 一轮迭代；主 agent 读 project
+    目录 → sub-agent 分派 → verify → formalize → BP → 下一轮。
+  steps:
+    - |
+      Plan：主 agent 读 projects/<id>/{PROBLEM.md, target.json, USER_HINTS.md,
+      plan.gaia.py} + iter_{N-1}/last_iter.json，生成 claim + strategy/operator
+      + action list 写回 plan.gaia.py。action_kind ∈ ALL_ACTIONS(8)。
+    - |
+      Dispatch：dispatcher.scan_actions 读 plan IR → ActionSignal[]；
+      orchestrator ThreadPoolExecutor(4) 并发 subagent.run_subagent；
+      每个 action_id 对应一个 task_results/<action_id>.md + evidence.json。
+    - |
+      Verify：evidence.json POST → verify-server，
+      ACTION_KIND_TO_ROUTER 分派到 quant/struct/heur；
+      返回 VerificationOutput（verdict + 可选 inconclusive_reason）。
+    - |
+      Formalize：verdict=verified 的 claim 走 gaia.formalize_named_strategy
+      + append_evidence_subgraph 回注 LocalCanonicalGraph（append-only）。
+    - |
+      Belief update：belief_ingest patch plan.gaia.py，
+      BP 跑 run_review，snapshot 写 runs/<iter>/{belief_snapshot, review}.json。
+    - |
+      Next-iter：下一轮主 agent 读回注入状态启动；
+      refuted → SyntheticRejection；工作假设 → SyntheticHypothesis。
+  verification:
+    - runs/<iter>/subagent_results.json 每条有非空 evidence_path
+    - verification.json verdict ∈ {verified, refuted, inconclusive}
+    - check_invariants.py 7 项全过
+
+- id: pat-002
+  date: 2026-05-03
+  title: 大块代码改完先跑 e2e smoke 再继续
+  domain: workflow
+  when_to_use: |
+    改 dispatcher / orchestrator / subagent / backends / verify_server
+    任一核心模块之后，下一步之前。
+  steps:
+    - |
+      schema smoke：python -c "from gd.verify_server.schemas import *;
+      assert ALL_ACTIONS == [...] and ACTION_KIND_TO_ROUTER == {...}"
+    - |
+      单测：cd /root/personal/gaia-discovery-v3 && python -m pytest
+      tests/unit/ -x -q （目标 184/184 全过；dispatcher 10/10、
+      orchestrator/runner/subagent/belief_ingest 41/41、e2e 1/1）
+    - |
+      check_invariants：python scripts/check_invariants.py（7 项全 OK 才算绿）
+    - |
+      EARS smoke：触发一次 ears/ears-trace hook，确认 trace.md 有
+      <!-- concepts: ... --> 标签
+  verification:
+    - pytest exit code 0
+    - check_invariants.py exit code 0
+    - 任一项红即停，不能进入下一块改动
+
+- id: pat-003
+  date: 2026-05-03
+  title: trace → distill → memory → CLAUDE.md 四级晋升
+  domain: knowledge
+  when_to_use: |
+    想沉淀经验：从 "这次碰到的" 到 "团队规矩" 的完整路径。
+  steps:
+    - |
+      层 1 瞬时：PostToolUse hook `[EARS]` 提示 → 追加到最近 trace.md
+      + <!-- concepts: ... --> 标签。3 min 内写，不写套话。
+    - |
+      层 2 蒸馏：完成一批工作（或新领域攒到 3+ 条 trace）后跑
+      /distill <concept>，从 trace 抽模式写进
+      .claude/memory/{decisions,pitfalls,patterns}.yaml。
+    - |
+      层 3 晋升：同一条模式在 memory 里攒到 [N >= 5, strength=strong]
+      是 CLAUDE.md 候选；agent 标 promote，人工决定。
+    - |
+      层 4 固化：进 CLAUDE.md 或 check_invariants.py 强约束的条目
+      从 memory 归档到 .claude/memory/archived/。
+  verification:
+    - /reflect 跑得出至少 1 条新 memory entry
+    - memory yaml 条目带 id/date/title + 领域专用字段
+    - CLAUDE.md 晋升条目必须有 memory 里 ≥5 次命中记录

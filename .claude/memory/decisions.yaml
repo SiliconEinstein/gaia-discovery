@@ -1,0 +1,102 @@
+# Decisions — Architectural Choices and Their Rationale
+# Each entry explains WHY we chose X over Y, with trade-offs documented.
+# Lifecycle: expires 6 months after date (decisions are longer-lived than pitfalls).
+
+- id: dec-001
+  date: 2026-04-15
+  title: 17-kind action 集合塌缩为 8-kind
+  domain: dsl
+  context: |
+    早期 plan.gaia.py 使用 17 种细粒度 action_kind（mathematical_induction,
+    structural_induction, proof_by_contradiction, ...），但下游 verify-server
+    只有 3 路 router（quantitative/structural/heuristic），多对一映射混乱、
+    sub-agent 路径选择困难、router 派发歧义。
+  decision: |
+    塌缩到 8-kind：4 strategy（support/deduction/abduction/induction）
+    + 4 operator（contradiction/equivalence/complement/disjunction）。
+    单一映射 ACTION_KIND_TO_ROUTER：induction→quant, deduction→struct,
+    其余 6 个 → heuristic。
+  rationale:
+    - 8-kind 与 strategy/operator 概念正交，命名直觉
+    - 单一 router 派发，无歧义
+    - check_invariants.py 强制不变量（ALL_ACTIONS==8 等 7 项）
+  trade_offs: |
+    损失部分语义粒度（如不再区分 mathematical/structural induction），
+    但 induction 内部细分由子 agent prompt + skill 选择处理。
+  consequences:
+    - dispatcher 拒绝旧 kind（fail-fast 时需先看 action_status，见 pit-003）
+    - 历史 action 记录里有 legacy kind，需 status=failed 直接跳过
+
+- id: dec-002
+  date: 2026-04-18
+  title: verify-server 拆 3 路 router
+  domain: verify
+  context: |
+    单一 LLM judge 无法可靠区分数值/结构/启发式三类断言：数值需要 Python
+    sandbox 实跑，结构需要 Lean compile + goal closed 检查，启发式才用 LLM。
+  decision: |
+    src/gd/verify_server/ 按 action_kind dispatch 到三个独立子模块：
+    quantitative（NumPy + 容差）、structural（lake env lean --make）、
+    heuristic（LLM judge + EvidencePayload 强度评估）。
+  rationale:
+    - 各路 verdict 标准独立、可单测
+    - inconclusive_reason 能精准归因（timeout 属 sandbox 还是 lean cache）
+    - 后续可平移到 Rethlas 风格 routes/<route>/ 目录布局
+  trade_offs: |
+    api 层增加 dispatch 复杂度，但 ACTION_KIND_TO_ROUTER 是常量映射，无运行时分支歧义。
+
+- id: dec-003
+  date: 2026-04-22
+  title: sub-agent 后端锁定 claude CLI + Vendor2/Claude-4.5-Sonnet
+  domain: backend
+  context: |
+    曾尝试 GPT-5.4（高 reasoning effort）和 Opus，但前者 stream-json
+    解析器崩、后者 MAX_OUTPUT_TOKENS=0 默认值导致 timeout。
+  decision: |
+    backends.py 默认 ClaudeCliBackend，model 强制 Vendor2/Claude-4.5-Sonnet，
+    runner 默认 flags 含 --output-format stream-json + --verbose +
+    --dangerously-skip-permissions（root 下需 IS_SANDBOX=1）。
+  rationale:
+    - claude CLI 稳定，stream-json 协议可解析
+    - Sonnet 性价比 + reasoning 够用，没有 Opus 的输出截断
+    - --permission-mode bypassPermissions 让子 agent 自由编辑沙箱
+  trade_offs: |
+    模型固定，遇 Sonnet 推理瓶颈无法切到更强模型；以代价换稳定性。
+
+- id: dec-004
+  date: 2026-04-25
+  title: EvidencePayload + VerificationOutput schema 化
+  domain: schema
+  context: |
+    sub-agent 自由 NL 输出难校验，verify-server 收到的 evidence.json
+    经常缺字段、premise_qids 引用图外节点（ghost-premise）。
+  decision: |
+    verify_server/schemas.py 用 pydantic 强约束 EvidencePayload
+    （premise_qids/source/strength 必填）+ VerificationOutput
+    （verdict ∈ {verified, refuted, inconclusive} + inconclusive_reason 枚举）。
+    所有 verification.json 写入只能走 write_verification_output MCP。
+  rationale:
+    - schema 是 sub-agent ↔ verify-server 唯一 API 契约
+    - inconclusive_reason 让 belief_ingest 知道是工具问题还是证据不足
+    - direct file write 禁止后，run_id ↔ verification.json 一对一可审计
+  trade_offs: |
+    sub-agent prompt 必须显式教 schema，否则容易输出非法 JSON。
+
+- id: dec-005
+  date: 2026-05-03
+  title: 复用 playground 的 .claude/ 基础设施迁移到 v3
+  domain: meta
+  context: |
+    v3 早期 .claude/ 目录混乱：agents 与 v3 语义脱节、skills 仍提
+    pyasurf/Cantera 例子、check_invariants.py 是占位。playground-for-agentic-science
+    的 EARS v2 + memory yaml + 12 agents + 15 skills 已稳定。
+  decision: |
+    最大化复用 playground 的 .claude/ 内容，只做 gaia 语义改造：
+    agents 全部按 v3 schemas 重写、skills 替换示例、check_invariants.py
+    接 src/gd/verify_server/schemas + gd.strategy_skeleton 做真正的不变量校验。
+  rationale:
+    - 用户明确 "复用 gaia 接口和 EARS 和 playground 代码，自己只做少量连接代码"
+    - 12 agent 角色（pi-reviewer/sentinel/oracle/...) 在两个项目通用
+    - EARS v2 hook 跨项目零改可用
+  trade_offs: |
+    一次性迁移成本高（agents 全部重写 v3 化），但避免长期维护两套并行体系。

@@ -1,0 +1,761 @@
+#!/usr/bin/env python3
+"""EARS State Writer — bridge between EARS hooks and session state YAML.
+
+Called by ears-trace to append decisions, update heartbeat, and manage
+session lifecycle in .claude/state/current.yaml.
+
+v2.0 additions (brainstorm fixes):
+  - File locking (fcntl) for concurrent write safety
+  - Scientific provenance (--backend, --router, --worktree)
+  - Artifact tracking (artifact command)
+  - Failure taxonomy (success, blocked, env_failure, timeout, inconclusive)
+  - Worker result schema (structured output_files, findings, metrics)
+  - Kill/timeout handling (kill command, --reason)
+
+Usage:
+    ears-state init [--role worker|orchestrator|standalone] [--parent SESSION_ID] [--backend B] [--router R] [--worktree PATH]
+    ears-state heartbeat
+    ears-state decision --type TYPE --summary TEXT [--question Q] [--decision D] [--rationale R] [--concepts c1,c2]
+    ears-state artifact --path PATH --role ROLE [--decision_ref IDX]
+    ears-state status STATUS
+    ears-state end [--summary TEXT] [--outcome success|blocked|env_failure|timeout|inconclusive] [--findings JSON]
+    ears-state kill SESSION_ID [--reason TEXT]
+    ears-state show
+    ears-state bump METRIC
+
+State file: .claude/state/current.yaml (relative to repo root)
+"""
+
+from __future__ import annotations
+
+import argparse
+import fcntl
+import hashlib
+import json
+import os
+import signal
+import sys
+import time
+from contextlib import contextmanager
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+# Use ruamel if available (preserves comments), fall back to pyyaml
+try:
+    import yaml
+except ImportError:
+    print("ears-state: pyyaml not installed, skipping", file=sys.stderr)
+    sys.exit(0)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# P0: File locking for concurrent write safety
+# ─────────────────────────────────────────────────────────────────────────────
+
+@contextmanager
+def file_lock(path: Path, timeout: float = 5.0):
+    """Acquire exclusive lock on state file with timeout.
+
+    Uses fcntl.flock for cross-process locking. Lock file is adjacent to
+    state file (e.g., current.yaml.lock) to avoid partial-write corruption.
+    """
+    lock_path = path.with_suffix(path.suffix + ".lock")
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+
+    lock_fd = None
+    try:
+        lock_fd = os.open(str(lock_path), os.O_RDWR | os.O_CREAT)
+
+        # Try to acquire lock with timeout
+        deadline = time.time() + timeout
+        acquired = False
+        while time.time() < deadline:
+            try:
+                fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                acquired = True
+                break
+            except BlockingIOError:
+                time.sleep(0.05)  # 50ms retry interval
+
+        if not acquired:
+            print(f"ears-state: timeout acquiring lock on {path}", file=sys.stderr)
+            raise TimeoutError(f"Could not acquire lock on {path} within {timeout}s")
+
+        yield
+
+    finally:
+        if lock_fd is not None:
+            try:
+                fcntl.flock(lock_fd, fcntl.LOCK_UN)
+            except Exception:
+                pass
+            os.close(lock_fd)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Utilities
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _session_id() -> str:
+    """Generate a session ID from env or timestamp+random."""
+    env_id = os.environ.get("CLAUDE_SESSION_ID", "")
+    if env_id:
+        return env_id[:16]
+    ts = int(time.time())
+    rnd = hashlib.md5(f"{ts}{os.getpid()}".encode()).hexdigest()[:6]
+    return f"s-{ts}-{rnd}"
+
+
+def _find_repo_root(start: str = ".") -> Path | None:
+    """Walk up to find .git directory."""
+    p = Path(start).resolve()
+    while p != p.parent:
+        if (p / ".git").exists() or (p / ".git").is_file():
+            return p
+        p = p.parent
+    return None
+
+
+def _state_dir(repo_root: Path) -> Path:
+    d = repo_root / ".claude" / "state"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def _state_file(repo_root: Path) -> Path:
+    return _state_dir(repo_root) / "current.yaml"
+
+
+def _load_state(path: Path) -> dict:
+    if path.exists():
+        with open(path) as f:
+            return yaml.safe_load(f) or {}
+    return {}
+
+
+def _save_state(path: Path, data: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # Write atomically via temp file
+    tmp_path = path.with_suffix(".tmp")
+    with open(tmp_path, "w") as f:
+        yaml.dump(data, f, default_flow_style=False, allow_unicode=True,
+                  sort_keys=False, width=120)
+    tmp_path.rename(path)
+
+
+def _get_branch() -> str:
+    try:
+        import subprocess
+        r = subprocess.run(["git", "branch", "--show-current"],
+                           capture_output=True, text=True, timeout=5)
+        return r.stdout.strip() or "unknown"
+    except Exception:
+        return "unknown"
+
+
+def _get_backend_version(backend: str) -> str:
+    """Get backend version string (v3 backends: claude, gpugeek)."""
+    try:
+        import subprocess
+        if backend == "claude":
+            r = subprocess.run(["claude", "--version"],
+                               capture_output=True, text=True, timeout=5)
+            return r.stdout.strip().split()[0] if r.stdout else "unknown"
+    except Exception:
+        pass
+    return "unknown"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Commands
+# ─────────────────────────────────────────────────────────────────────────────
+
+def cmd_init(args):
+    """Initialize a new session or update heartbeat of existing active session."""
+    repo = _find_repo_root()
+    if not repo:
+        print("ears-state: not in a git repo", file=sys.stderr)
+        sys.exit(1)
+
+    sf = _state_file(repo)
+
+    with file_lock(sf):
+        existing = _load_state(sf)
+
+        # Don't overwrite an active session
+        if existing.get("status") == "active":
+            # Just update heartbeat
+            existing["last_heartbeat"] = _now_iso()
+            _save_state(sf, existing)
+            return
+
+        sid = _session_id()
+        state: dict[str, Any] = {
+            "schema_version": "2.0",
+            "session_id": sid,
+            "role": args.role or "standalone",
+            "status": "active",
+            "started_at": _now_iso(),
+            "last_heartbeat": _now_iso(),
+            "branch": _get_branch(),
+            "cwd": str(repo),
+            "current_task": "",
+            "decisions": [],
+            "blockers": [],
+            "artifacts": [],
+            "metrics": {"edits": 0, "commits": 0, "errors_fixed": 0, "decisions_made": 0},
+        }
+
+        # P1: Scientific provenance
+        if args.parent:
+            state["parent_session"] = args.parent
+        if args.backend:
+            state["provenance"] = state.get("provenance", {})
+            state["provenance"]["backend"] = args.backend
+            state["provenance"]["backend_version"] = _get_backend_version(args.backend)
+        if args.router:
+            state["provenance"] = state.get("provenance", {})
+            state["provenance"]["router"] = args.router
+        if args.worktree:
+            state["provenance"] = state.get("provenance", {})
+            state["provenance"]["worktree"] = args.worktree
+
+        # Archive previous session if exists
+        if existing.get("session_id"):
+            archive_dir = _state_dir(repo) / "archive"
+            archive_dir.mkdir(exist_ok=True)
+            archive_path = archive_dir / f"{existing['session_id']}.yaml"
+            _save_state(archive_path, existing)
+
+        _save_state(sf, state)
+        print(f"ears-state: initialized session {sid}", file=sys.stderr)
+
+
+def cmd_heartbeat(args):
+    """Update session heartbeat timestamp."""
+    repo = _find_repo_root()
+    if not repo:
+        return
+    sf = _state_file(repo)
+
+    with file_lock(sf):
+        state = _load_state(sf)
+        if not state:
+            return
+        state["last_heartbeat"] = _now_iso()
+        _save_state(sf, state)
+
+
+def cmd_decision(args):
+    """Record a decision in the session state."""
+    repo = _find_repo_root()
+    if not repo:
+        return
+    sf = _state_file(repo)
+
+    with file_lock(sf):
+        state = _load_state(sf)
+        if not state:
+            return
+
+        decision = {
+            "timestamp": _now_iso(),
+            "type": args.type,
+            "summary": args.summary,
+        }
+        if args.question:
+            decision["question"] = args.question
+        if args.decision:
+            decision["decision"] = args.decision
+        if args.rationale:
+            decision["rationale"] = args.rationale
+        if args.concepts:
+            decision["concepts"] = [c.strip() for c in args.concepts.split(",")]
+        decision["source"] = f"EARS {args.type}"
+
+        if "decisions" not in state:
+            state["decisions"] = []
+        state["decisions"].append(decision)
+
+        # Update metrics
+        if "metrics" not in state:
+            state["metrics"] = {}
+        state["metrics"]["decisions_made"] = len(state["decisions"])
+        if args.type == "error_fix":
+            state["metrics"]["errors_fixed"] = state["metrics"].get("errors_fixed", 0) + 1
+
+        state["last_heartbeat"] = _now_iso()
+        _save_state(sf, state)
+
+
+def cmd_artifact(args):
+    """P1: Record an artifact (output file) linked to a decision."""
+    repo = _find_repo_root()
+    if not repo:
+        return
+    sf = _state_file(repo)
+
+    with file_lock(sf):
+        state = _load_state(sf)
+        if not state:
+            return
+
+        artifact = {
+            "path": args.path,
+            "role": args.role,
+            "created_at": _now_iso(),
+        }
+        if args.decision_ref is not None:
+            # Link to specific decision by index
+            if 0 <= args.decision_ref < len(state.get("decisions", [])):
+                artifact["decision_ref"] = args.decision_ref
+
+        if "artifacts" not in state:
+            state["artifacts"] = []
+        state["artifacts"].append(artifact)
+
+        state["last_heartbeat"] = _now_iso()
+        _save_state(sf, state)
+        print(f"ears-state: recorded artifact {args.path} ({args.role})", file=sys.stderr)
+
+
+def cmd_status(args):
+    """Change session status."""
+    repo = _find_repo_root()
+    if not repo:
+        return
+    sf = _state_file(repo)
+
+    with file_lock(sf):
+        state = _load_state(sf)
+        if not state:
+            return
+        state["status"] = args.new_status
+        state["last_heartbeat"] = _now_iso()
+        _save_state(sf, state)
+
+
+def cmd_end(args):
+    """End session with structured result (P2: failure taxonomy)."""
+    repo = _find_repo_root()
+    if not repo:
+        return
+    sf = _state_file(repo)
+
+    with file_lock(sf):
+        state = _load_state(sf)
+        if not state:
+            return
+
+        # P2: Failure taxonomy
+        outcome = args.outcome or "success"
+        state["status"] = "completed" if outcome == "success" else "failed"
+        state["ended_at"] = _now_iso()
+        state["last_heartbeat"] = _now_iso()
+
+        # Build structured result
+        result: dict[str, Any] = {
+            "outcome": outcome,  # success | blocked | env_failure | timeout | inconclusive
+        }
+        if args.summary:
+            result["summary"] = args.summary
+
+        # P2: Parse findings JSON if provided
+        if args.findings:
+            try:
+                result["findings"] = json.loads(args.findings)
+            except json.JSONDecodeError:
+                result["findings_raw"] = args.findings
+
+        # Collect output files from artifacts
+        output_files = [a["path"] for a in state.get("artifacts", []) if a.get("role") == "output"]
+        if output_files:
+            result["output_files"] = output_files
+
+        state["result"] = result
+        _save_state(sf, state)
+
+        # Archive
+        archive_dir = _state_dir(repo) / "archive"
+        archive_dir.mkdir(exist_ok=True)
+        archive_path = archive_dir / f"{state['session_id']}.yaml"
+        _save_state(archive_path, state)
+
+
+def cmd_kill(args):
+    """P2: Send termination signal to a worker session."""
+    repo = _find_repo_root()
+    if not repo:
+        print("ears-state: not in a git repo", file=sys.stderr)
+        sys.exit(1)
+
+    state_dir = _state_dir(repo)
+
+    # Find the worker's state file
+    target_file = None
+    for pattern in [f"session-{args.session_id}.yaml", "current.yaml"]:
+        candidate = state_dir / pattern
+        if candidate.exists():
+            with file_lock(candidate):
+                state = _load_state(candidate)
+                if state.get("session_id") == args.session_id:
+                    target_file = candidate
+                    break
+
+    if not target_file:
+        # Check archive
+        archive_dir = state_dir / "archive"
+        if archive_dir.exists():
+            candidate = archive_dir / f"{args.session_id}.yaml"
+            if candidate.exists():
+                print(f"ears-state: session {args.session_id} already archived", file=sys.stderr)
+                return
+        print(f"ears-state: session {args.session_id} not found", file=sys.stderr)
+        sys.exit(1)
+
+    with file_lock(target_file):
+        state = _load_state(target_file)
+
+        # Check if there's a PID to signal
+        pid = state.get("pid")
+        if pid:
+            try:
+                os.kill(pid, signal.SIGTERM)
+                print(f"ears-state: sent SIGTERM to PID {pid}", file=sys.stderr)
+            except ProcessLookupError:
+                print(f"ears-state: PID {pid} not found (already exited?)", file=sys.stderr)
+            except PermissionError:
+                print(f"ears-state: permission denied for PID {pid}", file=sys.stderr)
+
+        # Mark as killed in state
+        state["status"] = "failed"
+        state["ended_at"] = _now_iso()
+        state["result"] = {
+            "outcome": "timeout",  # or could be "killed"
+            "reason": args.reason or "killed by orchestrator",
+        }
+        _save_state(target_file, state)
+
+        # Archive
+        archive_dir = state_dir / "archive"
+        archive_dir.mkdir(exist_ok=True)
+        archive_path = archive_dir / f"{args.session_id}.yaml"
+        _save_state(archive_path, state)
+
+        print(f"ears-state: marked session {args.session_id} as killed", file=sys.stderr)
+
+
+def cmd_bump(args):
+    """Bump a metric counter (edits, commits)."""
+    repo = _find_repo_root()
+    if not repo:
+        return
+    sf = _state_file(repo)
+
+    with file_lock(sf):
+        state = _load_state(sf)
+        if not state:
+            return
+        if "metrics" not in state:
+            state["metrics"] = {}
+        state["metrics"][args.metric] = state["metrics"].get(args.metric, 0) + 1
+        state["last_heartbeat"] = _now_iso()
+        _save_state(sf, state)
+
+
+def cmd_task(args):
+    """Set current_task."""
+    repo = _find_repo_root()
+    if not repo:
+        return
+    sf = _state_file(repo)
+
+    with file_lock(sf):
+        state = _load_state(sf)
+        if not state:
+            return
+        state["current_task"] = args.text
+        state["last_heartbeat"] = _now_iso()
+        _save_state(sf, state)
+
+
+def cmd_blocker(args):
+    """Record a blocker."""
+    repo = _find_repo_root()
+    if not repo:
+        return
+    sf = _state_file(repo)
+
+    with file_lock(sf):
+        state = _load_state(sf)
+        if not state:
+            return
+
+        blocker = {
+            "description": args.description,
+            "severity": args.severity or "medium",
+            "created_at": _now_iso(),
+        }
+        if args.waiting_for:
+            blocker["waiting_for"] = args.waiting_for
+        if args.assumption:
+            blocker["assumption"] = args.assumption
+
+        if "blockers" not in state:
+            state["blockers"] = []
+        state["blockers"].append(blocker)
+
+        state["last_heartbeat"] = _now_iso()
+        _save_state(sf, state)
+        print(f"ears-state: recorded blocker [{args.severity}] {args.description[:50]}...", file=sys.stderr)
+
+
+def cmd_resolve_blocker(args):
+    """Resolve a blocker by index."""
+    repo = _find_repo_root()
+    if not repo:
+        return
+    sf = _state_file(repo)
+
+    with file_lock(sf):
+        state = _load_state(sf)
+        if not state:
+            return
+
+        blockers = state.get("blockers", [])
+        if 0 <= args.index < len(blockers):
+            resolved = blockers.pop(args.index)
+            resolved["resolved_at"] = _now_iso()
+            resolved["resolution"] = args.resolution or "resolved"
+
+            # Move to resolved_blockers list
+            if "resolved_blockers" not in state:
+                state["resolved_blockers"] = []
+            state["resolved_blockers"].append(resolved)
+
+            state["blockers"] = blockers
+            state["last_heartbeat"] = _now_iso()
+            _save_state(sf, state)
+            print(f"ears-state: resolved blocker #{args.index}", file=sys.stderr)
+        else:
+            print(f"ears-state: blocker #{args.index} not found", file=sys.stderr)
+
+
+def cmd_show(args):
+    """Print current state summary."""
+    repo = _find_repo_root()
+    if not repo:
+        print("Not in a git repo")
+        return
+    sf = _state_file(repo)
+
+    with file_lock(sf, timeout=2.0):
+        state = _load_state(sf)
+
+    if not state:
+        print("No active session state")
+        return
+
+    print(f"Session:   {state.get('session_id', '?')}")
+    print(f"Schema:    {state.get('schema_version', '1.0')}")
+    print(f"Role:      {state.get('role', '?')}")
+    print(f"Status:    {state.get('status', '?')}")
+    print(f"Branch:    {state.get('branch', '?')}")
+    print(f"Task:      {state.get('current_task', '(none)')}")
+    print(f"Heartbeat: {state.get('last_heartbeat', '?')}")
+
+    # Provenance
+    prov = state.get("provenance", {})
+    if prov:
+        print(f"Provenance:")
+        if prov.get("backend"):
+            print(f"  Backend:   {prov['backend']} {prov.get('backend_version', '')}")
+        if prov.get("router"):
+            print(f"  Router:    {prov['router']}")
+        if prov.get("worktree"):
+            print(f"  Worktree:  {prov['worktree']}")
+
+    # Decisions
+    decisions = state.get("decisions", [])
+    print(f"Decisions: {len(decisions)}")
+    for d in decisions[-5:]:  # Last 5
+        print(f"  [{d.get('type','')}] {d.get('summary','')}")
+
+    # Blockers
+    blockers = state.get("blockers", [])
+    if blockers:
+        print(f"Blockers:  {len(blockers)}")
+        for i, b in enumerate(blockers):
+            print(f"  #{i} [{b.get('severity','')}] {b.get('description','')[:50]}")
+
+    # Artifacts
+    artifacts = state.get("artifacts", [])
+    if artifacts:
+        print(f"Artifacts: {len(artifacts)}")
+        for a in artifacts[-3:]:
+            print(f"  {a.get('path','')} ({a.get('role','')})")
+
+    # Metrics
+    metrics = state.get("metrics", {})
+    print(f"Metrics:   edits={metrics.get('edits',0)} commits={metrics.get('commits',0)} fixes={metrics.get('errors_fixed',0)}")
+
+    # Result
+    result = state.get("result")
+    if result:
+        print(f"Result:    {result.get('outcome', '?')} - {result.get('summary', '')[:50]}")
+
+
+def cmd_list(args):
+    """List all sessions (active + recent archived)."""
+    repo = _find_repo_root()
+    if not repo:
+        print("Not in a git repo")
+        return
+
+    state_dir = _state_dir(repo)
+    sessions = []
+
+    # Current session
+    current = state_dir / "current.yaml"
+    if current.exists():
+        state = _load_state(current)
+        if state:
+            sessions.append(("current", state))
+
+    # Archived sessions (most recent 10)
+    archive_dir = state_dir / "archive"
+    if archive_dir.exists():
+        archived = sorted(archive_dir.glob("*.yaml"), key=lambda p: p.stat().st_mtime, reverse=True)
+        for p in archived[:10]:
+            state = _load_state(p)
+            if state:
+                sessions.append((p.stem, state))
+
+    if not sessions:
+        print("No sessions found")
+        return
+
+    print(f"{'Session ID':<20} {'Role':<12} {'Status':<10} {'Outcome':<12} {'Branch':<20}")
+    print("-" * 80)
+    for name, s in sessions:
+        sid = s.get("session_id", "?")[:18]
+        role = s.get("role", "?")
+        status = s.get("status", "?")
+        outcome = s.get("result", {}).get("outcome", "-")
+        branch = s.get("branch", "?")[:18]
+        print(f"{sid:<20} {role:<12} {status:<10} {outcome:<12} {branch:<20}")
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog="ears-state",
+        description="EARS Session State Manager v2.0 — with file locking, provenance, and failure taxonomy"
+    )
+    sub = parser.add_subparsers(dest="command")
+
+    # init
+    p_init = sub.add_parser("init", help="Initialize a new session")
+    p_init.add_argument("--role", choices=["orchestrator", "worker", "standalone"],
+                        default="standalone")
+    p_init.add_argument("--parent", help="Parent session ID (for workers)")
+    p_init.add_argument("--backend", help="LLM backend (claude, gpugeek)")
+    p_init.add_argument("--router", help="verify-server router (quantitative, structural, heuristic)")
+    p_init.add_argument("--worktree", help="Git worktree path")
+
+    # heartbeat
+    sub.add_parser("heartbeat", help="Update session heartbeat")
+
+    # decision
+    p_dec = sub.add_parser("decision", help="Record a decision")
+    p_dec.add_argument("--type", required=True,
+                       choices=["error_fix", "design_choice", "parameter_selection",
+                                "tool_selection", "scope_change", "blocker_resolution"])
+    p_dec.add_argument("--summary", required=True)
+    p_dec.add_argument("--question")
+    p_dec.add_argument("--decision")
+    p_dec.add_argument("--rationale")
+    p_dec.add_argument("--concepts")
+
+    # artifact (P1)
+    p_art = sub.add_parser("artifact", help="Record an artifact (output file)")
+    p_art.add_argument("--path", required=True, help="Path to artifact")
+    p_art.add_argument("--role", required=True,
+                       choices=["input", "output", "config", "data", "script", "log"],
+                       help="Role of artifact")
+    p_art.add_argument("--decision_ref", type=int, help="Link to decision index")
+
+    # blocker
+    p_block = sub.add_parser("blocker", help="Record a blocker")
+    p_block.add_argument("--description", required=True)
+    p_block.add_argument("--severity", choices=["critical", "high", "medium", "low"])
+    p_block.add_argument("--waiting_for", help="What this is waiting for")
+    p_block.add_argument("--assumption", help="Assumption being made to proceed")
+
+    # resolve-blocker
+    p_resolve = sub.add_parser("resolve-blocker", help="Resolve a blocker")
+    p_resolve.add_argument("index", type=int, help="Blocker index to resolve")
+    p_resolve.add_argument("--resolution", help="How it was resolved")
+
+    # status
+    p_status = sub.add_parser("status", help="Change session status")
+    p_status.add_argument("new_status",
+                          choices=["starting", "active", "idle", "blocked", "completed", "failed"])
+
+    # end (P2: failure taxonomy)
+    p_end = sub.add_parser("end", help="End session with result")
+    p_end.add_argument("--summary", help="Result summary")
+    p_end.add_argument("--outcome",
+                       choices=["success", "blocked", "env_failure", "timeout", "inconclusive"],
+                       default="success",
+                       help="Outcome category")
+    p_end.add_argument("--findings", help="JSON string of structured findings")
+
+    # kill (P2)
+    p_kill = sub.add_parser("kill", help="Terminate a worker session")
+    p_kill.add_argument("session_id", help="Session ID to terminate")
+    p_kill.add_argument("--reason", help="Reason for termination")
+
+    # bump
+    p_bump = sub.add_parser("bump", help="Bump a metric counter")
+    p_bump.add_argument("metric", choices=["edits", "commits", "errors_fixed"])
+
+    # task
+    p_task = sub.add_parser("task", help="Set current task description")
+    p_task.add_argument("text", help="Task description")
+
+    # show
+    sub.add_parser("show", help="Show current session state")
+
+    # list
+    sub.add_parser("list", help="List all sessions")
+
+    args = parser.parse_args()
+    if not args.command:
+        parser.print_help()
+        sys.exit(1)
+
+    handlers = {
+        "init": cmd_init,
+        "heartbeat": cmd_heartbeat,
+        "decision": cmd_decision,
+        "artifact": cmd_artifact,
+        "blocker": cmd_blocker,
+        "resolve-blocker": cmd_resolve_blocker,
+        "status": cmd_status,
+        "end": cmd_end,
+        "kill": cmd_kill,
+        "bump": cmd_bump,
+        "task": cmd_task,
+        "show": cmd_show,
+        "list": cmd_list,
+    }
+    handlers[args.command](args)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,70 @@
+id: wrap-up
+name: Wrap Up
+version: 1.0.0
+description: >
+  Wrap up the current feature branch: discover and update relevant documentation,
+  commit uncommitted changes, merge to the main branch, and optionally push.
+
+triggers:
+  commands:
+    - /wrap-up
+    - /merge
+    - /finalize
+  patterns:
+    - "wrap up"
+    - "merge to main"
+    - "finalize branch"
+    - "finish this work"
+    - "commit and merge"
+
+inputs:
+  - name: branch
+    type: string
+    optional: true
+    description: Branch to wrap up (defaults to current)
+  - name: push
+    type: boolean
+    default: false
+    description: Push after merge
+
+outputs:
+  - name: merged
+    type: boolean
+    description: Whether merge succeeded
+  - name: docs_updated
+    type: array
+    description: List of documentation files updated
+  - name: conflicts
+    type: array
+    description: List of merge conflicts (if any)
+
+depends_on:
+  required: []
+  optional:
+    - id: reflect
+      reason: "Should run /reflect before merging"
+    - id: test-suite
+      reason: "Should run tests before merging"
+
+requires:
+  - tool: git
+    reason: "For branch operations and merging"
+  - tool: python3
+    reason: "For running check_invariants.py"
+
+compatibility:
+  project_types: [any]
+  tags: [workflow, git, merge, documentation]
+
+author:
+  name: Playground Team
+
+license: MIT
+extensible: true
+
+test:
+  expectations:
+    - given: "A feature branch with uncommitted changes"
+      then: "Changes are committed before merge"
+    - given: "A branch with doc changes"
+      then: "Relevant docs are updated"

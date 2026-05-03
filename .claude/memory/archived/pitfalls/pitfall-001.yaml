@@ -1,0 +1,17 @@
+archived_date: '2026-04-09'
+archived_reason: promoted
+date: 2026-04-09
+expires: 2026-07-09
+files:
+- server/routes/topics.py
+id: pitfall-001
+impact: All POST endpoints return 500 TypeError
+invariant_check: RequireAuthPattern
+promoted_to_invariant: true
+right: 'def create_topic(): ... user = g.current_user'
+tags:
+- flask
+- auth
+- decorator
+title: require_auth decorator uses g.current_user, not function parameter
+wrong: 'def create_topic(current_user): ...'

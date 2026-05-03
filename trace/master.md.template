@@ -1,0 +1,289 @@
+# Trace: master
+
+This file aggregates key milestones merged to master. Individual branch traces are in `trace/<branch>.md`.
+
+### EARS — Commit Digest (2026-04-29 09:54)
+<!-- concepts: deployment, cache-busting, css-sync -->
+- Context: Deployed S2 track filtering feature to production (audp1430906.bohrium.tech:50002). User reported "fatal issue" — S2 page not visible, dropdown menu missing, homepage banner still showing S1.
+- Root cause: Incomplete deployment — only synced `js/` and `server/` directories, missed `index.html` (S2 route + dropdown HTML) and `css/styles.css` (nav-dropdown styles). Remote CSS had 0 occurrences of "nav-dropdown", local had 11.
+- Fix: (1) rsync index.html + css/ + locales/ to remote (2) Bump CSS cache buster from v=202604242149 to v=202604291730 to force browser reload (3) Restart gunicorn
+- Lesson: Full-stack feature deployment checklist must include: HTML (routes/structure), CSS (styles), JS (logic), locales (i18n), server (API), and cache-busting. Partial sync breaks UX silently.
+- Verification: curl confirmed nav-dropdown in remote CSS (11 occurrences), cache buster updated in served HTML, S2 API returns complete season data with seasonLabelEn.
+
+### EARS — Session End (2026-04-29 08:35)
+<!-- concepts: time-gated-ui, multi-season-support, data-loading -->
+- Accomplished: (1) Time-gated "Browse Challenges" button on S2 page — disabled before 14:00 (2026-04-29T14:00:00+08:00), enabled after competition starts. (2) Multi-season leaderboard support: added `loadAllSeasons()` in data.js, updated leaderboard filter bar to show all seasons dynamically (S1 + S2 tabs), seeded S2 in seed.py with 4 tracks, 13:00-18:00 schedule, per-track awards. Verified via Playwright: leaderboard shows 3 tabs (All Time, Season 1, Season 2), S2 button correctly disabled before 14:00.
+- Next session: S2 fully integrated. Leaderboard now supports unlimited seasons via `/api/hackathon/seasons`. Time-gate logic uses CST timezone.
+- Open issues: None
+
+### EARS — Session End (2026-04-29 08:24)
+<!-- concepts: spa-layout, css-design-system, bilingual-content -->
+- Accomplished: Improved S2 hackathon page layout to match S1 visual quality. Added `hackathon-hero-inner` wrapper, `hackathon-hero-subtitle` styling, alternating `hackathon-alt` backgrounds (4 sections), replaced custom table wrapper with standard `hackathon-table`, used `hackathon-prose` for rich content, and `hackathon-schedule` grid layout. Added CSS for subtitle and `ul` support in prose. All elements verified via Playwright.
+- Next session: S2 page now has consistent visual rhythm with S1. Content already aligned with public announcement (4 tracks, 13:00-18:00, per-track awards, no GPU/internal details).
+- Open issues: None
+
+### EARS — Progress (2026-04-18 09:28)
+<!-- concepts: deployment, merge-conflicts, test-infrastructure, automated-monitoring -->
+Merged `vk/857c-hackathon-1-pipe` (7 commits) into master: anti-cheat hardening, fraud research export, null-guard challenge cards, patrol selector fixes.
+
+Key merge issues resolved:
+- **Duplicate `except` line** in `scoring_service.py` from conflict resolution → IndentationError (16 test failures)
+- **Hackathon deadline enforcement** now past 2026-04-17 17:00 CST → all test attempts blocked. Fix: `os.environ['HACKATHON_DEADLINE'] = ''` in conftest.py
+- **200×200 solid-color PNG = 589 bytes** < `_MIN_FIGURE_BYTES=1024`. Solid colors compress too well. Fix: use `np.random.randint` noisy images in tests
+- **No-script penalty (0.5×)** not accounted for in 5 tests that expected score=100. Fix: set `attempt.script_path = 'test.py'`
+- **LLM review test reload bug**: `unittest.mock.patch('_API_KEY', '')` + `reload(mod)` → reload re-reads os.environ, overwriting mock. Fix: don't reload
+
+531 tests passing. Now building automated patrol cron + Lark notifications.
+
+### Merged: vk/4644-translate-is-mis — Complete i18n System (2026-04-15)
+- Full EN/ZH internationalization: 515+ locale keys, language toggle (中/EN button)
+- Glossary-driven terminology: Fork=keep English, Trace=轨迹, Stuck=卡住, Agent=智能体
+- All 18 page renderers wrapped with t() calls, data-i18n for static HTML
+- UX fixes: removed Dashboard from nav, moved Library to profile tab, guard against empty locale
+- Deploy fix: added missing `requests` dependency to requirements.txt (Bohrium SSO broken on venv rebuild)
+
+### Merged: vk/f575-arm-hub-https-ar — ARM Hub Integration (2026-04-14)
+- Researched ARM Hub (arm.bohrium.com): 533 papers, 40 ARM packages, 91 skills
+- 5-model brainstorm (Claude/GPT/Gemini/Qwen/Kimi) on ARM design decisions
+- ARM manifest v1 JSON Schema: paper targets, environment, expected_outputs with comparison_method, handoff, scorecard, provenance
+- ReproductionSeries model: three-level hierarchy (Challenge → Series → Attempt/Version)
+- 10 bundle API endpoints: series CRUD, bundle upload/download/status/manifest, ARM export, schema
+- 6-state bundle status machine: draft → incomplete → packaging → ready → verified → failed
+- 6-dimension scorecard: packaging, executability, output_coverage, result_fidelity, environment_reproducibility, trace_quality
+- Skeleton bundle generator for 14 challenges with per-discipline Dockerfiles
+- ARM Protocol Reference: 784-line community consensus document (docs/ARM_PROTOCOL_REFERENCE.md)
+- 236 total tests (16 new ARM tests), all passing
+- 3 new decisions (D11-D13), 2 new pitfalls (P23-P24) in .claude/memory/
+
+### Merged: vk/5d01-ears — EARS + Checkpoint System (2026-04-14)
+- Added `GET /api/skills/{id}/bundle` endpoint: returns tar.gz of full skill directory
+- GitHub-imported skills fetch complete directory (scripts, examples, docs); platform skills bundle SKILL.md
+- Frontend install tab updated: primary command is `curl | tar xz`, legacy single-file download in collapsible
+- 5 new tests (220 API tests total), CLAUDE.md and AGENT_API.md updated
+
+### Merged: vk/1d79-chrome-extension — Session 2 (2026-04-09)
+- Fixed 3 bugs in Submit Paper/Attempt flows (empty author crash, missing totalFigures field, multi-file handler)
+- Complete attempt submission pipeline: script upload, skill/agent linking, trace upload (inline + standalone POST)
+- Agent handoff is now a single multipart POST with all artifacts
+- 6 new tests, 169 pytest API tests total
+
+### Merged: vk/69c2-asp-3c6a8d8b23e3 (2026-04-09)
+- Fixed library POST 500: deferred PDF download from synchronous to fire-and-forget
+- `except Exception` → `except BaseException` to catch Gunicorn worker `SystemExit`
+- Chrome extension service worker auto-triggers `/fetch-pdf` after save (instant 201, background PDF)
+
+### Merged: vk/6dd7-zotero-playgroun (2026-04-09)
+- Extract `stripFrontmatter()` shared utility; fix plain-text spec fallback in skill/agent detail pages
+- Simplified API fetch fallback logic (removed content-type HTML guard)
+- Removed redundant `proxy_intercept_errors off` from nginx.conf
+
+### Merged: vk/1d79-chrome-extension (2026-04-09)
+- Chrome extension PDF page support — regex-based HTML meta parsing in service worker
+- Fixed critical bug: DOMParser unavailable in service worker context (silently failed)
+- 8 publisher-specific URL rewrite rules (arXiv, bioRxiv, medRxiv, ScienceDirect, Wiley, Springer/Nature, ACS, APS)
+- optional_host_permissions for 12 publisher domains, on-demand permission grant UX
+- 5-minute per-tab metadata cache, distinct PDF error state in popup
+- New skill: /sync-and-plan (cross-worktree orientation)
+- Extension version 0.2.0
+
+### Merged: vk/f32a-playground-skill (2026-04-09)
+- 44 pytest tests for library + engagement routes (total 136)
+- Multi-worktree coordination system (per-worktree state files, trace shards, live merge order)
+- Portable gemini-review and gpt-review skills (auto-read CLAUDE.md)
+- Enhanced wrap-up and worktree skills with pre-merge validation gate
+- docs/COORDINATION_SYSTEM_DESIGN.md (cross-model reviewed)
+
+### Merged: engagement feature (2026-04-09)
+- 7 engagement models (SkillVote, AgentVote, AttemptVote, Follow, UsageRecord, AttemptSkill, AttemptAgent)
+- engagement.js module (224 lines) with renderEngagementBar()
+- engagement.py routes (239 lines) — vote/follow/stats/trending
+
+### Merged: library feature (2026-04-08)
+- LibraryItem model, 5 CRUD endpoints, PDF download
+- Chrome extension for paper saving
+
+### Merged: discussion zone (2026-04-08)
+- Topic model, TopicReply, TopicVote
+- 10 API endpoints, agent-friendly feed
+- Homepage hot discussions
+
+### Merged: test suite (2026-04-08)
+- 92 pytest API tests + 19 Playwright E2E tests
+- Two new skills: /test-suite, /update-docs
+
+### Merged: vk/e42b-discussion-zone — Community Health Dashboard (2026-04-10)
+- GET /api/admin/community-health: 30+ platform metrics (users, attempts, forks, outcomes, votes, badges, feed)
+- Frontend #dashboard page with overview cards, CSS-only bar charts, outcome/vote/badge distribution
+- Added created_at to SkillVote/AgentVote/AttemptVote for vote velocity tracking
+- 215 total tests (4 new), all passing
+
+### Merged: vk/e42b-discussion-zone — Attempt Fork System (2026-04-10)
+- Git-like attempt fork DAG: parent_attempt_id self-referencing FK, outcome tracking (success/partial/failed/stuck)
+- 5 new API endpoints: fork, tree, submit draft, PATCH draft, enhanced list with tree mode
+- Pathfinder + Wall Breaker badges with wired badge_service calls
+- Attempt timeline UI: outcome icons replace numeric rank, fork lineage, "Continue this attempt" CTA
+- Onboarding toast ("Stuck is a save point"), agent submission guide rewrite
+- Code review fixes: N+1 forkCount, cycle protection in tree walk, dead CSS removal
+- 211 total tests (21 new), all passing
+- 2 new pitfalls, 2 new decisions in .claude/memory/
+
+### Merged: vk/6dd7-zotero-playgroun — Discussion UX Polish (2026-04-10)
+- 2 new auto-discuss personas (comedian 陈立冬, cute-newbie 默默) — 13 total
+- Deep reply nesting fix: DOM capped at 5 levels, overflow rendered as flat siblings
+- Dynamic @mention highlighting from actual topic participants (replaces hardcoded list)
+- Reply collapse (3 visible + fold toggle), inline Reply button on topic body
+- 9 commits, 215 tests passing
+
+### Merged: vk/e42b-discussion-zone — Evolution System (2026-04-10)
+- Closed 5 broken feedback loops in the self-improving evolution system
+- Session Start Protocol in CLAUDE.md: mandatory memory load + invariant check
+- Session End Protocol: mandatory /reflect before session close
+- New /reflect skill: lightweight session-end knowledge extraction (split from wrap-up)
+- check_invariants.py --fix: auto-patches CLAUDE.md numeric drift
+- check_invariants.py: DistillNeeded + MemoryStaleness warning checks
+- pre-push hook: warns if no memory entries updated since last push
+- wrap-up skill restructured: Steps 6-11, /reflect integrated, duplicate step removed
+- review_gemini.py: fixed double /v1 in GPUGeek API URL (pitfall-004)
+- 2 new pitfalls, 1 updated pattern in .claude/memory/
+
+### EARS — Progress (2026-04-21 17:54)
+<!-- concepts: documentation, tutorial, deployment, testing -->
+
+**What happened**: Deployed audit enhancements to production and wrote comprehensive bilingual tutorial (TUTORIAL.md, 18 sections, ~15K words).
+
+**Deployment**:
+- Merged feature branch to master (audit enhancements already merged in previous session)
+- 595 API tests passed
+- Hotdeploy succeeded: DB backup, code sync, Gunicorn reload, seed, smoke tests, SPA check
+- Verified production: ban system, scoring audit log, API sanitization all working
+- Pushed to origin
+
+**Tutorial creation**:
+- Captured 8 live site screenshots via Playwright (home, challenges, detail, leaderboard, knowledge, discuss, skills, skill-detail)
+- Wrote TUTORIAL.md covering: platform overview, registration, challenges, submission, fork system, hackathon, skills, agents, discussion, knowledge graph, profile, AI agent integration, ARM bundles, browser extension, API reference, local dev, FAQ
+- Bilingual (ZH primary, EN secondary) — follows platform's i18n approach
+- 18 sections with tables, code examples, API endpoints
+
+**Key decisions**:
+- Tutorial focuses on user journey (browse → submit → fork → agent integration) rather than technical architecture
+- Included real production data (281 challenges, 91 skills, 31 agents, 13 topics)
+- Emphasized agent-as-first-class-citizen narrative (Phase 1 → 2 → 3 from VISION.md)
+
+**Next**: Commit tutorial, optionally add to #docs page.
+
+
+### EARS — Progress (2026-04-24 21:53)
+<!-- concepts: hunter-refactor, submission-protocol, anti-cheat -->
+Implementing Phase 1 of Hunter refactor: introduced `SubmissionLike` Protocol
++ `HackathonSubmissionAdapter` wrapping `Attempt`. All 6 detectors in
+`hunter_service.py` now consume `SubmissionLike` and never touch ORM fields
+directly (uses `_as_submissions()` helper to auto-wrap raw Attempts at entry
+for backward compatibility with existing unit tests that call detectors with
+raw `Attempt` rows).
+
+Fixed latent L266 bug: `original_score` was read *after* `a.score =
+CHEATER_SCORE` mutation, so audit logs always recorded 0. Now snapshot
+`original_scores = {a.id: a.score for a in hackathon_attempts}` before the
+mutation loop and read from the dict.
+
+Key awkwardness: detector unit tests pass raw `Attempt` objects; rather than
+break them, added `_as_submissions()` to auto-wrap. Slight leak of the old
+API, but preserves tests with zero diff.
+
+**Next**: Write `tests/test_submission_protocol.py` (adapter fields, bucket_id
+format, has_evidence, llm_review_verdict) + L266 bug regression test. Run
+full hunter test suite.
+
+### EARS — Progress (2026-04-24 23:25)
+<!-- concepts: hunter-abstraction, rl-anti-cheat, conviction-pipeline -->
+Drafted `docs/HUNTER_ABSTRACTION_DESIGN.md` v0.2 incorporating Riso's 23:06
+pushback (5 substantive points + 3 blank-table fills + L266 bug). Key
+structural changes vs v0.1:
+
+- `source: Literal[...]` → `source: str` + runtime `hunter_registry`. Closed
+  enum at the type layer was forcing every new source to touch the Protocol;
+  registry pushes the decision to wiring time.
+- `ConvictionPolicy` (one class doing 3 things) → `DetectorRegistry` +
+  `AdjudicationPolicy` + `EnforcementPolicy`. Same anti-coupling pattern as
+  the gaia-eval lesson (never let one component own both extraction and
+  adjudication).
+- `bucket_id` (one ambiguous string) → three orthogonal axes
+  (`task_id`/`submission_id`/`actor_id`). Cross-doc alignment with
+  `RAW_TRAJECTORY_SPEC.md` §3.1 to avoid pseudo-alignment.
+- Per-detector thresholds with deterministic-vs-stochastic split —
+  hard-identity detectors emit raw matches, AdjudicationPolicy dedups on
+  `(actor, task, seed, env_seed)` before applying 1-strike. Avoids
+  convicting ablation/seed-repeat runs.
+- Anti-cheat wiring goes hybrid: hard identity = sync (sub-ms hash lookup),
+  soft drift = async batch sweep, adjudication always async.
+- Detector × fields matrix added (verifies SubmissionLike is field-superset,
+  no Phase 2 AttributeError).
+- L266 fix + regression assert.
+
+**Next**: `/brainstorm` the doc with reviewer + red-team roles before
+posting to RL Autonomous Researcher 群 (per user's principle 2: anything
+to Riso must go through brainstorm). Then patch `RAW_TRAJECTORY_SPEC.md`
+to align on three-axis task object + provider-native dispatch + per-message
+optional `created_at`/`latency_ms`/`usage` fields.
+
+### EARS — Mandatory Failure Trajectory Submission (2026-04-25 11:49)
+<!-- concepts: rl-training, agentic-science, playground-architecture -->
+
+**Context**: Implementing Riso #5 from hackathon轨迹提案 — "规则：失败轨迹也要提交"。当前 Playground 允许 agent 提交时不带 trace，导致只能收集成功轨迹 = 退化成 SFT。10 种 RL 方法中 8 种需要失败轨迹（GRPO/DPO/RFT/PRM/CURE/ExGRPO）。
+
+**Decision**: 
+1. **Submission validation** — `attempts.py:create_attempt()` 新增强制检查：`attempt_type == 'agent' && status == 'submitted'` 时必须提供 `trace` (JSON) 或 `raw_messages` (JSONL file)，否则 400 error
+2. **Storage** — 新增 `Attempt.raw_messages_path` 字段存储 `traces/{attempt_id}/raw_messages.jsonl` 路径
+3. **Error message** — 明确告知 agent 开发者为什么需要轨迹："enables RL training from both success and failure trajectories"
+
+**Why**: 
+- S1 数据显示 87.3% 提交得 0 分，这些失败轨迹是"巨大的资产"（Riso 原话）
+- 只收成功 = 只能做 SFT，丢失 GRPO/DPO/CURE/ExGRPO/RFT/PRM 六种方法
+- 强制提交 = 数据完整性保证，不依赖 agent 开发者自觉
+
+**Implementation notes**:
+- `trace_json` 和 `raw_messages_file` 在 validation 阶段提前读取（避免重复 `request.form.get`）
+- Draft 提交豁免（允许迭代开发），只对 `status == 'submitted'` 强制
+- Human 提交豁免（人类可能没有结构化轨迹）
+
+**Next**: 需要数据库 migration 添加 `raw_messages_path` 列，然后测试 agent 提交 rejection。
+
+### EARS — Session Start (2026-04-28 15:57)
+<!-- concepts: ARM-protocol, submission-system, hackathon-design -->
+- Task: 阅读 /home/developer/kb 关于 hackathon 和 paper2arm 的内容（特别是 ARM 7 个基本单元），为 playground 网站设计新的提交系统和协议。
+- Why: 让 playground 的提交系统对齐 Bohr Agentic Infra / Paper2ARM 协议（ARM Hub 兼容），把 hackathon、reproduction、agent attempt 都纳入统一的 ARM 提交格式。
+
+### EARS — Progress (2026-04-29 07:12)
+<!-- concepts: ARM-protocol, submission-system, hackathon-design -->
+
+**Done so far** (Tasks 1-4 partial):
+- **v1.1 schema split**: created `data/schemas/characterization-v1.schema.json` and `data/schemas/trace-step-v1.schema.json`; extended `data/schemas/arm-manifest-v1.schema.json` with top-level `execution.{log_path,artifacts[]}`, modality pointers (`characterization`/`knowledge`/`rag`/`sub_agent`/`trace`), and `expected_outputs[].produced_by[]` (id-reference replaces brittle path matching). `arm_version` enum accepts both `1.0` and `1.1`.
+- **arm_service.py rewrite**: added `compute_modality_coverage()` (file-scan over 7 modality dirs), `validate_trace()` (5 anti-fraud checks: typed step_type enum, tool_call/tool_result pairing, ISO timestamp window vs `execution.ran_at±wall_time_s`, artifact file existence, cost_usd ≥ 0.01 floor, stdout anchor — body greppable in run.log), `_metric_score()` (per-metric → [0,1]), `parse_characterization()`, and `derive_handoff_block()` (server-computed modality_coverage + deltas_from_parent for manifest injection).
+- **REQUIRED_MODALITIES = (execution, characterization, trace)** enforced via file presence, not manifest claims.
+- **SSIM deprioritized**: characterization metric enum places numerical metrics first (relative_error / rmse / l2_relative_norm / pearson_r / ks_statistic / kl_divergence / physical_consistency); SSIM documented as fallback only, capped at 0.3 contribution to result_fidelity. Per user: "图像形状容易伪造，计算结果比曲线形状更值得比较".
+
+**Next** (Tasks 4-6):
+- Wire `derive_handoff_block()` into `server/routes/bundles.py:upload_bundle` so manifest_json gets server-computed coverage on every upload.
+- Update `update_scoring_scorecard` in arm_service.py: derive `output_coverage = |deviations.target ∩ expected_outputs.name| / |expected_outputs|` and `result_fidelity = mean(deviations.score)` from characterization_report.
+- Update `data/docs.json` arm-bundles entry (EN+ZH) and `docs/ARM_PROTOCOL_REFERENCE.md` with 7-modality + handoff vs bundle + characterization schema + trace anti-fraud + numerical>SSIM guidance.
+
+### EARS — Progress (2026-04-29 08:01)
+<!-- concepts: hackathon-s2, frontend-spa, navigation-ux -->
+- Built Hackathon S2 page (`js/pages/hackathon-s2.js`) with full bilingual content
+- Added dropdown nav for Hackathon (S1/S2 selector) with hover-based CSS menu
+- Hardcoded S2 LIVE banner fallback in home.js when API has no season data
+- Fixed: reduced from 5 tracks to 4 (removed Scientific Gatekeeper, merged into Red-Blue Adversarial per user instruction aligning with public announcement)
+- Fixed: duplicate `import { t }` in home.js causing page crash
+- In progress: fixing dropdown hover gap (menu disappears before click), updating schedule times (13:00-18:00, 1h onboarding + 4h competition), updating awards to per-track naming, fixing FAQ "五条" → "四条"
+
+### EARS — Progress (2026-04-29 08:42)
+<!-- concepts: ARM-protocol, agent-discoverability, anti-fraud -->
+
+**Done** (Tasks 7-9 — agent self-discovery layer):
+- `GET /api/protocol` (server/routes/bundles.py + arm_service.protocol_descriptor): self-describing endpoint returning required modalities, metric formulas, SSIM cap (0.3), trace anti-fraud checks (6 items), status machine, scorecard formulas, schema URLs, handoff field split (user vs server-computed). Values derived from live constants — no drift.
+- `GET /api/schemas/{characterization,trace-step}/v1` added alongside existing arm-manifest schema.
+- `/llms.txt` at site root (3.8 KB) + updated `/robots.txt` pointer following the llms.txt convention. Flask routes `serve_llms_txt` / `serve_robots_txt` in app.py serve them as text/plain.
+- `derive_violations(validation)` in arm_service.py converts validation report into structured `[{rule, message, fix, docs}]` array. Bundle upload response now always includes `violations[]` + `protocol_url: '/api/protocol'`. Hard-failed uploads return 400; incomplete returns 200 (uploaded but not ready) with violations the agent can act on.
+- Tested rules emitted: `required_modality_missing`, `ssim_only_metric`, `expected_outputs_unresolved`, `trace_anti_fraud`, `completeness_below_threshold`.
+
+**Why this matters**: agents now have three independent paths to learn the protocol — passive (llms.txt → protocol), active (introspect /api/protocol on first run), reactive (read violations from a failed upload). All paths route to the same machine-readable contract; an agent that ignores the first two will still learn from a single rejected submission.

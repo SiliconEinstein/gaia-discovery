@@ -1,0 +1,106 @@
+# Pitfalls — Things That Broke and Why
+# Curated knowledge base: each entry is actionable, specific, and dated.
+# When a pitfall can be prevented by automation, promote it to check_invariants.py.
+#
+# Lifecycle: expires 3 months after date. Promoted entries are auto-archived
+# by `python scripts/check_invariants.py --compact`.
+
+- id: pit-001
+  date: 2026-04-22
+  title: Opus 默认 MAX_OUTPUT_TOKENS=0 导致子 agent 静默超时
+  domain: backend
+  symptom: |
+    claude CLI 以 Opus 运行 sub-agent，agent.log 里 stream-json 第一条
+    message_start 后再无任何输出，900s timeout 命中，verdict 被降级为
+    inconclusive(timeout)，但 sub-agent 实际一行没写。
+  root_cause: |
+    Opus 在 claude CLI 下 MAX_OUTPUT_TOKENS 环境变量默认 0，服务端直接
+    返回空 completion。
+  fix: |
+    切 Vendor2/Claude-4.5-Sonnet；或若坚持 Opus，显式导出
+    MAX_OUTPUT_TOKENS=32000。
+  prevention: |
+    backends.ClaudeCliBackend 默认 model=Vendor2/Claude-4.5-Sonnet；
+    不要用 settings.json 的 model 默认值。
+
+- id: pit-002
+  date: 2026-04-22
+  title: GPT-5.4 输出破坏 stream-json 解析器
+  domain: backend
+  symptom: |
+    model=gpt-5.4 时 runner 在读子 agent stdout 时抛 JSONDecodeError，
+    partial line 无法拼接。
+  root_cause: |
+    GPT-5.4 在 reasoning_effort=xhigh 下输出非 stream-json 协议期望的
+    结构（多行 reasoning block），claude CLI 的 stream-json 解码器不兼容。
+  fix: |
+    只使用 Vendor2/Claude-4.5-Sonnet 作为子 agent 模型。
+  prevention: |
+    runner.DEFAULT_BASE_FLAGS 锁 --output-format stream-json；
+    模型固定为 Sonnet。
+
+- id: pit-003
+  date: 2026-05-02
+  title: dispatcher 对 legacy action_kind fail-fast，阻塞历史 demo
+  domain: dispatcher
+  symptom: |
+    sqrt2_irrational demo 里 18 条历史 action 包含 mathematical_induction
+    （旧 17-kind），尽管 action_status=failed，dispatcher._validate_metadata
+    仍抛 ValueError("未知 action")，scan_actions 整个挂掉。
+  root_cause: |
+    _validate_metadata 先校验 kind ∈ ALLOWED_ACTIONS，再看 status；
+    顺序错了。
+  fix: |
+    调换顺序：先 `if status != "pending": return None`，再校验 kind。
+    file: src/gd/dispatcher.py
+  prevention: |
+    dispatcher 10/10 单测已覆盖该路径；新增历史残留场景也走 status-first。
+
+- id: pit-004
+  date: 2026-04-28
+  title: root 下 --dangerously-skip-permissions 被拒
+  domain: backend
+  symptom: |
+    claude CLI 在 root 用户下见到 --dangerously-skip-permissions 直接退出，
+    errno=1，agent.log 里只有 "This flag is only available in sandbox mode"。
+  root_cause: |
+    claude CLI 检测 UID=0 时要求 IS_SANDBOX=1 才允许危险 flag。
+  fix: |
+    runner.run() 若环境变量 IS_SANDBOX 未设，自动 setenv IS_SANDBOX=1。
+  prevention: |
+    runner.py 的 _prepare_env 已包住；不要在 CI 流程手动 unset。
+
+- id: pit-005
+  date: 2026-04-26
+  title: evidence.json 引用 LocalCanonicalGraph 外的 premise_qid
+  domain: verify
+  symptom: |
+    sub-agent 写出的 evidence.json 里 premise_qids 含 "L42"、
+    "phantom_claim" 之类图外节点，verify-server 当 verified，
+    但 append_evidence_subgraph 回图时 KeyError。
+  root_cause: |
+    sub-agent prompt 没强制 premise 必须来自 LocalCanonicalGraph 可达集；
+    LLM 幻觉造词。称此为 ghost-premise 攻击面。
+  fix: |
+    verify_server heuristic 路增加 premise_reachability check：
+    evidence.premise_qids ⊆ reachable(claim_qid, LocalCanonicalGraph)
+    不满足 → verdict=inconclusive, reason=insufficient_evidence。
+  prevention: |
+    sentinel agent 的 quality gate 第 3 条；Red Team Category 3
+    (Evidence Schema Drift) 必查项。
+
+- id: pit-006
+  date: 2026-04-30
+  title: prior_justification 字段串匹配 false-positive
+  domain: verify
+  symptom: |
+    Reviewer 规则用 "justified by prior" 子串检测，把 claim_text
+    里恰好含该短语的正常断言标为已 justified，导致无根据的 verified。
+  root_cause: |
+    prior_justification 本应是结构化字段（list[qid]），但早期代码
+    fallback 到对 claim_text 做 str.contains。
+  fix: |
+    prior_justification 严格走 EvidencePayload 字段；Reviewer 只读
+    evidence.prior_justification: list[str]，绝不 grep claim_text。
+  prevention: |
+    schemas.py 强 typing；verify_server heuristic 路明确不做文本匹配。
