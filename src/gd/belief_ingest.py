@@ -714,6 +714,74 @@ def apply_verdict(
         )
 
 
+def _emit_inquiry_events(
+    project_dir: Path | str,
+    *,
+    action_id: str,
+    decision: "StateDecision",
+    verdict: str,
+    backend: str,
+) -> None:
+    """plan rewrite 成功后，把 transition 落到 gaia.inquiry 事件层。
+
+    - 永远 append_tactic 一条 claim_state_transition 审计事件
+    - new_state ∈ {refuted, contested} → push_rejection（告诉 inquiry "这条分支关了"）
+    - new_state == stale → push_obligation(diagnostic_kind="other") 让 reviewer 重审
+
+    inquiry 事件 emit 失败不影响 verdict ingest（plan 已写成功），只 log warning。
+    bridge: gd.inquiry_bridge → gaia.inquiry.state.{append_tactic_event,
+    SyntheticRejection, SyntheticObligation}。
+    """
+    from gd import inquiry_bridge
+
+    payload = {
+        "action_id": action_id,
+        "verdict": verdict,
+        "backend": backend,
+        "new_state": decision.new_state,
+        "new_prior": decision.new_prior,
+        "reason": decision.reason,
+    }
+    try:
+        inquiry_bridge.append_tactic(
+            project_dir, event="claim_state_transition", payload=payload
+        )
+    except Exception as exc:
+        logger.warning("append_tactic(claim_state_transition) failed: %s", exc)
+
+    if decision.new_state in ("refuted", "contested"):
+        try:
+            inquiry_bridge.push_rejection(
+                project_dir,
+                target_strategy=action_id,
+                content=(
+                    f"action {action_id}: {verdict}({backend}) → "
+                    f"{decision.new_state}. {decision.reason}"
+                ),
+            )
+        except Exception as exc:
+            logger.warning(
+                "push_rejection(%s) failed: %s", action_id, exc
+            )
+
+    if decision.new_state == "stale":
+        try:
+            inquiry_bridge.push_obligation(
+                project_dir,
+                target_qid=action_id,
+                content=(
+                    f"claim {action_id} demoted to stale: {decision.reason}. "
+                    f"需重新 verify。"
+                ),
+                diagnostic_kind="other",
+                anchor={"action_id": action_id},
+            )
+        except Exception as exc:
+            logger.warning(
+                "push_obligation(%s) failed: %s", action_id, exc
+            )
+
+
 def _apply_verdict_locked(
     *,
     project_dir: Path | str,
@@ -800,6 +868,15 @@ def _apply_verdict_locked(
             rolled_back=True,
         )
 
+    if decision is not None:
+        _emit_inquiry_events(
+            project_dir,
+            action_id=action_id,
+            decision=decision,
+            verdict=verdict,
+            backend=backend,
+        )
+
     return IngestResult(
         action_id=action_id, file=str(plan_path), patched=True,
         new_prior=decision.new_prior if decision else None,
@@ -810,6 +887,7 @@ def _apply_verdict_locked(
             "updates": sorted(set(transformer.applied_updates)),
             "transition": decision.reason if decision else None,
             "provenance_appended": True,
+            "inquiry_events_emitted": True,
         },
     )
 

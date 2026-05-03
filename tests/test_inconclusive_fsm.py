@@ -323,3 +323,139 @@ def test_apply_verdict_verified_lean_on_fresh(tmp_path):
     src = _plan_file(project).read_text(encoding="utf-8")
     assert 'state="proven"' in src
     assert 'prior=0.99' in src
+
+# ---------------------------------------------------------------------------
+# inquiry 事件层集成：apply_verdict 成功后 → tactics.jsonl + state.json
+# ---------------------------------------------------------------------------
+
+
+def _read_tactics(project: Path) -> list[dict]:
+    import json
+    f = project / ".gaia" / "inquiry" / "tactics.jsonl"
+    if not f.is_file():
+        return []
+    return [json.loads(line) for line in f.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def _load_inquiry_state(project: Path):
+    from gaia.inquiry.state import load_state
+    return load_state(project.resolve())
+
+
+def test_apply_verdict_emits_claim_state_transition_tactic(tmp_path):
+    """每次 apply_verdict 成功改写 plan，tactics.jsonl 必须 append 一条 claim_state_transition。"""
+    project = _make_pkg(tmp_path, _plan_with(prior=0.5))
+    res = apply_verdict(
+        project,
+        action_id="act_test_fsm_0001",
+        verdict="verified",
+        backend="lean_lake",
+        confidence=1.0,
+        evidence="e",
+    )
+    assert res.error is None and res.patched
+    tactics = _read_tactics(project)
+    csts = [t for t in tactics if t.get("event") == "claim_state_transition"]
+    assert len(csts) == 1
+    payload = csts[0].get("payload", {})
+    assert payload.get("action_id") == "act_test_fsm_0001"
+    assert payload.get("verdict") == "verified"
+    assert payload.get("backend") == "lean_lake"
+    assert payload.get("new_state") == "proven"
+    assert res.diff_summary.get("inquiry_events_emitted") is True
+
+
+def test_apply_verdict_refuted_pushes_synthetic_rejection(tmp_path):
+    """new_state ∈ {refuted, contested} → state.synthetic_rejections append。"""
+    project = _make_pkg(tmp_path, _plan_with(prior=0.5))
+    res = apply_verdict(
+        project,
+        action_id="act_test_fsm_0001",
+        verdict="refuted",
+        backend="sandbox_python",
+        confidence=1.0,
+        evidence="counterexample",
+    )
+    assert res.error is None
+    assert res.new_state == "refuted"
+    state = _load_inquiry_state(project)
+    rejs = [r for r in state.synthetic_rejections if r.target_strategy == "act_test_fsm_0001"]
+    assert len(rejs) == 1
+    assert "refuted" in rejs[0].content
+    assert "sandbox_python" in rejs[0].content
+
+
+def test_apply_verdict_contested_also_pushes_rejection(tmp_path):
+    """弱 backend refuted vs lean proven → contested → 也要 push_rejection。"""
+    project = _make_pkg(
+        tmp_path,
+        _plan_with(
+            prior=0.99,
+            state="proven",
+            history=[{"source": "verify:lean_lake", "verdict": "verified"}],
+        ),
+    )
+    res = apply_verdict(
+        project,
+        action_id="act_test_fsm_0001",
+        verdict="refuted",
+        backend="heuristic",
+        confidence=0.5,
+        evidence="weak",
+    )
+    assert res.error is None
+    assert res.new_state == "contested"
+    state = _load_inquiry_state(project)
+    rejs = [r for r in state.synthetic_rejections if r.target_strategy == "act_test_fsm_0001"]
+    assert len(rejs) == 1
+    assert "contested" in rejs[0].content
+
+
+def test_apply_verdict_stale_pushes_synthetic_obligation(tmp_path):
+    """new_state == stale → state.synthetic_obligations append。"""
+    project = _make_pkg(
+        tmp_path,
+        _plan_with(
+            prior=0.7,
+            state="proven",
+            history=[{"source": "verify:heuristic", "verdict": "verified"}],
+        ),
+    )
+    res = apply_verdict(
+        project,
+        action_id="act_test_fsm_0001",
+        verdict="inconclusive",
+        backend="heuristic",
+        confidence=0.5,
+        evidence="recheck",
+    )
+    assert res.error is None
+    assert res.new_state == "stale"
+    state = _load_inquiry_state(project)
+    obls = [o for o in state.synthetic_obligations if o.target_qid == "act_test_fsm_0001"]
+    assert len(obls) == 1
+    assert obls[0].diagnostic_kind == "other"
+    assert obls[0].anchor.get("action_id") == "act_test_fsm_0001"
+    assert "stale" in obls[0].content
+
+
+def test_apply_verdict_proven_does_not_push_rejection_or_obligation(tmp_path):
+    """new_state == proven → 只 append_tactic，不写 rejection/obligation。"""
+    project = _make_pkg(tmp_path, _plan_with(prior=0.5))
+    res = apply_verdict(
+        project,
+        action_id="act_test_fsm_0001",
+        verdict="verified",
+        backend="lean_lake",
+        confidence=1.0,
+        evidence="proof",
+    )
+    assert res.error is None
+    assert res.new_state == "proven"
+    state = _load_inquiry_state(project)
+    assert not any(r.target_strategy == "act_test_fsm_0001" for r in state.synthetic_rejections)
+    assert not any(o.target_qid == "act_test_fsm_0001" for o in state.synthetic_obligations)
+    # 但 tactics.jsonl 仍有 claim_state_transition
+    tactics = _read_tactics(project)
+    assert any(t.get("event") == "claim_state_transition" for t in tactics)
+
