@@ -580,12 +580,15 @@ class GpugeekBackend:
         attached_files: list[str] = []
         if target_lang:
             ext = "py" if target_lang == "python" else target_lang
-            for blk in all_blocks:
-                if blk["lang"] in (target_lang, "py" if target_lang == "python" else target_lang):
-                    side_path = artifact_path.with_suffix(f".{ext}")
-                    side_path.write_text(blk["body"], encoding="utf-8")
-                    attached_files.append(str(side_path))
-                    break
+            matching = [
+                blk for blk in all_blocks
+                if blk["lang"] in (target_lang, "py" if target_lang == "python" else target_lang)
+            ]
+            if matching:
+                blk = max(matching, key=lambda b: len(b["body"]))
+                side_path = artifact_path.with_suffix(f".{ext}")
+                side_path.write_text(blk["body"], encoding="utf-8")
+                attached_files.append(str(side_path))
 
         # 4) 写日志（伪 stream-json 单行）
         log_path.parent.mkdir(parents=True, exist_ok=True)

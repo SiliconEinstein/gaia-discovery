@@ -29,6 +29,7 @@ from gd.verify_server.schemas import (
     VerifyResponse,
 )
 
+from gd.verify_server.audit.error_taxonomy import InconclusiveReason, make_taxonomy
 
 logger = logging.getLogger(__name__)
 
@@ -320,31 +321,43 @@ def verify_heuristic(req: VerifyRequest) -> VerifyResponse:
     started = time.monotonic()
     project_dir = Path(req.project_dir)
     if not project_dir.is_dir():
+        tax = make_taxonomy(InconclusiveReason.TOOLCHAIN_UNAVAILABLE,
+                            detail="project_dir not found",
+                            extras={"project_dir": str(project_dir)})
         return _make_response(
             req, verdict="inconclusive", confidence=0.0,
-            evidence="project_dir 不存在", raw={}, started=started,
+            evidence="project_dir 不存在",
+            raw={"error_taxonomy": tax}, started=started,
             error=f"project_dir not found: {project_dir}",
         )
 
     markdown, evidence, art_error = _read_artifact(project_dir, req)
     if art_error and markdown is None and evidence is None:
+        tax = make_taxonomy(InconclusiveReason.EVIDENCE_SCHEMA_INVALID,
+                            detail="no markdown or evidence.json artifact",
+                            extras={"art_error": art_error})
         return _make_response(
             req, verdict="inconclusive", confidence=0.0,
             evidence="未找到可审 artifact（markdown 或 evidence.json）",
-            raw={}, started=started, error=art_error,
+            raw={"error_taxonomy": tax}, started=started, error=art_error,
         )
 
     if evidence is None:
+        tax = make_taxonomy(InconclusiveReason.EVIDENCE_SCHEMA_INVALID,
+                            detail="evidence.json missing; only markdown present")
         return _make_response(
             req, verdict="inconclusive", confidence=0.15,
             evidence="缺 evidence.json，无法做结构化 judge（仅有 markdown）",
-            raw={"markdown_chars": len(markdown or "")},
+            raw={"markdown_chars": len(markdown or ""), "error_taxonomy": tax},
             started=started, error="evidence.json missing",
         )
 
     try:
         ev_model = EvidencePayload.model_validate(evidence)
     except ValidationError as exc:
+        tax = make_taxonomy(InconclusiveReason.EVIDENCE_SCHEMA_INVALID,
+                            detail="evidence.json failed pydantic validation",
+                            extras={"validation_errors": exc.errors()[:8]})
         return _make_response(
             req, verdict="inconclusive", confidence=0.1,
             evidence="evidence.json schema 不合规（详见 raw.validation_errors）",
@@ -356,6 +369,7 @@ def verify_heuristic(req: VerifyRequest) -> VerifyResponse:
                     if isinstance(evidence.get("premises"), list) else None
                 ),
                 "validation_errors": exc.errors()[:8],
+                "error_taxonomy": tax,
             },
             started=started, error="bad evidence schema",
         )
@@ -363,17 +377,24 @@ def verify_heuristic(req: VerifyRequest) -> VerifyResponse:
     premises = [p.model_dump(exclude_none=True) for p in ev_model.premises]
 
     if stance == "inconclusive":
+        tax = make_taxonomy(InconclusiveReason.PREMISES_INSUFFICIENT,
+                            detail="sub-agent self-reported stance=inconclusive")
         return _make_response(
             req, verdict="inconclusive", confidence=0.5,
             evidence=f"sub-agent 自评 inconclusive: {evidence.get('summary','')[:200]}",
-            raw={"evidence": evidence}, started=started, error=None,
+            raw={"evidence": evidence, "error_taxonomy": tax},
+            started=started, error=None,
         )
 
     if not isinstance(premises, list) or len(premises) < 2:
+        tax = make_taxonomy(InconclusiveReason.PREMISES_INSUFFICIENT,
+                            detail=f"stance={stance} but premises count < 2",
+                            extras={"premise_count": len(premises) if isinstance(premises, list) else None})
         return _make_response(
             req, verdict="inconclusive", confidence=0.2,
             evidence=f"stance={stance} 但 premises 数 < 2，证据不足",
-            raw={"evidence": evidence}, started=started, error=None,
+            raw={"evidence": evidence, "error_taxonomy": tax},
+            started=started, error=None,
         )
 
     # gaia native 结构预检（仅 support stance + 9 种原生 strategy）
@@ -403,10 +424,14 @@ def verify_heuristic(req: VerifyRequest) -> VerifyResponse:
         try:
             judge_obj = _JUDGE_HOOK(req.claim_text or "", evidence, markdown or "", req.action_kind)
         except Exception as exc:
+            tax = make_taxonomy(InconclusiveReason.JUDGE_LLM_UNAVAILABLE,
+                                detail="judge hook raised exception",
+                                extras={"hook_exc": repr(exc)[:500]})
             return _make_response(
                 req, verdict="inconclusive", confidence=0.1,
                 evidence="judge hook 抛异常",
-                raw={"hook_exc": repr(exc)[:500], "evidence": evidence},
+                raw={"hook_exc": repr(exc)[:500], "evidence": evidence,
+                     "error_taxonomy": tax},
                 started=started, error=f"judge hook crash: {exc!r}",
             )
         raw_text = json.dumps(judge_obj, ensure_ascii=False) if isinstance(judge_obj, dict) else str(judge_obj)
@@ -417,31 +442,42 @@ def verify_heuristic(req: VerifyRequest) -> VerifyResponse:
             prompt, action_id=req.action_id, project_dir=project_dir, timeout=timeout,
         )
         if backend_error or raw_text is None:
+            tax = make_taxonomy(InconclusiveReason.JUDGE_LLM_UNAVAILABLE,
+                                detail="judge backend returned error or empty",
+                                extras={"backend_error": backend_error,
+                                        "backend_extras": {k: v for k, v in (backend_extras or {}).items()
+                                                            if k in ("model", "exit_code", "usage")}})
             return _make_response(
                 req, verdict="inconclusive", confidence=0.1,
                 evidence="judge backend 调用失败",
                 raw={"backend_error": backend_error,
-                     "evidence": evidence, "extras": backend_extras},
+                     "evidence": evidence, "extras": backend_extras,
+                     "error_taxonomy": tax},
                 started=started, error=backend_error or "no judge output",
             )
 
     parsed = _parse_judge_output(raw_text)
     if parsed is None:
+        tax = make_taxonomy(InconclusiveReason.JUDGE_LLM_INCONCLUSIVE,
+                            detail="judge output not parseable as JSON",
+                            extras={"raw_judge_tail": raw_text[-500:]})
         return _make_response(
             req, verdict="inconclusive", confidence=0.15,
             evidence="judge 输出无法解析为 JSON",
             raw={"raw_judge": raw_text[:1500], "evidence": evidence,
-                 "extras": backend_extras},
+                 "extras": backend_extras, "error_taxonomy": tax},
             started=started, error="judge json parse failed",
         )
 
     verdict = parsed.get("verdict")
     if verdict not in ("verified", "refuted", "inconclusive"):
+        tax = make_taxonomy(InconclusiveReason.JUDGE_LLM_INCONCLUSIVE,
+                            detail=f"invalid judge verdict field: {verdict!r}")
         return _make_response(
             req, verdict="inconclusive", confidence=0.15,
             evidence=f"judge verdict 字段无效: {verdict!r}",
             raw={"judge_raw": parsed, "evidence": evidence,
-                 "extras": backend_extras},
+                 "extras": backend_extras, "error_taxonomy": tax},
             started=started, error="bad judge verdict",
         )
 

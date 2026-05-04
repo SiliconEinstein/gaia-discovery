@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gaia-discovery-v3/schemas/inquiry_report.schema.json",
+  "title": "InquiryReport (gd inquiry 输出)",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "compile_status",
+    "diagnostics",
+    "next_edits",
+    "blockers",
+    "belief_summary",
+    "belief_stale"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "compile_status": {
+      "enum": [
+        "ok",
+        "error"
+      ]
+    },
+    "compile_error": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "diagnostics": {
+      "type": "array",
+      "description": "gaia.inquiry.run_review 的全量 diagnostics 列表",
+      "items": {
+        "type": [
+          "object",
+          "string"
+        ]
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "publish_blockers_for（已过滤 DSL false-positive）"
+    },
+    "belief_summary": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      },
+      "description": "qid → belief ∈ [0,1]，从最近 belief_snapshot 摘取"
+    },
+    "belief_stale": {
+      "type": "boolean",
+      "description": "plan.gaia.py mtime 是否晚于 last_bp_at —— 主 agent 据此决定先跑 run-cycle"
+    },
+    "mode": {
+      "enum": [
+        "iterate",
+        "publish"
+      ]
+    },
+    "review_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "next_edits": {
+      "type": "array",
+      "items": {
+        "type": [
+          "object",
+          "string"
+        ]
+      },
+      "description": "next_edits 提案（gaia.inquiry 给的）"
+    }
+  }
+}

@@ -14,8 +14,16 @@ from pathlib import Path
 import pytest
 
 from gd.belief_ingest import apply_verdict, stamp_action_ids
-from gd.dispatcher import ActionSignal, scan_actions
+from gd.cli_commands.dispatch import ScannedAction as ActionSignal, scan as _scan_graph
 from gd.gaia_bridge import load_and_compile
+
+
+def scan_actions(pkg):
+    from gd.gaia_bridge import load_and_compile
+    _, compiled = load_and_compile(pkg)
+    actions, _rejected = _scan_graph(compiled.graph)
+    return actions
+
 
 
 _PLAN = textwrap.dedent('''\

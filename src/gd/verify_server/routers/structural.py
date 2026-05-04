@@ -25,6 +25,8 @@ from gd.verify_server.schemas import (
     VerifyRequest,
     VerifyResponse,
 )
+from gd.verify_server.audit.error_taxonomy import InconclusiveReason, make_taxonomy
+from gd.verify_server.audit.lean_audit import audit_axioms, parse_errors, scan_sorries
 
 
 _LAKE = shutil.which("lake")
@@ -185,18 +187,102 @@ def verify_structural(req: VerifyRequest) -> VerifyResponse:
         has_error = ("error:" in stdout) or ("error:" in stderr)
         sorry_warn = ("declaration uses `sorry`" in stdout) or                      ("declaration uses `sorry`" in stderr)
         if proc.returncode == 0 and not has_error:
-            if sorry_warn:
-                # 有 sorry → 证明未完成，不算 verified
-                return _make_response(
-                    req, verdict="inconclusive", backend="lean_lake", confidence=0.5,
-                    evidence="lake env lean 成功但 proof 含 sorry",
-                    raw=raw, started=started, error="proof_incomplete_sorry",
+            # ===== Gate 1: sorry 字面扫描（优于 lake stderr 的 sorry warn） =====
+            sorry_report = scan_sorries(lean_path, timeout_s=30.0)
+            raw["sorry_scan"] = sorry_report
+            if sorry_report.get("available") and sorry_report.get("has_sorry"):
+                tax = make_taxonomy(
+                    InconclusiveReason.SORRY_LITERAL,
+                    detail=str(sorry_report.get("total_count", 0)) + " sorry token(s) in proof",
+                    extras={"sorries": sorry_report.get("sorries", [])},
                 )
+                raw["error_taxonomy"] = tax
+                return _make_response(
+                    req, verdict="inconclusive", backend="lean_lake", confidence=0.2,
+                    evidence="lake env lean 成功但词法层 sorry 扫描发现字面 sorry",
+                    raw=raw, started=started, error=tax["reason"],
+                )
+            # 退路：sorry_analyzer 不可用时仍尊重 lake stderr 的 sorry warn
+            if not sorry_report.get("available") and sorry_warn:
+                tax = make_taxonomy(
+                    InconclusiveReason.SORRY_LITERAL,
+                    detail="lake stderr reported declaration uses sorry",
+                    extras={"sorry_scan_skipped": sorry_report.get("reason")},
+                )
+                raw["error_taxonomy"] = tax
+                return _make_response(
+                    req, verdict="inconclusive", backend="lean_lake", confidence=0.4,
+                    evidence="lake env lean 成功但 proof 含 sorry（sorry_analyzer 不可用，依赖 lake warn）",
+                    raw=raw, started=started, error=tax["reason"],
+                )
+
+            # ===== Gate 2: axiom 闭包审计（必须在 lake_proj 内做 #print axioms） =====
+            axiom_report = audit_axioms(lean_path, lake_proj, timeout_s=max(60.0, float(req.timeout_s)))
+            raw["axiom_audit"] = axiom_report
+            if not axiom_report.get("available"):
+                tax = make_taxonomy(
+                    InconclusiveReason.TOOLCHAIN_UNAVAILABLE,
+                    detail="axiom audit unavailable; conservative pass with reduced confidence",
+                    extras={"audit_skipped": axiom_report.get("reason")},
+                )
+                raw["error_taxonomy"] = tax
+                return _make_response(
+                    req, verdict="verified", backend="lean_lake", confidence=0.85,
+                    evidence="lake env lean 成功（axiom audit 不可用，仅依赖编译通过）",
+                    raw=raw, started=started, error=None,
+                )
+            if axiom_report.get("has_sorry_ax"):
+                tax = make_taxonomy(
+                    InconclusiveReason.SORRY_IN_CLOSURE,
+                    detail="proof transitively depends on sorryAx",
+                    extras={
+                        "non_standard_axioms": axiom_report.get("non_standard_axioms", []),
+                        "depends_on": axiom_report.get("depends_on", []),
+                    },
+                )
+                raw["error_taxonomy"] = tax
+                return _make_response(
+                    req, verdict="inconclusive", backend="lean_lake", confidence=0.1,
+                    evidence="axiom 闭包包含 sorryAx：表面通过编译但深处仍未证完",
+                    raw=raw, started=started, error=tax["reason"],
+                )
+            if not axiom_report.get("clean"):
+                tax = make_taxonomy(
+                    InconclusiveReason.UNAUTHORIZED_AXIOM,
+                    detail="proof depends on non-whitelisted axioms",
+                    extras={
+                        "non_standard_axioms": axiom_report.get("non_standard_axioms", []),
+                        "depends_on": axiom_report.get("depends_on", []),
+                    },
+                )
+                raw["error_taxonomy"] = tax
+                return _make_response(
+                    req, verdict="inconclusive", backend="lean_lake", confidence=0.2,
+                    evidence="axiom 闭包包含非白名单 axiom（疑似引入未证假设）",
+                    raw=raw, started=started, error=tax["reason"],
+                )
+
+            # 三阶 gate 全过：高置信 verified
             return _make_response(
                 req, verdict="verified", backend="lean_lake", confidence=0.99,
-                evidence="lake env lean 成功，proof 编译通过（无 sorry）",
+                evidence="lake env lean 成功，无 sorry，仅依赖白名单标准 axiom",
                 raw=raw, started=started, error=None,
             )
+
+        # 编译失败：抓结构化错误
+        err_report = parse_errors(stdout, stderr)
+        raw["error_parse"] = err_report
+        is_timeout_like = "timeout" in (stderr.lower() + stdout.lower())
+        reason_enum = InconclusiveReason.LEAN_TIMEOUT if is_timeout_like else InconclusiveReason.LEAN_COMPILE_ERROR
+        tax = make_taxonomy(
+            reason_enum,
+            detail=f"lake env lean rc={proc.returncode}",
+            extras={
+                "errors": err_report.get("errors", []) if err_report.get("available") else [],
+                "error_parse_skipped": None if err_report.get("available") else err_report.get("reason"),
+            },
+        )
+        raw["error_taxonomy"] = tax
         return _make_response(
             req, verdict="inconclusive", backend="lean_lake", confidence=0.3,
             evidence=f"lake env lean 失败（rc={proc.returncode}），proof 未完成",
@@ -278,16 +364,53 @@ def verify_structural(req: VerifyRequest) -> VerifyResponse:
 
     stdout = (proc.stdout or "")[-4000:]
     stderr = (proc.stderr or "")[-4000:]
-    raw: dict[str, Any] = {"returncode": proc.returncode, "stdout_tail": stdout, "stderr_tail": stderr}
+    raw: dict[str, Any] = {"mode": "isolated", "returncode": proc.returncode,
+                            "stdout_tail": stdout, "stderr_tail": stderr}
 
     if proc.returncode == 0:
+        # Gate 1: sorry 扫描
+        sorry_report = scan_sorries(lean_path, timeout_s=30.0)
+        raw["sorry_scan"] = sorry_report
+        if sorry_report.get("available") and sorry_report.get("has_sorry"):
+            tax = make_taxonomy(
+                InconclusiveReason.SORRY_LITERAL,
+                detail=str(sorry_report.get("total_count", 0)) + " sorry token(s) in proof",
+                extras={"sorries": sorry_report.get("sorries", [])},
+            )
+            raw["error_taxonomy"] = tax
+            return _make_response(
+                req, verdict="inconclusive", backend="lean_lake", confidence=0.2,
+                evidence="lake build 成功但词法层 sorry 扫描发现字面 sorry",
+                raw=raw, started=started, error=tax["reason"],
+            )
+        # Gate 2: axiom 闭包审计（隔离模式 work 目录已被 cleanup，跳过——降级标记）
+        # 注：tempfile.TemporaryDirectory 在 with 退出时已删除 work；此模式下没有可用 lake_proj
+        # 让 audit 层据实标 unavailable，调用方按 toolchain_unavailable 走保守 verified。
+        tax = make_taxonomy(
+            InconclusiveReason.TOOLCHAIN_UNAVAILABLE,
+            detail="isolated mode: lake_proj closed before audit; sorry-only gating",
+            extras={"audit_skipped": "isolated_workspace_closed"},
+        )
+        raw["error_taxonomy"] = tax
+        raw["audit_skipped"] = "isolated_workspace_closed"
         return _make_response(
-            req, verdict="verified", backend="lean_lake", confidence=0.99,
-            evidence="lake build 成功，证明编译通过",
+            req, verdict="verified", backend="lean_lake", confidence=0.85,
+            evidence="lake build 成功（隔离模式无 axiom audit，仅 sorry 扫描）",
             raw=raw, started=started, error=None,
         )
 
-    # 编译失败 ≠ refuted；按 dz 规则 → inconclusive
+    # 编译失败 ≠ refuted；抓结构化错误后 inconclusive
+    err_report = parse_errors(stdout, stderr)
+    raw["error_parse"] = err_report
+    tax = make_taxonomy(
+        InconclusiveReason.LEAN_COMPILE_ERROR,
+        detail=f"lake build rc={proc.returncode}",
+        extras={
+            "errors": err_report.get("errors", []) if err_report.get("available") else [],
+            "error_parse_skipped": None if err_report.get("available") else err_report.get("reason"),
+        },
+    )
+    raw["error_taxonomy"] = tax
     return _make_response(
         req, verdict="inconclusive", backend="lean_lake", confidence=0.4,
         evidence=f"lake build 失败（returncode={proc.returncode}），证明未完成",

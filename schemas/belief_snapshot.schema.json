@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gaia-discovery-v3/schemas/belief_snapshot.schema.json",
+  "title": "BeliefSnapshot (gd bp / gd run-cycle 输出)",
+  "description": "与 gd.gaia_bridge.BeliefSnapshot dataclass 一一对应。",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["beliefs", "method_used", "compile_status", "project_dir", "timestamp"],
+  "properties": {
+    "beliefs": {
+      "type": "object",
+      "additionalProperties": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+      "description": "qid → belief ∈ [0,1]"
+    },
+    "method_used": {"type": "string"},
+    "treewidth": {"type": "integer"},
+    "elapsed_ms": {"type": "number", "minimum": 0.0},
+    "is_exact": {"type": "boolean"},
+    "knowledge_index": {
+      "type": "object",
+      "additionalProperties": {"type": "object"}
+    },
+    "compile_status": {"enum": ["ok", "error"]},
+    "error": {"type": ["string", "null"]},
+    "ir_warnings": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "project_dir": {"type": "string"},
+    "iter_id": {"type": ["string", "null"]},
+    "timestamp": {"type": "number"}
+  }
+}

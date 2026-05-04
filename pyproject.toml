@@ -29,7 +29,7 @@ dev = [
 ]
 
 [project.scripts]
-gd = "gd.cli:app"
+gd = "gd.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/gd"]

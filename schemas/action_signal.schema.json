@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gaia-discovery-v3/schemas/action_signal.schema.json",
+  "title": "ActionSignal envelope",
+  "description": "gd dispatch <project_dir> 的标准输出。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "project_dir", "plan_path", "actions", "rejected", "cycle_state"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "project_dir": {"type": "string", "description": "探索项目根目录绝对路径"},
+    "plan_path": {"type": "string", "description": "plan.gaia.py 绝对路径"},
+    "actions": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/Action"},
+      "description": "本轮全部 pending action 清单"
+    },
+    "rejected": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/Rejected"},
+      "description": "metadata.action 不在白名单 / args 形态非法等被拒原因"
+    },
+    "cycle_state": {"$ref": "cycle_state.schema.json"}
+  },
+  "$defs": {
+    "Action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action_id", "action_kind", "claim_qid", "args", "metadata"],
+      "properties": {
+        "action_id": {"type": "string", "minLength": 4, "maxLength": 64},
+        "action_kind": {
+          "type": "string",
+          "enum": ["support", "deduction", "abduction", "induction",
+                   "contradiction", "equivalence", "complement", "disjunction"]
+        },
+        "claim_qid": {"type": "string"},
+        "claim_text": {"type": ["string", "null"]},
+        "args": {"type": "object"},
+        "metadata": {"type": "object"},
+        "lean_target": {"type": ["string", "null"]}
+      }
+    },
+    "Rejected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reason", "claim_qid"],
+      "properties": {
+        "reason": {"type": "string"},
+        "claim_qid": {"type": ["string", "null"]},
+        "raw_action": {"type": ["string", "null"]}
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gaia-discovery-v3/schemas/cycle_state.schema.json",
+  "title": "CycleState (.gaia/cycle_state.json)",
+  "description": "闸 B 状态机文件。dispatch 写 phase=dispatched 与 pending_actions；run-cycle 消费完后写 phase=idle, pending=[]。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "phase", "pending_actions"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "phase": {"enum": ["idle", "dispatched", "running"]},
+    "pending_actions": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "dispatched 后等待 sub-agent 跑 + run-cycle 消费的 action_id 列表"
+    },
+    "last_dispatch_at": {"type": ["string", "null"], "description": "ISO8601"},
+    "last_run_cycle_at": {"type": ["string", "null"], "description": "ISO8601"},
+    "last_bp_at": {"type": ["string", "null"], "description": "ISO8601"},
+    "plan_mtime_at_last_bp": {
+      "type": ["number", "null"],
+      "description": "上次 BP 时 plan.gaia.py 的 mtime（用来算 belief_stale）"
+    },
+    "current_run_id": {"type": ["string", "null"]}
+  }
+}

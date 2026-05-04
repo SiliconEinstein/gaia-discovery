@@ -1,11 +1,11 @@
-"""Archon-style task_results 迭代归档（orchestrator._archive_prev_task_results）。"""
+"""Archon-style task_results 迭代归档（gd.archive._archive_prev_task_results）。"""
 from __future__ import annotations
 
 from pathlib import Path
 
 import pytest
 
-from gd.orchestrator import _archive_prev_task_results
+from gd.archive import _archive_prev_task_results
 
 
 def _make_project(tmp_path: Path) -> Path:

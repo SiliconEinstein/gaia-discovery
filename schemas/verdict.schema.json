@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gaia-discovery-v3/schemas/verdict.schema.json",
+  "title": "VerifyResponse (verify-server 给出的独立 verdict)",
+  "description": "与 gd.verify_server.schemas.VerifyResponse pydantic 模型一一对应。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["action_id", "action_kind", "router", "verdict", "backend",
+               "confidence", "evidence", "raw", "elapsed_s"],
+  "properties": {
+    "action_id": {"type": "string"},
+    "action_kind": {
+      "type": "string",
+      "enum": ["support", "deduction", "abduction", "induction",
+               "contradiction", "equivalence", "complement", "disjunction"]
+    },
+    "router": {"enum": ["quantitative", "structural", "heuristic"]},
+    "verdict": {"enum": ["verified", "refuted", "inconclusive"]},
+    "backend": {
+      "enum": ["sandbox_python", "lean_lake", "inquiry_review", "unavailable"]
+    },
+    "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+    "evidence": {"type": "string", "minLength": 1},
+    "raw": {"type": "object"},
+    "elapsed_s": {"type": "number", "minimum": 0.0},
+    "error": {"type": ["string", "null"]}
+  }
+}

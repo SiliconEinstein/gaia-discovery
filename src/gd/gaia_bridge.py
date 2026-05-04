@@ -104,7 +104,7 @@ def compile_and_infer(
       - 含一个 .py 模块（默认 plan.gaia.py 或 importable name）声明 KNOWLEDGES/STRATEGIES/...
       - 可选 priors.py / references.json
 
-    异常吃掉记录到 snapshot.error，让 orchestrator 决定如何反馈给主 agent。
+    异常吃掉记录到 snapshot.error，由调用方（cli_commands）决定如何反馈给主 agent。
     """
     pkg_path = Path(project_dir).resolve()
     snapshot = BeliefSnapshot(project_dir=str(pkg_path), iter_id=iter_id)

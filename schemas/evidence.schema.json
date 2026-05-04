@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gaia-discovery-v3/schemas/evidence.schema.json",
+  "title": "Evidence payload (sub-agent 写到 task_results/<action_id>.evidence.json)",
+  "description": "与 gd.verify_server.schemas.EvidencePayload pydantic 模型一一对应。verify-server.routers.heuristic 直接消费这些字段。",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema_version", "stance", "summary"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "stance": {"enum": ["support", "refute", "inconclusive"]},
+    "summary": {"type": "string", "minLength": 1, "maxLength": 2000},
+    "premises": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/Premise"}
+    },
+    "counter_evidence": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/Premise"}
+    },
+    "uncertainty": {"type": ["string", "null"], "maxLength": 1000},
+    "formal_artifact": {
+      "type": ["string", "null"],
+      "description": "可选的 .lean / .py 形式化证据路径（相对 project_dir）"
+    },
+    "action_id": {
+      "type": "string",
+      "description": "对应 dispatch 派出的 ActionSignal.action_id（sub-agent 必须填）"
+    }
+  },
+  "$defs": {
+    "Premise": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["text"],
+      "properties": {
+        "text": {"type": "string", "minLength": 1},
+        "confidence": {"type": ["number", "null"], "minimum": 0.0, "maximum": 1.0},
+        "weight": {"type": ["number", "null"], "minimum": 0.0, "maximum": 1.0},
+        "source": {"type": ["string", "null"]}
+      }
+    }
+  }
+}

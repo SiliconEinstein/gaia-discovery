@@ -1,8 +1,8 @@
 """belief_ingest: 把 verify_server 的 verdict 回写为 plan.gaia.py 的源码 patch。
 
-工作流（与原 8 步主循环对齐）：
+工作流（与 cli_commands.run_cycle 闸 A 对齐）：
 - DISPATCH 第一次扫到 pending claim → 调 stamp_action_ids 把 action_id 写进 metadata
-- VERIFY 完成后 → orchestrator 调 apply_verdict(project_dir, action_id=..., verdict=...)
+- VERIFY 完成后 �� cli_commands.run_cycle / cli_commands.ingest 调 apply_verdict(project_dir, action_id=..., verdict=...)
 - 本模块用 libcst 找含 action_id=... 的 claim 调用，按
   (old_state × new_verdict × backend_rank) 状态机改写（详见 _transition_state）：
     * verified + lean_lake on fresh    → prior=0.99, state="proven", action_status="done"

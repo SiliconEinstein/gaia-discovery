@@ -27,6 +27,7 @@ from gd.verify_server.schemas import (
     VerifyRequest,
     VerifyResponse,
 )
+from gd.verify_server.audit.error_taxonomy import InconclusiveReason, make_taxonomy
 
 
 def _make_preexec(memory_bytes: int, cpu_seconds: int, fsize_bytes: int):
@@ -152,16 +153,32 @@ def verify_quantitative(req: VerifyRequest) -> VerifyResponse:
                 check=False,
             )
         except subprocess.TimeoutExpired as exc:
+            tax = make_taxonomy(
+                InconclusiveReason.SANDBOX_TIMEOUT,
+                detail=f"sandbox subprocess exceeded {req.timeout_s}s",
+                extras={"timeout_s": req.timeout_s},
+            )
             return _make_response(
                 req, verdict="inconclusive", confidence=0.0,
                 evidence=f"脚本执行超时 {req.timeout_s}s",
-                raw={"stdout": (exc.stdout or "")[-2000:], "stderr": (exc.stderr or "")[-2000:]},
+                raw={
+                    "stdout": (exc.stdout or "")[-2000:],
+                    "stderr": (exc.stderr or "")[-2000:],
+                    "error_taxonomy": tax,
+                },
                 started=started, error="timeout",
             )
         except OSError as exc:
+            tax = make_taxonomy(
+                InconclusiveReason.TOOLCHAIN_UNAVAILABLE,
+                detail="python sandbox failed to spawn subprocess",
+                extras={"os_error": str(exc)},
+            )
             return _make_response(
                 req, verdict="inconclusive", confidence=0.0,
-                evidence="无法启动 Python 子进程", raw={}, started=started,
+                evidence="无法启动 Python 子进程",
+                raw={"error_taxonomy": tax},
+                started=started,
                 error=f"OSError: {exc}",
             )
 
@@ -170,18 +187,45 @@ def verify_quantitative(req: VerifyRequest) -> VerifyResponse:
     payload = _extract_verdict_payload(stdout)
 
     if payload is None and proc.returncode != 0:
+        tax = make_taxonomy(
+            InconclusiveReason.SANDBOX_RUNTIME_ERROR,
+            detail=f"non-zero exit rc={proc.returncode}, no verdict json",
+            extras={
+                "returncode": proc.returncode,
+                "stderr_tail": stderr[-1000:],
+            },
+        )
         return _make_response(
             req, verdict="inconclusive", confidence=0.0,
             evidence=f"脚本非零退出（{proc.returncode}）且未输出 verdict JSON",
-            raw={"returncode": proc.returncode, "stdout": stdout[-2000:], "stderr": stderr[-2000:]},
+            raw={
+                "returncode": proc.returncode,
+                "stdout": stdout[-2000:],
+                "stderr": stderr[-2000:],
+                "error_taxonomy": tax,
+            },
             started=started, error=f"non-zero exit: {proc.returncode}",
         )
 
     if payload is None:
+        tax = make_taxonomy(
+            InconclusiveReason.SANDBOX_NO_VERDICT,
+            detail="script did not print JSON with verdict field",
+            extras={
+                "returncode": proc.returncode,
+                "stdout_tail": stdout[-1000:],
+                "stderr_tail": stderr[-1000:],
+            },
+        )
         return _make_response(
             req, verdict="inconclusive", confidence=0.0,
             evidence='脚本未输出形如 {"verdict":...} 的 JSON',
-            raw={"returncode": proc.returncode, "stdout": stdout[-2000:], "stderr": stderr[-2000:]},
+            raw={
+                "returncode": proc.returncode,
+                "stdout": stdout[-2000:],
+                "stderr": stderr[-2000:],
+                "error_taxonomy": tax,
+            },
             started=started, error="missing verdict json",
         )
 

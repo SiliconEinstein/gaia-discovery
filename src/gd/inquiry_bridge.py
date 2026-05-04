@@ -116,6 +116,16 @@ def write_review(rep: dict[str, Any], out_dir: str | Path) -> Path:
     return target
 
 
+# 当前 Gaia DSL 的 deduction()/support()/abduction()/induction() 不接受 metadata
+# kwarg（cf390c40 之后），但 reviewer 的 overstrong_strategy_without_provenance
+# 检测的是 strategy.metadata.{provenance,justification}。两边不自洽，导致该 kind
+# 在任何 plan 上都恒发 false-positive。在 v3 这层屏蔽，直到 Gaia upstream 给
+# strategy 重新提供合法的 provenance 落点（或 reviewer 改读 reason 字符串）。
+_DSL_INCONSISTENT_KIND_PREFIXES: tuple[str, ...] = (
+    "overstrong_strategy_without_provenance:",
+)
+
+
 def publish_blockers_for(
     project_dir: str | Path,
     *,
@@ -134,7 +144,8 @@ def publish_blockers_for(
         since=since,
         strict=True,
     )
-    return list(_publish_blockers(report))
+    raw = list(_publish_blockers(report))
+    return [b for b in raw if not b.startswith(_DSL_INCONSISTENT_KIND_PREFIXES)]
 
 
 # --------------------------------------------------------------------------- #

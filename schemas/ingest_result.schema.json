@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gaia-discovery-v3/schemas/ingest_result.schema.json",
+  "title": "IngestResult (gd ingest 返回的单步结果，包含强制 BP)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "action_id", "applied", "new_state",
+               "diff_summary", "belief_snapshot"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "action_id": {"type": "string"},
+    "applied": {
+      "type": "boolean",
+      "description": "verdict 是否成功写回 plan.gaia.py（false 表示 idempotent skip）"
+    },
+    "new_state": {
+      "type": "string",
+      "description": "FSM 转入的新状态（pending/dispatched/verified/refuted/inconclusive 等）"
+    },
+    "diff_summary": {
+      "type": "object",
+      "description": "lib_summary：appended_claims / patched_calls / 等",
+      "additionalProperties": true
+    },
+    "belief_snapshot": {"$ref": "belief_snapshot.schema.json"},
+    "verify_response": {"$ref": "verdict.schema.json"}
+  }
+}

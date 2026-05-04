@@ -1,0 +1,18 @@
+Vendored from Archon
+====================
+
+Upstream repository : https://github.com/frenzymath/Archon
+Upstream commit     : c504b1bfec9bd726e9a3f8c049ded2537964a280
+Upstream path       : src/archon/.archon-src/skills/lean4/scripts/
+License             : 见 https://github.com/frenzymath/Archon/blob/main/LICENSE
+Modification policy : 严禁就地修改本目录下文件。
+                      如需 gaia 语义适配，写在 src/gd/verify_server/audit/lean_audit.py
+                      （subprocess wrapper），保持 vendor 清白以便后续同步上游。
+
+Vendored files:
+  sorry_analyzer.py
+  check_axioms_inline.sh
+  parse_lean_errors.py
+
+Vendored on : 2026-05-04
+Vendored by : gaia-discovery-v3 verify-server hardening (PPT² iter_001 false-positive fix)

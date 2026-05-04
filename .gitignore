@@ -21,3 +21,5 @@ eval/frontierscience/results/
 
 # 主 agent 模型配置（每机器各自配，不入 git）
 gd.toml
+
+logs/

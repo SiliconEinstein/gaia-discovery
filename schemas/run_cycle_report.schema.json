@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gaia-discovery-v3/schemas/run_cycle_report.schema.json",
+  "title": "RunCycleReport (gd run-cycle 输出 — 闸 A bundle 原子化报告)",
+  "description": "verify+ingest+bp+inquiry 一次跑完后的完整报告。任一阶段失败时 success=false 且写明 failed_at。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "success", "actions_processed", "ingest_results",
+               "belief_snapshot", "review", "next_blockers", "target_belief",
+               "cycle_state"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "success": {"type": "boolean"},
+    "failed_at": {
+      "type": ["string", "null"],
+      "enum": ["evidence_missing", "verify", "ingest", "bp", "inquiry", null]
+    },
+    "failed_reason": {"type": ["string", "null"]},
+    "actions_processed": {"type": "integer", "minimum": 0},
+    "ingest_results": {
+      "type": "array",
+      "items": {"$ref": "ingest_result.schema.json"}
+    },
+    "belief_snapshot": {"$ref": "belief_snapshot.schema.json"},
+    "review": {"$ref": "inquiry_report.schema.json"},
+    "next_blockers": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "target_belief": {
+      "type": ["number", "null"],
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "target.json 里 target_claim_qid 在 belief_snapshot.beliefs 里的当前值"
+    },
+    "target_qid": {"type": ["string", "null"]},
+    "target_threshold": {"type": ["number", "null"], "minimum": 0.0, "maximum": 1.0},
+    "cycle_state": {"$ref": "cycle_state.schema.json"}
+  }
+}
