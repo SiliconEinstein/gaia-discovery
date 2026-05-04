@@ -70,7 +70,7 @@ mp_eb = claim(
         },
         "lean_target": "PPT2.Examples.MeasurePrepare.measure_prepare_is_EB","action_status": "failed"
     },
-action_id="act_465877d8f6e5", action_status="failed", verify_history=[{"source": "verify:lean_lake", "action_id": "act_465877d8f6e5", "verdict": "inconclusive", "confidence": "0.300", "evidence": "lake env lean 失败（rc=1），proof 未完成"}])
+action_id="act_465877d8f6e5", action_status="failed", verify_history=[{"source": "verify:lean_lake", "action_id": "act_465877d8f6e5", "verdict": "inconclusive", "confidence": "0.200", "evidence": "axiom 闭包包含非白名单 axiom（疑似引入未证假设）"}])
 
 # ----- 派发动作 2：形式化 dephasing → measure-and-prepare -----
 deph_mp = claim(

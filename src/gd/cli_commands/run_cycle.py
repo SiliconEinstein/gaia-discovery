@@ -137,6 +137,20 @@ def _resolve_artifact_path(project_dir: Path, ev_path: Path, evidence: dict[str,
     return str(p)
 
 
+def _derive_payload_files(action: _dispatch.ScannedAction, evidence: dict[str, Any]) -> dict[str, str]:
+    out: dict[str, str] = {}
+    args = action.args or {}
+    lpd = args.get("lake_project_dir")
+    if isinstance(lpd, str) and lpd:
+        out["lake_project_dir"] = lpd
+    pfs = evidence.get("payload_files")
+    if isinstance(pfs, dict):
+        for k, v in pfs.items():
+            if isinstance(k, str) and isinstance(v, str):
+                out[k] = v
+    return out
+
+
 def _post_verify(
     *,
     client: httpx.Client | Any,
@@ -155,7 +169,7 @@ def _post_verify(
         "args": action.args,
         "artifact": {
             "path": _resolve_artifact_path(project_dir, evidence_path, evidence),
-            "payload_files": {},
+            "payload_files": _derive_payload_files(action, evidence),
         },
         "timeout_s": timeout_s,
     }

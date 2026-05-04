@@ -1,6 +1,13 @@
 {
-    "focus": null,
-    "obligations": [],
-    "hypotheses": [],
-    "rejections": []
+  "version": 2,
+  "focus": null,
+  "focus_kind": null,
+  "focus_resolved_id": null,
+  "mode": "iterate",
+  "last_review_id": "2026-05-04T18-13-08Z_ad204276_iterate",
+  "baseline_review_id": "2026-05-04T18-13-08Z_ad204276_iterate",
+  "focus_stack": [],
+  "synthetic_obligations": [],
+  "synthetic_hypotheses": [],
+  "synthetic_rejections": []
 }
