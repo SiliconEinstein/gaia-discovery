@@ -153,3 +153,54 @@ support(
     reason='sub-agent evidence via inquiry_review; judge_confidence=0.95; reasoning=The sub-agent correctly demonstrates that any dephasing channel is a measure-and-prepare channel by construction, and me',
     prior=0.950,
 )
+
+
+# ---------------------------------------------------------------------- 新一批 pending（P2: EB composition ideal）
+# 用户 P0-P5 路线 P2 项：EB 是 CP 双侧 ideal。
+# 当前 PPT2/EntanglementBreaking.lean 留 sorry：
+#   theorem EB_comp_left (Φ Ψ : QChan d d) (hΨ : IsEB Ψ) : IsEB (Φ.comp Ψ) := by sorry
+# IsEB := Separable ∘ Choi 已经 unfold，但 QChan.comp / Choi / Separable 仍是 axiom，
+# 因此 sub-agent 的可行路径：
+#   (a) 在 PPT2.EntanglementBreaking 内补一条 axiom (e.g. choi_comp_left_separable)
+#       明确给出 "Choi(Φ.comp Ψ) = (CP-action on Choi Ψ)" 的代数 invariant，
+#       并把 EB_comp_left 用之归约——保持 IsEB 内涵 unfold；
+#   (b) 直接走 mp_implies_eb 风格：补 axiom EB_comp_law；不可取（绕开问题）。
+# 期望 sub-agent 选 (a) 并把新 axiom 写在最小封闭圈，不污染 Conjectures/。
+eb_comp_left_claim = claim(
+    "[P2] EB ideal 左合成律：对任一 Φ Ψ : QChan d d，若 Ψ 是 EB，则 Φ ∘ Ψ 是 EB。",
+    prior=0.55,
+    prior_justification=(
+        "标准结果（Horodecki–Shor–Ruskai 2003 Prop. 1, Holevo 1998）。"
+        "Choi(Φ ∘ Ψ) 在 Choi 矩阵层面是 (id ⊗ Φ) 作用在 Choi(Ψ) 上的 PSD 像，"
+        "PSD 的可分性在 CP 像下保持。当前 PPT2 的 Choi/QChan/Separable 仍是 axiom，"
+        "因此 sub-agent 需补最小代数 axiom（CP-on-separable preserves separable）"
+        "+ Choi(Φ.comp Ψ) 与 Choi Ψ 的 CP 关系 axiom，把 EB_comp_left 归约成代数事实。"
+    ),
+    metadata={
+        "action": "deduction",
+        "args": {
+            "theorem_name": "EB_comp_left",
+            "theorem_statement": (
+                "theorem EB_comp_left {d : Nat} (Φ Ψ : QChan d d) "
+                "(hΨ : IsEB Ψ) : IsEB (Φ.comp Ψ)"
+            ),
+            "lake_project_dir": "/root/personal/PPT2",
+            "target_file": "PPT2/EntanglementBreaking.lean",
+            "depends_on": [],
+            "guidance": (
+                "目标：把 PPT2/EntanglementBreaking.lean 中的 EB_comp_left sorry "
+                "替换成形式化证明。允许在同一文件内追加最小代数 axiom（明确"
+                "命名为 separable_under_cp_left 或 choi_comp_cp_action_left），"
+                "并在 evidence.json 的 premises 中显式引用、source=conjecture，"
+                "以便主 agent 后续把 axiom 闭包追小。"
+                "禁止：(1) 把整条 EB_comp_left 直接 axiom 化（绕开问题）；"
+                "(2) 引入与现有 axiom 不一致的签名；"
+                "(3) 修改 Conjectures/ 或 PPT2.Basic / Choi 顶层。"
+                "完成后跑 `lake build PPT2.EntanglementBreaking` 通过且 #print axioms "
+                "EB_comp_left 闭包仅含 STANDARD_AXIOMS ∪ 你新增的项目 axiom。"
+            ),
+        },
+        "lean_target": "PPT2.EntanglementBreaking.EB_comp_left",
+        "action_status": "failed",
+    },
+action_id="act_187d8e614e97", action_status="failed", verify_history=[{"source": "verify:lean_lake", "action_id": "act_187d8e614e97", "verdict": "inconclusive", "confidence": "0.200", "evidence": "axiom 闭包包含非白名单 axiom（疑似引入未证假设）"}])
