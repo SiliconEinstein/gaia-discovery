@@ -421,3 +421,54 @@ depolarizing_threshold_claim = claim(
         "action_status": "failed",
     },
 action_id="act_2981846df37d", action_status="failed", verify_history=[{"source": "verify:lean_lake", "action_id": "act_2981846df37d", "verdict": "inconclusive", "confidence": "0.200", "evidence": "axiom 闭包包含非白名单 axiom（疑似引入未证假设）"}])
+
+
+# ---------------------------------------------------------------------- P0-Step1 Separable 实例化
+# 当前 PPT2.Separable 是 axiom : Prop。本步把它降为 mathlib 真定义：
+# Separable X := ∃ k (p : Fin k → ℝ) (A B : Fin k → Matrix ℂ),
+#   (∀ i, 0 ≤ p i) ∧ (∀ i, (A i).PosSemidef) ∧ (∀ i, (B i).PosSemidef) ∧
+#   X = ∑ i, (p i : ℂ) • kron (A i) (B i)
+# 这一步独立、不动其他文件，下游 EB_comp_left/right 等仍 type-check（unfold IsEB 仍 work）。
+separable_instantiation_claim = claim(
+    "[P0-Step1] PPT2.Separable 由 axiom Prop 降为 mathlib def：凸组合可分性的标准存在式。",
+    prior=0.99,
+    prior_justification=(
+        "标准 separable cone 定义（Werner 1989；HHHH RMP 2009 §IV）。"
+        "Mathlib 已具 Matrix.PosSemidef + Matrix.kroneckerMap 全部基建。"
+        "当前 Separable 是 axiom : Prop 占位，无内涵；本步把它降为 def，"
+        "为 P0-Step5 的 mp_implies_eb 真证明铺路。"
+    ),
+    metadata={
+        "action": "deduction",
+        "args": {
+            "theorem_name": "Separable_def",
+            "theorem_statement": (
+                "def Separable {d : Nat} (X : Matrix (Fin d × Fin d) (Fin d × Fin d) ℂ) : Prop"
+            ),
+            "lake_project_dir": "/root/personal/PPT2",
+            "target_file": "PPT2/Separable.lean",
+            "depends_on": [],
+            "guidance": (
+                "目标：把 PPT2/Separable.lean 中 `axiom Separable {d : Nat} (X : ...) : Prop` "
+                "替换为 def：\n"
+                "import Mathlib.LinearAlgebra.Matrix.PosDef\n"
+                "import Mathlib.LinearAlgebra.Matrix.Kronecker\n"
+                "（已有 PPT2.MatrixTensor 提供 kron 别名，但本文件用 mathlib 原始 kroneckerMap 也行）\n\n"
+                "def Separable {d : Nat}\n"
+                "    (X : Matrix (Fin d × Fin d) (Fin d × Fin d) ℂ) : Prop :=\n"
+                "  ∃ (k : ℕ) (p : Fin k → ℝ) (A B : Fin k → Matrix (Fin d) (Fin d) ℂ),\n"
+                "    (∀ i, 0 ≤ p i) ∧ (∀ i, (A i).PosSemidef) ∧ (∀ i, (B i).PosSemidef) ∧\n"
+                "    X = ∑ i, (p i : ℂ) • Matrix.kroneckerMap (· * ·) (A i) (B i)\n\n"
+                "禁止：(1) 修改 EntanglementBreaking.lean 或下游；(2) 引入 sorryAx；"
+                "(3) 触碰 Choi.lean / Basic.lean。\n"
+                "完成验证：跑 `lake build PPT2` 全绿（顶层结论 ppt_dephasing_is_EB / "
+                "ppt2_conjecture_dim2 / depolarizing_EB_threshold 都仍 build PASS，因 EB_comp_*"
+                "证明体内 unfold IsEB 后 exact axiom 仍合法 —— Separable 类型签名未改）。\n"
+                "evidence.json premises 全部 source=derivation，confidence=1.0（mathlib 已有 API，"
+                "无外部假设）。"
+            ),
+        },
+        "lean_target": "PPT2.Separable",
+        "action_status": "done",
+    },
+action_id="act_1304a72a98a7", action_status="done", state="proven", verify_history=[{"source": "verify:lean_lake", "action_id": "act_1304a72a98a7", "verdict": "verified", "confidence": "0.990", "evidence": "lake env lean 成功，无 sorry，仅依赖白名单标准 axiom"}])
