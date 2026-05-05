@@ -337,3 +337,43 @@ dephasing_mp_claim = claim(
         "action_status": "failed",
     },
 action_id="act_3a4b379d37df", action_status="failed", verify_history=[{"source": "verify:lean_lake", "action_id": "act_3a4b379d37df", "verdict": "inconclusive", "confidence": "0.200", "evidence": "axiom 闭包包含非白名单 axiom（疑似引入未证假设）"}])
+
+
+# ---------------------------------------------------------------------- P8 PPT² 猜想 d=2 实例化
+# 把 ppt2_dim2 与 top-level def PPT2Conjecture 在 d=2 处接通：
+#   PPT2Conjecture 2 := ∀ Φ Ψ : QChan 2 2, IsPPT Φ → IsPPT Ψ → IsEB (Φ.comp Ψ)
+# 即 ppt2_dim2 的逐参数化包装。
+ppt2_conjecture_dim2_claim = claim(
+    "[P8] PPT² 猜想 d=2 实例：PPT2Conjecture 2 在 PPT2/Conjectures/PPT2.lean 处通过 ppt2_dim2 实例化为定理。",
+    prior=0.85,
+    prior_justification=(
+        "纯实例化包装，无新数学：PPT2Conjecture 2 := ∀ Φ Ψ, IsPPT Φ → IsPPT Ψ → IsEB (Φ.comp Ψ) "
+        "正是 ppt2_dim2 的签名。证明体一行：fun Φ Ψ hΦ hΨ => ppt2_dim2 Φ Ψ hΦ hΨ。"
+        "唯一需要的工程动作：在 Conjectures/PPT2.lean 顶端 import PPT2.Cases.Dim2。"
+    ),
+    metadata={
+        "action": "deduction",
+        "args": {
+            "theorem_name": "ppt2_conjecture_dim2",
+            "theorem_statement": "theorem ppt2_conjecture_dim2 : PPT2Conjecture 2",
+            "lake_project_dir": "/root/personal/PPT2",
+            "target_file": "PPT2/Conjectures/PPT2.lean",
+            "depends_on": ["ppt2_dim2"],
+            "guidance": (
+                "目标：在 PPT2/Conjectures/PPT2.lean 中追加 d=2 实例化定理。"
+                "(1) 顶部 import 块加：import PPT2.Cases.Dim2。"
+                "(2) namespace PPT2 内 PPT2Conjecture def 之后追加："
+                "theorem ppt2_conjecture_dim2 : PPT2Conjecture 2 := "
+                "fun Φ Ψ hΦ hΨ => ppt2_dim2 Φ Ψ hΦ hΨ。"
+                "禁止：(1) 修改 PPT2Conjecture 定义；(2) 触碰其他文件。"
+                "完成后跑 lake build PPT2.Conjectures.PPT2 通过；"
+                "#print axioms PPT2.ppt2_conjecture_dim2 闭包 = ppt2_dim2 闭包（"
+                "STANDARD_AXIOMS ∪ {PPT2.QChan, PPT2.QChan.comp, PPT2.Choi, PPT2.Separable, "
+                "PPT2.IsPPT, PPT2.separable_under_cp_right, PPT2.ppt_implies_eb_dim2}）。"
+                "evidence.json premises 全部 source=derivation（纯实例化、无新假设）。"
+            ),
+        },
+        "lean_target": "PPT2.Conjectures.PPT2.ppt2_conjecture_dim2",
+        "action_status": "failed",
+    },
+action_id="act_fbc1ba6e18b0", action_status="failed", verify_history=[{"source": "verify:lean_lake", "action_id": "act_fbc1ba6e18b0", "verdict": "inconclusive", "confidence": "0.200", "evidence": "axiom 闭包包含非白名单 axiom（疑似引入未证假设）"}])
