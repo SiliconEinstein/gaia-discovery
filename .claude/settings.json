@@ -1,4 +1,38 @@
 {
+  "env": {
+    "ANTHROPIC_API_KEY": "d0ziwmolmvx8t401000dhan1gs02h2a7e0q2p5to",
+    "ANTHROPIC_BASE_URL": "https://api.gpugeek.com",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "Vendor2/Claude-4.6-opus",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "Vendor2/Claude-4.5-Sonnet",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "Vendor2/Claude-4.5-Sonnet",
+    "ANTHROPIC_MODEL": "Vendor2/Claude-4.6-opus",
+    "CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "WebFetch",
+      "WebSearch",
+      "Agent"
+    ]
+  },
+  "model": "opus[1m]",
+  "enabledPlugins": {
+    "context7@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "math-olympiad@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true
+  },
   "hooks": {
     "PostToolUse": [
       {
@@ -6,5 +40,8 @@
         "hooks": [{"type": "command", "command": "$CLAUDE_PROJECT_DIR/ears/ears-trace"}]
       }
     ]
-  }
+  },
+  "language": "简体中文",
+  "effortLevel": "high",
+  "theme": "light-daltonized"
 }
