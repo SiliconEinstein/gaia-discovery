@@ -245,3 +245,49 @@ eb_comp_right_claim = claim(
         "action_status": "failed",
     },
 action_id="act_97bcfbf0bdf2", action_status="failed", verify_history=[{"source": "verify:lean_lake", "action_id": "act_97bcfbf0bdf2", "verdict": "inconclusive", "confidence": "0.200", "evidence": "axiom 闭包包含非白名单 axiom（疑似引入未证假设）"}])
+
+
+# ---------------------------------------------------------------------- P3 d=2 PPT²
+# Peres–Horodecki (1996, 1998)：在 d_A · d_B ≤ 6 维（含 2×2）下，PPT 等价于可分。
+# 因此对 Φ : QChan 2 2，IsPPT Φ ⇒ IsEB Φ。再叠加 P2 的 EB ideal 性质即得 PPT² d=2 平凡。
+ppt2_dim2_claim = claim(
+    "[P3] PPT² d=2 实例：对 Φ Ψ : QChan 2 2，若两者均 PPT，则 Φ.comp Ψ 是 EB（PPT² 在 d=2 平凡成立）。",
+    prior=0.6,
+    prior_justification=(
+        "Peres–Horodecki 定理（Horodecki 1996；Peres 1996）：d_A · d_B ≤ 6 时 PPT ⇔ Separable。"
+        "故对 d=2 的 Φ，IsPPT Φ ⇒ Choi Φ separable ⇒ IsEB Φ。再用 P2 已证的 EB_comp_right 即得。"
+        "当前 PPT2 的 IsPPT/IsEB/Choi/Separable 都是 axiom，需补一条 d=2 专用项目 axiom "
+        "ppt_implies_eb_dim2 : ∀ Φ : QChan 2 2, IsPPT Φ → IsEB Φ。"
+    ),
+    metadata={
+        "action": "deduction",
+        "args": {
+            "theorem_name": "ppt2_dim2",
+            "theorem_statement": (
+                "theorem ppt2_dim2 (Φ Ψ : QChan 2 2) "
+                "(_hΦ : IsPPT Φ) (_hΨ : IsPPT Ψ) : IsEB (Φ.comp Ψ)"
+            ),
+            "lake_project_dir": "/root/personal/PPT2",
+            "target_file": "PPT2/Cases/Dim2.lean",
+            "depends_on": ["EB_comp_right", "EB_comp_left"],
+            "guidance": (
+                "目标：把 PPT2/Cases/Dim2.lean 中的 ppt2_dim2 sorry 替换。"
+                "标准路径："
+                "(1) 在 PPT2/Cases/Dim2.lean 顶部新增项目 axiom "
+                "ppt_implies_eb_dim2 (Φ : QChan 2 2) : IsPPT Φ → IsEB Φ "
+                "（Peres–Horodecki d=2 特例）。"
+                "(2) 证明体：have hEBΦ : IsEB Φ := ppt_implies_eb_dim2 Φ _hΦ; "
+                "exact EB_comp_right Φ Ψ hEBΦ。"
+                "禁止：(1) 整条 axiom 化 ppt2_dim2；(2) 修改 Cases/Dim2.lean 之外的文件；"
+                "(3) 引入 Mathlib 高层依赖把闭包污染。"
+                "完成后跑 lake build PPT2.Cases.Dim2 通过，#print axioms ppt2_dim2 闭包 "
+                "= STANDARD_AXIOMS ∪ {PPT2.QChan, PPT2.QChan.comp, PPT2.Choi, PPT2.Separable, "
+                "PPT2.IsPPT, PPT2.separable_under_cp_right, PPT2.ppt_implies_eb_dim2}。"
+                "在 evidence.json 的 premises 里把 ppt_implies_eb_dim2 列为 source=conjecture, "
+                "confidence=0.99（Peres–Horodecki 已证），其余 axiom 列为 source=derivation。"
+            ),
+        },
+        "lean_target": "PPT2.Cases.Dim2.ppt2_dim2",
+        "action_status": "failed",
+    },
+action_id="act_b0b8bd0b6141", action_status="failed", verify_history=[{"source": "verify:lean_lake", "action_id": "act_b0b8bd0b6141", "verdict": "inconclusive", "confidence": "0.200", "evidence": "axiom 闭包包含非白名单 axiom（疑似引入未证假设）"}])
