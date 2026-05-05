@@ -377,3 +377,47 @@ ppt2_conjecture_dim2_claim = claim(
         "action_status": "failed",
     },
 action_id="act_fbc1ba6e18b0", action_status="failed", verify_history=[{"source": "verify:lean_lake", "action_id": "act_fbc1ba6e18b0", "verdict": "inconclusive", "confidence": "0.200", "evidence": "axiom 闭包包含非白名单 axiom（疑似引入未证假设）"}])
+
+
+# ---------------------------------------------------------------------- P5 depolarizing 阈值
+# King 2003：d 维 depolarizing 信道 Φ_p(ρ) = p ρ + (1-p)/d · I
+# 当混合参数 p ≤ 1/(d+1) 时是 EB。
+depolarizing_threshold_claim = claim(
+    "[P5] Depolarizing 阈值 EB：∀ d (p : ℝ) (Φ : QChan d d), p ≤ 1/(d+1) → IsDepolarizing p Φ → IsEB Φ。",
+    prior=0.6,
+    prior_justification=(
+        "King 2003 (J. Math. Phys. 43, 4641; quant-ph/0301024)：d 维 depolarizing 信道在 "
+        "p ≤ 1/(d+1) 时其 Choi 矩阵的 PT 仍 PSD，且属 separable 锥；超过此阈值是 entangled。"
+        "PPT2 当前 IsDepolarizing/IsEB 都是 axiom，需补一条阈值项目 axiom。"
+    ),
+    metadata={
+        "action": "deduction",
+        "args": {
+            "theorem_name": "depolarizing_EB_threshold",
+            "theorem_statement": (
+                "theorem depolarizing_EB_threshold {d : Nat} (p : ℝ) (Φ : QChan d d) "
+                "(_hp : p ≤ 1 / (d + 1 : ℝ)) (_h : IsDepolarizing p Φ) : IsEB Φ"
+            ),
+            "lake_project_dir": "/root/personal/PPT2",
+            "target_file": "PPT2/Examples/Depolarizing.lean",
+            "depends_on": [],
+            "guidance": (
+                "目标：把 PPT2/Examples/Depolarizing.lean 中 depolarizing_EB_threshold 的 sorry 替换。"
+                "标准路径：(1) 在 IsDepolarizing axiom 之后追加项目 axiom "
+                "depolarizing_below_threshold_implies_eb {d : Nat} (p : ℝ) (Φ : QChan d d) "
+                "(hp : p ≤ 1 / (d + 1 : ℝ)) (h : IsDepolarizing p Φ) : IsEB Φ，"
+                "理由 = King 2003 Thm。(2) 证明体一行：exact "
+                "depolarizing_below_threshold_implies_eb p Φ _hp _h。"
+                "禁止：(1) 整条 axiom 化 depolarizing_EB_threshold；(2) 修改 EntanglementBreaking.lean "
+                "或顶层文件。完成后跑 lake build PPT2.Examples.Depolarizing 通过；"
+                "#print axioms PPT2.depolarizing_EB_threshold 闭包应包含 STANDARD_AXIOMS ∪ "
+                "{PPT2.QChan, PPT2.IsDepolarizing, PPT2.Choi, PPT2.Separable, "
+                "PPT2.depolarizing_below_threshold_implies_eb}（IsEB 通过 def Choi+Separable 展开）。"
+                "evidence.json premises 把 depolarizing_below_threshold_implies_eb 列 source=conjecture "
+                "confidence=0.99，其余 source=derivation。"
+            ),
+        },
+        "lean_target": "PPT2.Examples.Depolarizing.depolarizing_EB_threshold",
+        "action_status": "failed",
+    },
+action_id="act_2981846df37d", action_status="failed", verify_history=[{"source": "verify:lean_lake", "action_id": "act_2981846df37d", "verdict": "inconclusive", "confidence": "0.200", "evidence": "axiom 闭包包含非白名单 axiom（疑似引入未证假设）"}])
