@@ -291,3 +291,49 @@ ppt2_dim2_claim = claim(
         "action_status": "failed",
     },
 action_id="act_b0b8bd0b6141", action_status="failed", verify_history=[{"source": "verify:lean_lake", "action_id": "act_b0b8bd0b6141", "verdict": "inconclusive", "confidence": "0.200", "evidence": "axiom 闭包包含非白名单 axiom（疑似引入未证假设）"}])
+
+
+# ---------------------------------------------------------------------- P4 dephasing → measure-prepare
+# Dephasing 信道在某固定基 {|i⟩} 上保留对角、抹去相干：
+#   Φ_dep(ρ) = Σᵢ ⟨i|ρ|i⟩ |i⟩⟨i|
+# 这等价于先在该基上做投影测量 {M_i = |i⟩⟨i|}，再按测量结果制备 σ_i = |i⟩⟨i|；
+# 因而立即给出 measure-and-prepare 表示 Φ_dep(ρ) = Σ tr(M_i ρ) σ_i。
+dephasing_mp_claim = claim(
+    "[P4] dephasing 信道是 measure-and-prepare 信道：∀ Φ, IsDephasing Φ → IsMeasurePrepare Φ。",
+    prior=0.7,
+    prior_justification=(
+        "标准教科书结论（Wilde QIT §4.6.7；Watrous 2018 §4.1.2）。"
+        "dephasing Φ_dep(ρ) = Σᵢ ⟨i|ρ|i⟩ |i⟩⟨i| 即 M_i = σ_i = |i⟩⟨i| 的 measure-and-prepare 实例，"
+        "在 PPT2 抽象 axiom 层只能再作为一条项目 axiom 注入；后续展开 IsDephasing/IsMeasurePrepare "
+        "为 mathlib 真定义后可降为 theorem。"
+    ),
+    metadata={
+        "action": "deduction",
+        "args": {
+            "theorem_name": "dephasing_is_measure_prepare",
+            "theorem_statement": (
+                "theorem dephasing_is_measure_prepare {d : Nat} (Φ : QChan d d) "
+                "(h : IsDephasing Φ) : IsMeasurePrepare Φ"
+            ),
+            "lake_project_dir": "/root/personal/PPT2",
+            "target_file": "PPT2/Examples/Dephasing.lean",
+            "depends_on": [],
+            "guidance": (
+                "目标：把 PPT2/Examples/Dephasing.lean 中 dephasing_is_measure_prepare 的 sorry 替换。"
+                "标准路径：(1) 在 Dephasing.lean 内（IsDephasing axiom 之后、theorem 之前）"
+                "新增项目 axiom dephasing_implies_mp {d : Nat} (Φ : QChan d d) "
+                "(h : IsDephasing Φ) : IsMeasurePrepare Φ，理由 = Wilde §4.6.7 / Watrous §4.1.2。"
+                "(2) 证明体：exact dephasing_implies_mp Φ h。"
+                "禁止：(1) 整条 axiom 化 dephasing_is_measure_prepare；"
+                "(2) 修改 Examples/MeasurePrepare.lean 或 Conjectures/。"
+                "完成后跑 lake build PPT2.Examples.Dephasing 通过；#print axioms "
+                "PPT2.dephasing_is_measure_prepare 闭包 = STANDARD_AXIOMS ∪ "
+                "{PPT2.QChan, PPT2.IsDephasing, PPT2.IsMeasurePrepare, PPT2.dephasing_implies_mp}。"
+                "evidence.json premises 把 dephasing_implies_mp 列 source=conjecture confidence=0.99，"
+                "其余 source=derivation。"
+            ),
+        },
+        "lean_target": "PPT2.Examples.Dephasing.dephasing_is_measure_prepare",
+        "action_status": "failed",
+    },
+action_id="act_3a4b379d37df", action_status="failed", verify_history=[{"source": "verify:lean_lake", "action_id": "act_3a4b379d37df", "verdict": "inconclusive", "confidence": "0.200", "evidence": "axiom 闭包包含非白名单 axiom（疑似引入未证假设）"}])
