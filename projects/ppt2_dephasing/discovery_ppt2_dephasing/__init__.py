@@ -524,3 +524,59 @@ qchan_instantiation_claim = claim(
         "action_status": "failed",
     },
 action_id="act_9e9ca4f40156", action_status="failed", verify_history=[{"source": "verify:lean_lake", "action_id": "act_9e9ca4f40156", "verdict": "inconclusive", "confidence": "0.200", "evidence": "axiom 闭包包含非白名单 axiom（疑似引入未证假设）"}])
+
+
+# ---------------------------------------------------------------------- P0-Step3 Choi 实例化
+# 把 axiom Choi 降为显式 def：C_Φ = ∑_{i,j} |i⟩⟨j| ⊗ Φ(|i⟩⟨j|)。
+# 这是 (id ⊗ Φ)(|Ω⟩⟨Ω|) 在标准基下的展开（去掉 1/d 归一）。
+choi_instantiation_claim = claim(
+    "[P0-Step3] PPT2.Choi 由 axiom 降为 def，Choi Φ := ∑_{i,j} kron (stdBasisMatrix i j 1) (Φ (stdBasisMatrix i j 1))。",
+    prior=0.99,
+    prior_justification=(
+        "Choi 矩阵 C_Φ = ∑_{i,j} |i⟩⟨j| ⊗ Φ(|i⟩⟨j|) 是教科书定义（Watrous Thm 2.22）。"
+        "Mathlib 已具 Matrix.stdBasisMatrix + Finset.sum + BigOperators，PPT2.kron 已具备，"
+        "PPT2.QChan 在 Step2 已实例化为 LinearMap，故 Φ 可直接当函数应用。"
+        "难点仅在 import 与 noncomputable 标注。"
+    ),
+    metadata={
+        "action": "deduction",
+        "args": {
+            "theorem_name": "Choi_def",
+            "theorem_statement": "noncomputable def Choi {d : Nat} (Φ : QChan d d) : Matrix (Fin d × Fin d) (Fin d × Fin d) ℂ",
+            "lake_project_dir": "/root/personal/PPT2",
+            "target_file": "PPT2/Choi.lean",
+            "depends_on": ["QChan_def"],
+            "guidance": (
+                "目标：把 PPT2/Choi.lean 中 `axiom Choi` 替换为 `noncomputable def`。\n"
+                "保留 QChan / QChan.comp 的现有 noncomputable def 不动。\n"
+                "新 PPT2/Choi.lean 完整内容（建议骨架）：\n"
+                "----\n"
+                "import PPT2.Basic\n"
+                "import PPT2.MatrixTensor\n"
+                "import Mathlib.Algebra.Module.LinearMap.Defs\n"
+                "import Mathlib.Data.Matrix.Basis\n"
+                "import Mathlib.Algebra.BigOperators.Basic\n"
+                "namespace PPT2\n"
+                "open Matrix BigOperators\n"
+                "noncomputable def QChan (d₁ d₂ : Nat) : Type :=\n"
+                "  Matrix (Fin d₁) (Fin d₁) ℂ →ₗ[ℂ] Matrix (Fin d₂) (Fin d₂) ℂ\n"
+                "noncomputable def QChan.comp {d₁ d₂ d₃ : Nat} (Φ : QChan d₂ d₃) (Ψ : QChan d₁ d₂) :\n"
+                "    QChan d₁ d₃ := LinearMap.comp Φ Ψ\n"
+                "noncomputable def Choi {d : Nat} (Φ : QChan d d) :\n"
+                "    Matrix (Fin d × Fin d) (Fin d × Fin d) ℂ :=\n"
+                "  ∑ i : Fin d, ∑ j : Fin d,\n"
+                "    kron (Matrix.stdBasisMatrix i j (1:ℂ)) (Φ (Matrix.stdBasisMatrix i j (1:ℂ)))\n"
+                "end PPT2\n"
+                "----\n"
+                "应用 Φ 到矩阵：因 QChan := Matrix →ₗ Matrix，写 `Φ M` 自动 coerce 为线性映射应用。\n"
+                "若 `Φ M` 报 expected function，则改写 `Φ.toFun M` 或显式 `(Φ : _ → _) M`。\n"
+                "禁止：(1) 修改下游 EntanglementBreaking / Examples / Cases / Conjectures；"
+                "(2) 触碰 Separable.lean / MatrixTensor.lean / Basic.lean；"
+                "(3) 改 QChan / QChan.comp 的现有签名。\n"
+                "完成验证：`lake build PPT2` 全绿；闭包审计应让 PPT2.Choi 从所有顶层 axiom 集合消失。"
+            ),
+        },
+        "lean_target": "PPT2.Choi",
+        "action_status": "done",
+    },
+action_id="act_a900df791412", action_status="done", state="proven", verify_history=[{"source": "verify:lean_lake", "action_id": "act_a900df791412", "verdict": "verified", "confidence": "0.990", "evidence": "lake env lean 成功，无 sorry，仅依赖白名单标准 axiom"}])
