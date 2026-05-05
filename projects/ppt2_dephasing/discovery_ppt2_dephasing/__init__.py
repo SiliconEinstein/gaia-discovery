@@ -580,3 +580,59 @@ choi_instantiation_claim = claim(
         "action_status": "done",
     },
 action_id="act_a900df791412", action_status="done", state="proven", verify_history=[{"source": "verify:lean_lake", "action_id": "act_a900df791412", "verdict": "verified", "confidence": "0.990", "evidence": "lake env lean 成功，无 sorry，仅依赖白名单标准 axiom"}])
+
+# ---------------------------------------------------------------------- P0-Step4 IsMeasurePrepare 实例化
+# 把 axiom IsMeasurePrepare 降为存在量化 def：
+# ∃ k M σ, ∀ ρ, Φ ρ = Σᵢ tr(Mᵢ ρ) • σᵢ，M/σ 为 PSD（项目首版不强制 POVM 完整性/态归一化）。
+mp_instantiation_claim = claim(
+    "[P0-Step4] PPT2.IsMeasurePrepare 由 axiom 降为 ∃ k M σ. PSD ∧ ∀ρ, Φ ρ = Σᵢ tr(Mᵢ·ρ)•σᵢ。",
+    prior=0.78,
+    prior_justification=(
+        "Measure-and-prepare 信道的标准定义（Horodecki–Shor–Ruskai 1998；Watrous 2018 §4.6）"
+        "即存在 POVM {Mᵢ} 与态族 {σᵢ}，Φ(ρ) = Σᵢ tr(Mᵢ ρ) σᵢ。"
+        "首版不强制 POVM 完整性 (Σ Mᵢ = I) 与态归一化 (tr σᵢ = 1)，与项目其它 axiom 同精度。"
+        "Mathlib 已具 Matrix.PosSemidef + Matrix.trace + 矩阵乘 *，"
+        "QChan 在 Step2 已 mathlib def，Φ 通过 type ascription 调用即可。"
+    ),
+    metadata={
+        "action": "deduction",
+        "args": {
+            "theorem_name": "IsMeasurePrepare_def",
+            "theorem_statement": "def IsMeasurePrepare {d : Nat} (Φ : QChan d d) : Prop",
+            "lake_project_dir": "/root/personal/PPT2",
+            "target_file": "PPT2/Examples/MeasurePrepare.lean",
+            "depends_on": ["QChan_def", "Choi_def"],
+            "guidance": (
+                "目标：把 PPT2/Examples/MeasurePrepare.lean 中 axiom IsMeasurePrepare 替换为 def。\n"
+                "保持 mp_implies_eb 仍为 axiom（Step5 再实例化）。\n"
+                "新内容（建议骨架）：\n"
+                "import PPT2.EntanglementBreaking\n"
+                "import Mathlib.LinearAlgebra.Matrix.PosDef\n"
+                "import Mathlib.Data.Matrix.Basic\n"
+                "import Mathlib.Algebra.BigOperators.Group.Finset.Defs\n"
+                "namespace PPT2\n"
+                "open Matrix BigOperators\n"
+                "open scoped ComplexOrder\n"
+                "def IsMeasurePrepare {d : Nat} (Φ : QChan d d) : Prop :=\n"
+                "  ∃ (k : ℕ) (M : Fin k → Matrix (Fin d) (Fin d) ℂ)\n"
+                "    (σ : Fin k → Matrix (Fin d) (Fin d) ℂ),\n"
+                "    (∀ i, (M i).PosSemidef) ∧\n"
+                "    (∀ i, (σ i).PosSemidef) ∧\n"
+                "    ∀ ρ : Matrix (Fin d) (Fin d) ℂ,\n"
+                "      (let Φ' : Matrix _ _ ℂ →ₗ[ℂ] Matrix _ _ ℂ := Φ; Φ' ρ)\n"
+                "        = ∑ i, ((M i * ρ).trace) • (σ i)\n"
+                "axiom mp_implies_eb {d : Nat} (Φ : QChan d d) (h : IsMeasurePrepare Φ) : IsEB Φ\n"
+                "theorem measure_prepare_is_EB {d : Nat} (Φ : QChan d d)\n"
+                "    (h : IsMeasurePrepare Φ) : IsEB Φ := mp_implies_eb Φ h\n"
+                "end PPT2\n\n"
+                "禁止：(1) 修改下游 Examples/Dephasing.lean、Cases、Conjectures；"
+                "(2) 改 mp_implies_eb 与 measure_prepare_is_EB 现有签名；"
+                "(3) 改 QChan / QChan.comp / Choi / Separable 的现有定义。\n"
+                "完成验证：lake build PPT2 全绿；闭包审计应让 PPT2.IsMeasurePrepare 从所有顶层 axiom 集合消失"
+                "（mp_implies_eb 仍在闭包中，Step5 再处理）。"
+            ),
+        },
+        "lean_target": "PPT2.IsMeasurePrepare",
+        "action_status": "failed",
+    },
+action_id="act_bdd381ab0e88", action_status="failed", verify_history=[{"source": "verify:lean_lake", "action_id": "act_bdd381ab0e88", "verdict": "inconclusive", "confidence": "0.200", "evidence": "axiom 闭包包含非白名单 axiom（疑似引入未证假设）"}])
