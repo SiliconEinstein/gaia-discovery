@@ -472,3 +472,55 @@ separable_instantiation_claim = claim(
         "action_status": "done",
     },
 action_id="act_1304a72a98a7", action_status="done", state="proven", verify_history=[{"source": "verify:lean_lake", "action_id": "act_1304a72a98a7", "verdict": "verified", "confidence": "0.990", "evidence": "lake env lean 成功，无 sorry，仅依赖白名单标准 axiom"}])
+
+
+# ---------------------------------------------------------------------- P0-Step2 QChan 实例化
+# 将 axiom QChan + axiom QChan.comp 降为 mathlib LinearMap 真定义。
+# 暂不带 CPTP 谓词（裸 LinearMap）；CPTP bundle 留给后期 add as struct。
+qchan_instantiation_claim = claim(
+    "[P0-Step2] PPT2.QChan / QChan.comp 由 axiom Type/axiom 函数降为 mathlib def，背靠 LinearMap.comp。",
+    prior=0.85,
+    prior_justification=(
+        "标准 quantum channel 在矩阵代数层即 ℂ-线性映射。"
+        "Mathlib 已具 Matrix.module + LinearMap + LinearMap.comp 全部基建。"
+        "去掉 CPTP 谓词不影响下游 axiom 形式（顶层 6 条项目 axiom 都把 QChan 当 opaque 看）。"
+    ),
+    metadata={
+        "action": "deduction",
+        "args": {
+            "theorem_name": "QChan_def",
+            "theorem_statement": "def QChan (d₁ d₂ : Nat) : Type",
+            "lake_project_dir": "/root/personal/PPT2",
+            "target_file": "PPT2/Choi.lean",
+            "depends_on": ["Separable_def"],
+            "guidance": (
+                "目标：把 PPT2/Choi.lean 中 `axiom QChan` + `axiom QChan.comp` 替换为 def。"
+                "Choi 暂保持 axiom（Step 3 再做）。\n"
+                "新 PPT2/Choi.lean：\n"
+                "import PPT2.Basic\n"
+                "import PPT2.MatrixTensor\n"
+                "import Mathlib.Algebra.Module.LinearMap.Defs\n"
+                "namespace PPT2\n"
+                "open Matrix\n"
+                "/-- 量子信道（裸定义）：从 d₁×d₁ 矩阵到 d₂×d₂ 矩阵的 ℂ-线性映射。\n"
+                "    暂不带 CPTP 谓词；CPTP bundle 在后续 step 加 -/\n"
+                "def QChan (d₁ d₂ : Nat) : Type :=\n"
+                "  Matrix (Fin d₁) (Fin d₁) ℂ →ₗ[ℂ] Matrix (Fin d₂) (Fin d₂) ℂ\n\n"
+                "/-- 信道复合：背靠 LinearMap.comp。 -/\n"
+                "def QChan.comp {d₁ d₂ d₃ : Nat} (Φ : QChan d₂ d₃) (Ψ : QChan d₁ d₂) :\n"
+                "    QChan d₁ d₃ :=\n"
+                "  LinearMap.comp Φ Ψ\n\n"
+                "/-- Choi 矩阵 C_Φ = (id ⊗ Φ)(|Ω⟩⟨Ω|)，Step 3 实例化。 -/\n"
+                "axiom Choi {d : Nat} (Φ : QChan d d) :\n"
+                "    Matrix (Fin d × Fin d) (Fin d × Fin d) ℂ\n"
+                "end PPT2\n\n"
+                "禁止：(1) 修改下游 EntanglementBreaking / Examples / Cases / Conjectures；"
+                "(2) 触碰 Separable.lean / MatrixTensor.lean / Basic.lean。\n"
+                "完成验证：`lake build PPT2` 全绿。下游所有 `Φ.comp Ψ` 调用应自动通过 dot-notation "
+                "解析到 PPT2.QChan.comp（因 Φ 显式 type QChan）。"
+            ),
+        },
+        "lean_target": "PPT2.QChan",
+        "action_status": "failed",
+    },
+action_id="act_9e9ca4f40156", action_status="failed", verify_history=[{"source": "verify:lean_lake", "action_id": "act_9e9ca4f40156", "verdict": "inconclusive", "confidence": "0.200", "evidence": "axiom 闭包包含非白名单 axiom（疑似引入未证假设）"}])
