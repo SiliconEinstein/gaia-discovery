@@ -644,7 +644,7 @@ class DeepSeekBackend(GpugeekBackend):
         model: str | None = None,
         base_url: str | None = None,
         api_key: str | None = None,
-        max_tokens: int = 8192,
+        max_tokens: int | None = None,
         max_retries: int = 3,
     ) -> None:
         self.model = model or os.environ.get(
@@ -655,7 +655,11 @@ class DeepSeekBackend(GpugeekBackend):
         )).rstrip("/")
         self.endpoint = f"{base}/v1/chat/completions"
         self.api_key = api_key or os.environ.get("DEEPSEEK_API_KEY")
-        self.max_tokens = max_tokens
+        self.max_tokens = (
+            max_tokens
+            if max_tokens is not None
+            else int(os.environ.get("GD_DEEPSEEK_MAX_TOKENS", "32768"))
+        )
         self.max_retries = max_retries
 
     def _post(

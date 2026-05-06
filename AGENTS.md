@@ -43,8 +43,12 @@ pending claim 拿到 evidence；让 BP 收敛到 target claim 的 belief ≥ thr
 5. 不要编辑 `.gaia/`、`runs/`、`task_results/`、`src/gd/verify_server/` 等工具管理目录。
    你只编辑：`PROBLEM.md` / `target.json` / `discovery_<name>/__init__.py` / 必要时 `references.json`。
 6. 编辑 plan.gaia.py 必须先 `Read` 后 `Edit`；**禁止 Write 整体重写**。
-7. `claim()` 必给 `prior=[a, b]`（Beta(a, b)，严格 ∈ (0.001, 0.999)）和
-   `metadata.prior_justification`，否则 review 列入 `publish_blockers`。
+7. `claim()` 必给 **标量** `prior=<float in (0.001, 0.999)>` 和
+   `metadata={"prior_justification": "<rationale>"}`。
+   严禁 `prior=[a,b]` 列表（Beta 形式）—— gaia-lang IR validator + BP lowerer
+   只接受标量；写成 list 会触发 "metadata prior must be a number, got list"
+   并导致 BP 不能运行（belief_summary 全空，主代理失去信号）。
+   正确：`claim("...", prior=0.5, metadata={"prior_justification": "..."})`。
 
 ## DSL 速查
 
@@ -93,9 +97,15 @@ gd inquiry .
   写 `SUCCESS.md` 后停止本会话。
 - 若 `belief_stale=true`，先回到 Step 4-5 让 BP 跑过再继续。
 
-### Step 3 — 编辑 plan.gaia.py
-基于 inquiry 的 `next_edits` 与 belief 弱链，**至少加一个**带 `metadata.action`（pending）
-的 claim 推动当前最弱链；可同时补 supporting claim。Edit 前必 Read。
+### Step 3 — 编辑 plan.gaia.py（必须以 belief 为指引）
+**必读** Step 2 inquiry 输出的 `belief_summary`（每个 claim_id → 当前 belief ∈ [0,1]）：
+1. 找出 `belief < 0.5` 或 `belief == None`（未算）的 claim —— 这是当前**最弱链**；
+2. 找出 inquiry 给出的 `next_edits`（如 "missing premise X for claim Y"）；
+3. 基于以上**至少加一个**带 `metadata.action`（pending）的 claim 直接攻击最弱链；
+4. 可同时补 supporting claim、refine prior（依据上一轮 verify verdict）；
+5. Edit 前必 Read。
+
+**禁止**：忽略 belief 信号，盲目加新 claim 而不是修补当前 weak link；这会让探索发散。
 
 ### Step 4 — dispatch
 ```bash

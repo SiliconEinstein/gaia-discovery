@@ -35,9 +35,10 @@ def call_model(problem: str, *, max_retries: int = 3, timeout: int = 600) -> dic
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": problem},
         ],
-        "temperature": 0.0,
-        "max_tokens": 8192,
+        "max_tokens": int(os.environ.get("FS_MAX_TOKENS", "32768")),
     }
+    if not MODEL.startswith(("deepseek-reasoner", "deepseek-v4-pro", "o1", "o3")):
+        payload["temperature"] = 0.0
     last_err: Exception | None = None
     for attempt in range(max_retries):
         try:

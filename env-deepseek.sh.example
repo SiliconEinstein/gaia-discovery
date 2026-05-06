@@ -1,0 +1,49 @@
+#!/bin/bash
+# DeepSeek backend for Claude Code (Anthropic-compatible) + FrontierScience eval (OpenAI-compatible).
+#
+# Copy to env-deepseek.sh and fill in your DeepSeek API key. env-deepseek.sh is gitignored.
+# Source this file before running `claude`, `gd ...`, fs_run_baseline.py, or fs_v3_runner.py.
+#
+# Background: DeepSeek's Anthropic-compatible endpoint enforces metadata.user_id ~ ^[a-zA-Z0-9_-]+$
+# which Claude Code can violate (e.g. user_id contains '@', ':'). The local
+# `ds_anthropic_proxy.py` (port 8788) sanitizes that field. Start it with:
+#   setsid python3 -m uvicorn ds_anthropic_proxy:app --host 127.0.0.1 --port 8788
+
+export DEEPSEEK_API_KEY="sk-REPLACE_ME"
+
+# --- Claude Code main agent (Anthropic-compatible endpoint via local proxy) ---
+export ANTHROPIC_BASE_URL="http://127.0.0.1:8788"
+export ANTHROPIC_AUTH_TOKEN="$DEEPSEEK_API_KEY"
+export NO_PROXY="127.0.0.1,localhost"
+export no_proxy="127.0.0.1,localhost"
+export ANTHROPIC_MODEL="deepseek-v4-pro"
+export ANTHROPIC_DEFAULT_OPUS_MODEL="deepseek-v4-pro"
+export ANTHROPIC_DEFAULT_SONNET_MODEL="deepseek-v4-pro"
+export ANTHROPIC_DEFAULT_HAIKU_MODEL="deepseek-v4-flash"
+export CLAUDE_CODE_SUBAGENT_MODEL="deepseek-v4-pro"
+export CLAUDE_CODE_EFFORT_LEVEL="max"
+export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
+
+# --- FrontierScience scripts (OpenAI-compatible endpoint, direct to DeepSeek) ---
+export GPUGEEK_BASE_URL="https://api.deepseek.com"
+export GPUGEEK_API_KEY="$DEEPSEEK_API_KEY"
+export FS_MODEL="deepseek-v4-pro"
+
+# Optional: paper-faithful judge with GPT-5 via gpugeek proxy
+# (overrides GPUGEEK_BASE_URL / GPUGEEK_API_KEY only for the judge call)
+# export FS_JUDGE_BASE_URL="https://api.gpugeek.com"
+# export FS_JUDGE_API_KEY="REPLACE_ME"
+# export FS_JUDGE_MODEL="Vendor2/GPT-5"
+# export FS_JUDGE_REASONING_EFFORT="high"
+
+# Default judge: deepseek-v4-flash (cheap, but lenient vs GPT-5)
+export FS_JUDGE_MODEL="deepseek-v4-flash"
+
+# --- gd verify-server heuristic-judge backend ---
+# Route per-/verify LLM judge through DeepSeek HTTP (single-shot) rather than
+# nested `claude -p`. Default `claude` backend ran out of max_tokens silently
+# under reasoning models and returned empty text => verdicts were all None.
+export GD_SUBAGENT_BACKEND="deepseek"
+export GD_SUBAGENT_MODEL="deepseek-v4-pro"
+export GD_DEEPSEEK_MAX_TOKENS="32768"
+export DEEPSEEK_BASE_URL="https://api.deepseek.com"

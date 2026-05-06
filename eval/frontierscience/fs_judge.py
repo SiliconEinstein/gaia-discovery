@@ -20,9 +20,10 @@ from pathlib import Path
 
 import requests
 
-API_BASE = os.environ.get("GPUGEEK_BASE_URL", "https://api.gpugeek.com")
-API_KEY = os.environ["GPUGEEK_API_KEY"]
+API_BASE = os.environ.get("FS_JUDGE_BASE_URL") or os.environ.get("GPUGEEK_BASE_URL", "https://api.gpugeek.com")
+API_KEY = os.environ.get("FS_JUDGE_API_KEY") or os.environ["GPUGEEK_API_KEY"]
 JUDGE_MODEL = os.environ.get("FS_JUDGE_MODEL", "Vendor2/GPT-4o")
+JUDGE_REASONING = os.environ.get("FS_JUDGE_REASONING_EFFORT", "high")
 ENDPOINT = f"{API_BASE}/v1/chat/completions"
 
 JUDGE_SYSTEM = (
@@ -64,10 +65,19 @@ def call_judge(problem: str, candidate: str, rubric: str, *, max_retries: int = 
             {"role": "system", "content": JUDGE_SYSTEM},
             {"role": "user", "content": user},
         ],
-        "temperature": 0.0,
-        "max_tokens": 4096,
-        "response_format": {"type": "json_object"},
+        "max_tokens": int(os.environ.get("FS_JUDGE_MAX_TOKENS", "32768")),
     }
+    is_reasoning = (
+        "GPT-5" in JUDGE_MODEL
+        or "gpt-5" in JUDGE_MODEL
+        or JUDGE_MODEL.startswith(("deepseek-reasoner", "deepseek-v4", "o1", "o3"))
+    )
+    if is_reasoning:
+        if "GPT-5" in JUDGE_MODEL or "gpt-5" in JUDGE_MODEL:
+            payload["reasoning_effort"] = JUDGE_REASONING
+    else:
+        payload["temperature"] = 0.0
+        payload["response_format"] = {"type": "json_object"}
     last_err: Exception | None = None
     for attempt in range(max_retries):
         try:

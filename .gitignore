@@ -22,4 +22,12 @@ eval/frontierscience/results/
 # 主 agent 模型配置（每机器各自配，不入 git）
 gd.toml
 
+# 后端 / API key 环境配置（每机器各自配，不入 git；模板见 env-deepseek.sh.example）
+env-deepseek.sh
+env-*.sh
+!env-*.sh.example
+
+# gd CLI 状态目录（每个 cwd 自动产生）
+.gaia/
+
 logs/
