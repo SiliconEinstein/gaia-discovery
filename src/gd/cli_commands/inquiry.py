@@ -34,7 +34,7 @@ EXIT_OK = 0
 EXIT_USER = 1
 EXIT_SYSTEM = 2
 
-VALID_MODES = ("iterate", "publish")
+VALID_MODES = ("explore", "publish")
 
 
 # ---------- belief_summary 摘取 ----------
@@ -90,7 +90,7 @@ def _is_belief_stale(project_dir: Path) -> bool:
 def run(
     project_dir: str | Path,
     *,
-    mode: str = "iterate",
+    mode: str = "explore",
     focus: str | None = None,
     since: str | None = None,
     strict: bool = False,
@@ -152,7 +152,7 @@ def run(
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="gd inquiry")
     p.add_argument("project_dir", help="gaia knowledge package 根目录")
-    p.add_argument("--mode", default="iterate", choices=list(VALID_MODES))
+    p.add_argument("--mode", default="explore", choices=list(VALID_MODES))
     p.add_argument("--focus", default=None, help="单个 qid 聚焦诊断")
     p.add_argument("--since", default=None, help="diagnostics since baseline id")
     p.add_argument("--strict", action="store_true", help="strict 模式")

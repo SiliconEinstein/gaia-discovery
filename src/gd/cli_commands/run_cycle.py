@@ -229,7 +229,7 @@ def _empty_review() -> dict[str, Any]:
         "blockers": [],
         "belief_summary": {},
         "belief_stale": True,
-        "mode": "iterate",
+        "mode": "explore",
         "review_id": None,
     }
 
@@ -436,7 +436,7 @@ def run(
         ir["belief_snapshot"] = snap_dict
 
     # ---- 阶段 5: inquiry ----
-    review_payload = run_review(pkg, mode="iterate")
+    review_payload = run_review(pkg, mode="explore")
     if review_payload.get("status") == "error":
         review_envelope = {
             "schema_version": 1,
@@ -445,7 +445,7 @@ def run(
             "diagnostics": [], "next_edits": [], "blockers": [],
             "belief_summary": dict(snapshot.beliefs),
             "belief_stale": False,
-            "mode": "iterate",
+            "mode": "explore",
             "review_id": None,
         }
     else:
@@ -459,7 +459,7 @@ def run(
             "blockers": [],
             "belief_summary": dict(snapshot.beliefs),
             "belief_stale": False,
-            "mode": "iterate",
+            "mode": "explore",
             "review_id": review_payload.get("review_id"),
         }
     write_review(review_envelope, out_dir)

@@ -193,7 +193,7 @@ def _build_parser() -> argparse.ArgumentParser:
     # inquiry
     sp = sub.add_parser("inquiry", help="跑 gaia.inquiry.run_review（read-only）")
     sp.add_argument("project_dir")
-    sp.add_argument("--mode", default="iterate", choices=["iterate", "publish"])
+    sp.add_argument("--mode", default="explore", choices=["explore", "publish"])
     sp.add_argument("--focus", default=None)
     sp.add_argument("--since", default=None)
     sp.add_argument("--strict", action="store_true")
