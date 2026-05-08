@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "stance": "support",
+  "summary": "The DC and AC Josephson effects are rigorously recovered from the STJ ODEs under the symmetric-reservoir approximation n_{s,1}≈n_{s,2}≈n_s/2. (1) The density ODE simplifies to dn_{s,1}/dt = −(K n_s/ℏ) sin θ, yielding the Josephson current-phase relation I = I_c sin θ with I_c ∝ K n_s/ℏ. (2) The phase ODE simplifies to dθ/dt = 2eV/ℏ because the asymmetric correction term √(n₂/n₁)−√(n₁/n₂) vanishes when n₁=n₂. (3) At V=0, dθ/dt=0 so θ is constant and I = I_c sin θ₀ — the dissipationless DC Josephson effect. (4) At V≠0, θ(t) = θ₀ + (2eV/ℏ)t = θ₀ + ω_J t, yielding I(t) = I_c sin(θ₀+ω_J t) with zero time-averaged DC current — the AC Josephson effect. (5) f_J = (2e/h)V ≈ 483.6 MHz/μV in practical units. (6) The naming describes the current nature: DC Josephson = DC supercurrent at zero voltage; AC Josephson = AC current under DC voltage.",
+  "premises": [
+    {
+      "text": "Starting from the ODEs of sub-question (e): dn_{s,1}/dt = (2K/ℏ)√(n_{s,1}n_{s,2}) sin(φ₂−φ₁) and dθ/dt = 2eV/ℏ − (K/ℏ)[√(n_{s,2}/n_{s,1}) − √(n_{s,1}/n_{s,2})] cos θ. Under n_{s,1}≈n_{s,2}≈n_s/2, the geometric mean √(n_{s,1}n_{s,2}) ≈ n_s/2 and the ratio correction √(n_{s,2}/n_{s,1}) − √(n_{s,1}/n_{s,2}) ≈ 1−1 = 0. This is a first-order Taylor expansion: the correction term is O(δ²) for small asymmetry δ = (n_{s,1}−n_{s,2})/n_s.",
+      "confidence": 0.95,
+      "source": "derivation",
+      "claim_id": "discovery:fs010_bf7d23f3::c_josephson_effects"
+    },
+    {
+      "text": "Density equation simplification: dn_{s,1}/dt = (2K/ℏ)(n_s/2) sin(−θ) = −(K n_s/ℏ) sin θ. Using sin(−θ)=−sin θ (oddness of sine). The supercurrent I_s is related to the pair tunneling rate: I_s = −2e · A · L · dn_{s,1}/dt (charge flow from side 2 to side 1 proportional to the rate of pair accumulation on side 1). Hence I_s = (2e K n_s A L / ℏ) sin θ ≡ I_c sin θ with critical current I_c ∝ K n_s/ℏ. The negative sign in dn_{s,1}/dt is absorbed by the conventional current direction definition.",
+      "confidence": 0.95,
+      "source": "derivation",
+      "claim_id": "discovery:fs010_bf7d23f3::c_josephson_effects"
+    },
+    {
+      "text": "Phase equation simplification: when n_{s,1}=n_{s,2} exactly, √(n_{s,2}/n_{s,1}) = √(n_{s,1}/n_{s,2}) = 1, so the bracketed correction term is identically zero. The cos θ term is multiplied by zero and vanishes, leaving dθ/dt = 2eV/ℏ — the canonical Josephson voltage-frequency relation. Formally proven as the theorem 'correction_term_vanishes' in the companion Lean artifact.",
+      "confidence": 0.97,
+      "source": "derivation",
+      "claim_id": "discovery:fs010_bf7d23f3::c_josephson_effects"
+    },
+    {
+      "text": "DC Josephson effect (V=0): dθ/dt = 0 → θ(t) = θ₀ = constant. The current I = I_c sin θ₀ is a dissipationless DC supercurrent. The current magnitude can be any value between −I_c and +I_c depending on the fixed phase difference θ₀. This is fundamentally non-Ohmic: there is current without voltage, an impossibility in normal conductors. Formally: the phase is pinned at a constant, and the Josephson element acts as a phase-tunable nonlinear inductor L_J = ℏ/(2e I_c cos θ₀).",
+      "confidence": 0.98,
+      "source": "derivation",
+      "claim_id": "discovery:fs010_bf7d23f3::c_josephson_effects"
+    },
+    {
+      "text": "AC Josephson effect (V≠0, DC bias): Integrating dθ/dt = 2eV/ℏ gives θ(t) = θ₀ + (2eV/ℏ)t = θ₀ + ω_J t with ω_J ≡ 2eV/ℏ. The current oscillates as I(t) = I_c sin(θ₀ + ω_J t). The time-averaged DC current over one period T = 2π/ω_J is ⟨I⟩ = (1/T)∫₀ᵀ I_c sin(θ₀+ω_J t) dt = (I_c/2π)[−cos u]_{θ₀}^{θ₀+2π} = 0, since cos(θ₀+2π)=cos θ₀. The Lean theorem 'time_averaged_current_zero' formalizes this result: the antiderivative evaluation yields zero because cos is 2π-periodic (axiom cos_2pi_periodic).",
+      "confidence": 0.97,
+      "source": "derivation",
+      "claim_id": "discovery:fs010_bf7d23f3::c_josephson_effects"
+    },
+    {
+      "text": "Josephson frequency in practical units: f_J = ω_J/(2π) = 2eV/(2πℏ) = (2e/h)V. Using CODATA 2018 exact values e = 1.602176634×10⁻¹⁹ C and h = 6.62607015×10⁻³⁴ J·s, the Josephson constant K_J = 2e/h = 3.204353268×10⁻¹⁹ / 6.62607015×10⁻³⁴ = 4.8359785×10¹⁴ Hz/V ≈ 483.6 MHz/μV (to four significant figures). This constant is the basis of the international Josephson voltage standard.",
+      "confidence": 0.99,
+      "source": "derivation",
+      "claim_id": "discovery:fs010_bf7d23f3::c_josephson_effects"
+    },
+    {
+      "text": "Naming convention: The 'DC Josephson effect' describes a DC supercurrent flowing at zero applied voltage (V=0, I=I_c sin θ₀). The 'AC Josephson effect' describes an AC current oscillating at frequency ω_J=2eV/ℏ under a DC voltage bias (V≠0, ⟨I⟩_DC=0). The naming describes the NATURE OF THE CURRENT (DC/AC), not the applied voltage. This counterintuitive naming is standard in the superconductivity literature since Josephson's 1962 paper.",
+      "confidence": 0.99,
+      "source": "literature",
+      "claim_id": "discovery:fs010_bf7d23f3::c_josephson_effects"
+    }
+  ],
+  "counter_evidence": [
+    {
+      "text": "The approximation n_{s,1}≈n_{s,2} assumes identical superconducting electrodes. In junctions with dissimilar superconductors (SIS' junctions) or under strong current bias where the superfluid density depletes asymmetrically, the correction term (K/ℏ)[√(n_{s,2}/n_{s,1})−√(n_{s,1}/n_{s,2})] cos θ must be retained. This introduces density-dependent corrections to the phase evolution equation and modifies the AC Josephson frequency by O(δ) where δ = (n_{s,1}−n_{s,2})/n_s.",
+      "weight": 0.15
+    },
+    {
+      "text": "The derivation assumes the constant-Δ approximation (sub-question (a)) where |Δ_j| is uniform in bulk. Within a few coherence lengths ξ of the tunnel barrier, |Δ_j| varies spatially due to proximity effect and current-induced pair-breaking. The ODEs are exact for the two-level model but the model itself is an approximation to the full Ginzburg-Landau or Bogoliubov-de Gennes description.",
+      "weight": 0.15
+    },
+    {
+      "text": "Real Josephson junctions have finite capacitance C and quasiparticle resistance R (the RCSJ model). The pure STJ model neglects displacement current I_dis = C dV/dt and quasiparticle tunneling current I_qp = V/R. For V≠0, the total junction behavior is described by I = I_c sin θ + V/R + C dV/dt, and the time-averaged current is not strictly zero but I_dc = V/R (the quasiparticle branch). The pure AC Josephson result ⟨I⟩=0 holds only for the ideal STJ element.",
+      "weight": 0.25
+    },
+    {
+      "text": "The Lean formalization uses an axiomatic scalar field (Float with arithmetic/trig axioms) rather than the real numbers from Mathlib. While this captures the structural algebraic identities needed for the derivation, it does not provide a foundational real-number proof. The axioms are justified by standard ℝ identities from calculus (sin oddness, cos 2π-periodicity, antiderivative of sin). The full derivation with integration over ℝ would require measure-theoretic foundations not formalized here.",
+      "weight": 0.20
+    }
+  ],
+  "uncertainty": "The derivation is algebraically exact given the ODEs from sub-question (e) and the approximation n_{s,1}≈n_{s,2}. The primary uncertainties are: (1) the physical validity of the constant-Δ and symmetric-reservoir approximations in real junctions (temperature gradients, material asymmetry, non-equilibrium effects); (2) the sign convention for θ=φ₁−φ₂ is conventional — the physical observables (|I|, |ω_J|) are invariant under θ→−θ; (3) the RCJS model corrections (capacitance, quasiparticle resistance) produce DC components not captured here — the ⟨I⟩=0 result is exact for the bare STJ element but approximate for real junctions. The companion Lean formalization proves the key algebraic identities (correction term vanishing, antiderivative evaluation to zero) in a self-contained axiom system that captures the structural logic of the derivation.",
+  "formal_artifact": "task_results/act_48377d45ee70.lean"
+}

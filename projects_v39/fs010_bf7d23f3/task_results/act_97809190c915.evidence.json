@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "stance": "support",
+  "summary": "At K=0, the Cooper pair energy change from side 1 to side 2 is ΔE = −2eV, matching the Cooper pair charge q = −2e and electrochemical potential difference Δμ = −2e(V₂−V₁) = −2eV. The Hamiltonian eigenvalue splitting |E₁−E₂| = 2|eV| equals |Δμ| = 2|eV|, confirming the model's consistency. The factor of 2 (not e) arises from the Cooper pair carrying two electrons. Sign convention: V ≡ V₂−V₁; when V>0, side 2 is at higher electrostatic potential.",
+  "premises": [
+    {
+      "text": "At K=0, H = diag(eV, −eV). Eigenvalue analysis: Hψ₁=eV·ψ₁ with ψ₁=(1,0)^T (Cooper pair on side 1, E₁=+eV); Hψ₂=−eV·ψ₂ with ψ₂=(0,1)^T (Cooper pair on side 2, E₂=−eV). Verified by direct matrix multiplication and Lean formalization (Theorem eigen1, eigen2).",
+      "confidence": 0.99,
+      "source": "derivation",
+      "claim_id": "discovery:fs010_bf7d23f3::c_energy_change"
+    },
+    {
+      "text": "Energy change for Cooper pair moving side 1→side 2: ΔE = E₂ − E₁ = −eV − (+eV) = −2eV. Algebraically exact: (-eV)-eV = -2eV (ring). The negative sign means the Cooper pair releases energy (lower energy state on side 2 when V>0). Magnitude: |ΔE| = 2|eV|. Formally proved in Lean (theorem energy_change_eq, energy_change_magnitude).",
+      "confidence": 0.99,
+      "source": "derivation",
+      "claim_id": "discovery:fs010_bf7d23f3::c_energy_change"
+    },
+    {
+      "text": "Cooper pair charge q = −2e (two electrons, each −e, in a spin-singlet bound state). Electrostatic energy on side j: U_j = qV_j = −2eV_j. Electrochemical potential difference: Δμ = μ₂−μ₁ = U₂−U₁ = −2e(V₂−V₁). With the Hamiltonian parameter V ≡ V₂−V₁ (sign convention), Δμ = −2eV, matching ΔE = −2eV exactly. Lean proof: theorems cooper_pair_charge_eq_2e, mu_diff_eq.",
+      "confidence": 0.98,
+      "source": "derivation",
+      "claim_id": "discovery:fs010_bf7d23f3::c_energy_change"
+    },
+    {
+      "text": "Consistency verification: eigenvalue splitting |E₁−E₂| = |eV−(−eV)| = 2|eV|. Electrochemical potential magnitude |Δμ| = |−2e(V₂−V₁)| = 2|eV|. These are equal in magnitude: 2|eV| = 2|eV|. The agreement is not accidental — the Hamiltonian is in units of energy per Cooper pair, so diagonal entries ±eV are Cooper-pair electrochemical potentials. Lean proof: theorem consistency_theorem: |splitting eV| = 2|eV| ∧ |deltaE eV| = 2|eV|.",
+      "confidence": 0.97,
+      "source": "derivation",
+      "claim_id": "discovery:fs010_bf7d23f3::c_energy_change"
+    },
+    {
+      "text": "Factor-of-2 explanation: a single electron (charge −e) traversing potential V changes energy by ΔE_single = −eV. A Cooper pair (charge −2e) changes energy by ΔE_pair = −2eV = 2·ΔE_single. This factor of 2 is a defining feature of superconductivity and is experimentally verified via the Josephson voltage-frequency relation f_J = (2e/h)V ≈ 483.6 MHz/μV, used in the SI voltage standard. If the Hamiltonian were for single electrons, the splitting would be eV, not 2eV, and the AC Josephson frequency would be eV/ℏ, which is experimentally falsified.",
+      "confidence": 0.99,
+      "source": "derivation",
+      "claim_id": "discovery:fs010_bf7d23f3::c_energy_change"
+    },
+    {
+      "text": "Sign convention: The Hamiltonian parameter V ≡ V₂ − V₁ (potential on side 2 minus side 1). When V > 0, side 2 is at higher electrostatic potential. The Cooper pair (q = −2e) on side 1 has energy +eV > −eV (side 2), so it has higher electrostatic energy on side 1. Since q < 0, higher electrostatic energy corresponds to lower electrostatic potential: V₁ < V₂. A Cooper pair moving 1→2 releases energy −2eV (goes to lower energy state), consistent with a negative charge moving toward higher electrostatic potential. Formally: theorem higher_energy_lower_potential and potential_difference_is_V.",
+      "confidence": 0.95,
+      "source": "derivation",
+      "claim_id": "discovery:fs010_bf7d23f3::c_energy_change"
+    }
+  ],
+  "counter_evidence": [
+    {
+      "text": "The energy change ΔE = −2eV is derived in the K=0 limit, where the eigenstates are fully localized on one side. For non-eigenstate superpositions (which are the generic state for finite K), the expectation value of energy is intermediate between +eV and −eV, and the energy released in a single tunneling event is not sharply defined without specifying the measurement protocol. The ΔE = −2eV is the diagonal-energy difference, not the full energy including the off-diagonal K contribution.",
+      "weight": 0.15
+    },
+    {
+      "text": "The sign convention V ≡ V₂−V₁ is a choice. The opposite convention V ≡ V₁−V₂ would change the sign of all expressions involving V (ΔE → +2eV when V₁>V₂). However, the physical observable — the magnitude |ΔE| = 2|eV| and the AC Josephson frequency ω_J = 2|eV|/ℏ — is invariant under V → −V. The essential point is that the convention must be stated consistently across all sub-questions.",
+      "weight": 0.10
+    },
+    {
+      "text": "The identification of Hamiltonian diagonal entries ±eV with electrochemical potentials assumes the constant-Δ approximation (sub-question (a)). Near the tunnel barrier (within ~ξ), |Δ| varies spatially and the simple two-level Hamiltonian with uniform diagonal entries may not fully capture the local electrostatic energy landscape. The constant-Δ approximation is standard and experimentally validated for tunnel junctions where electrode thickness d ≫ ξ.",
+      "weight": 0.15
+    }
+  ],
+  "uncertainty": "The algebraic derivation (ΔE = −2eV, eigenvalue splitting = 2eV, electrochemical potential = −2eV) is mathematically exact at K=0 within the given Hamiltonian model. The primary uncertainty is conceptual rather than algebraic: (i) the sign convention V ≡ V₂−V₁ must be carried consistently through the full solution to avoid sign errors propagating into sub-questions (d)-(f); (ii) the K=0 limit is idealized — real junctions always have finite K — but the K=0 energies ±eV are the energies of the localized basis states used to construct the finite-K eigenstates; (iii) the Cooper pair charge of −2e is a fundamental BCS result but the treatment of the chemical potential as purely electrostatic neglects pair-interaction energy shifts (which are constant offsets absorbed into the energy reference). The Lean formalization proves all algebraic identities, and the numerical consistency with the AC Josephson frequency (f_J = 2eV/h ≈ 483.6 MHz/μV) provides experimental corroboration.",
+  "formal_artifact": "task_results/act_97809190c915.lean"
+}

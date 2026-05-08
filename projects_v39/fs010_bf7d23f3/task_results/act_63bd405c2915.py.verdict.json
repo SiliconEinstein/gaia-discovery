@@ -1,0 +1,114 @@
+{
+  "overall": "PASS",
+  "num_passed": 7,
+  "num_failed": 0,
+  "num_total": 7,
+  "results": {
+    "test_1_energy_change": {
+      "test": "energy_change",
+      "passed": true,
+      "max_error": 0.0,
+      "V_samples": [
+        1e-06,
+        0.001,
+        1.0,
+        10.0
+      ],
+      "Delta_E_samples": [
+        -3.204353268e-25,
+        -3.2043532679999997e-22,
+        -3.204353268e-19,
+        -3.204353268e-18
+      ],
+      "expected": [
+        -3.204353268e-25,
+        -3.2043532679999997e-22,
+        -3.204353268e-19,
+        -3.204353268e-18
+      ],
+      "units": "joules"
+    },
+    "test_2_josephson_frequency": {
+      "test": "josephson_frequency",
+      "passed": true,
+      "max_freq_error": 0.0,
+      "theoretical_ratio_Hz_per_V": 483597848416983.6,
+      "computed_ratio_Hz_per_V": 483597848416983.6,
+      "ratio_MHz_per_uV": 483.5978484169836,
+      "V_samples_muV": [
+        1.0,
+        10.0,
+        100.0,
+        1000.0
+      ],
+      "f_J_samples_Hz": [
+        483597848.4169836,
+        4835978484.169836,
+        48359784841.698364,
+        483597848416.9836
+      ],
+      "f_J_expected_GHz": [
+        0.4836,
+        4.836,
+        48.36,
+        483.6
+      ]
+    },
+    "test_3_ac_current_oscillation": {
+      "test": "ac_current_oscillation",
+      "passed": true,
+      "periodicity_max_error": 1.8868144450138296e-05,
+      "zero_crossings": 6,
+      "expected_crossings_per_3_periods": 6,
+      "I_c_A": 0.001,
+      "V_muV": 100.0,
+      "omega_J_rad_s": 303853489575.7252,
+      "T_period_s": 2.0678338484619294e-11,
+      "f_J_Hz": 48359784841.698364
+    },
+    "test_4_zero_dc_average": {
+      "test": "zero_dc_average",
+      "passed": true,
+      "max_dc_average_A": 1.6263032587282567e-19,
+      "num_phi_0_tested": 50,
+      "V_muV": 100.0,
+      "T_period_s": 2.0678338484619294e-11
+    },
+    "test_5_cos_periodicity": {
+      "test": "cos_periodicity",
+      "passed": true,
+      "max_error": 2.0211696899474774e-15,
+      "num_samples": 1000
+    },
+    "test_6_ohmic_contrast": {
+      "test": "ohmic_contrast",
+      "passed": true,
+      "nonzero_ok": true,
+      "zero_ok": true,
+      "V_samples_V": [
+        -10.0,
+        -1.0,
+        -0.001,
+        0.001,
+        1.0,
+        10.0
+      ],
+      "I_ohm_A": [
+        -10.0,
+        -1.0,
+        -0.001,
+        0.001,
+        1.0,
+        10.0
+      ],
+      "note": "Ohmic I=V/R is constant DC; Josephson AC time-averages to zero"
+    },
+    "test_7_sin_integral_epoch": {
+      "test": "sin_integral_full_period",
+      "passed": true,
+      "integral_value": 2.221501482512777e-16,
+      "quad_error_estimate": 4.3998892617845996e-14,
+      "note": "This justifies the sin_integral_full_period axiom in the Lean proof"
+    }
+  }
+}

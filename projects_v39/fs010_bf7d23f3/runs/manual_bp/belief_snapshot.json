@@ -1,0 +1,102 @@
+{
+  "beliefs": {
+    "discovery:discovery_fs010_bf7d23f3::c_ac_response": 0.98633071369286,
+    "discovery:discovery_fs010_bf7d23f3::c_const_delta": 0.8506085614704992,
+    "discovery:discovery_fs010_bf7d23f3::c_energy_change": 0.9901835296740753,
+    "discovery:discovery_fs010_bf7d23f3::c_josephson_effects": 0.9334316697496446,
+    "discovery:discovery_fs010_bf7d23f3::c_k0_eigenstates": 0.9302463308868342,
+    "discovery:discovery_fs010_bf7d23f3::c_schrodinger_eqns": 0.7714694171262939,
+    "discovery:discovery_fs010_bf7d23f3::c_schrodinger_sign_resolved": 0.8272187532741176,
+    "discovery:discovery_fs010_bf7d23f3::t_target": 0.9999719201949965
+  },
+  "method_used": "jt",
+  "treewidth": 2,
+  "elapsed_ms": 1.6246890008915216,
+  "is_exact": true,
+  "knowledge_index": {
+    "q_main": {
+      "label": "q_main",
+      "content": "Solve the Josephson junction tunneling Hamiltonian problem: given H = [[eV, K], [K, -eV]] and wavefunction Ψ = (|Δ₁|e^{iφ₁}, |Δ₂|e^{iφ₂})^T with Δ_j = √(n_{s,j}/2) e^{iφ_j}, answer sub-questions (a)-(f) covering the constant-Δ approximation, K=0 eigenstates, Cooper-pair energy change, AC Josephson from energy conservation, Schrödinger ODEs, and DC/AC Josephson effects.",
+      "prior": null,
+      "role": null
+    },
+    "k_3d0ff392": {
+      "label": null,
+      "content": "Superconducting coherence length ξ sets the scale over which |Δ| varies; in bulk electrodes far from interfaces (d ≫ ξ), |Δ| saturates to its equilibrium BCS value. GL free-energy minimisation ∇²ψ=0 in uniform, field-free bulk gives |ψ|=const (Tinkham §6.1).",
+      "prior": null,
+      "role": null
+    },
+    "k_abfc78a5": {
+      "label": null,
+      "content": "H = [[eV, K], [K, -eV]] in units of energy per Cooper pair; K is tunneling amplitude; V is potential bias. Ψ = (|Δ₁|e^{iφ₁}, |Δ₂|e^{iφ₂})^T with |Δ_j| = √(n_{s,j}/2) is the two-component superconducting order parameter.",
+      "prior": null,
+      "role": null
+    },
+    "k_6064f60e": {
+      "label": null,
+      "content": "Cooper pair charge q = -2e. Diagonal entries ±eV in H are Cooper-pair energies measured from the Fermi level: electrostatic energy U_j = -2e V_j, so energy splitting ΔE = -2e(V₂-V₁) = -2eV when V = V₂-V₁.",
+      "prior": null,
+      "role": null
+    },
+    "k_be8ddcc9": {
+      "label": null,
+      "content": "Time-dependent Schrödinger equation: iℏ ∂Ψ/∂t = H Ψ.",
+      "prior": null,
+      "role": null
+    },
+    "t_target": {
+      "label": "t_target",
+      "content": "All six sub-questions (a)-(f) of the Josephson junction tunneling Hamiltonian problem are correctly solved: (a) constant Δ_j approximation justified by coherence length ξ and Ginzburg-Landau theory; (b) K=0 eigenstates are (1,0)^T and (0,1)^T with eigenvalues ±eV and n_{s,1}+n_{s,2}=const; (c) ΔE = −2eV consistent with Cooper pair charge −2e; (d) energy conservation in tunneling implies AC Josephson effect with ω_J=2eV/ℏ and zero DC average; (e) Schrödinger equation yields coupled ODEs for n_{s,j} and θ=φ₁−φ₂ via real/imaginary separation; (f) with n_{s,1}≈n_{s,2}, ODEs reduce to DC (V=0, I=I_c sin θ) and AC (V≠0, I=I_c sin(θ+ω_J t)) Josephson effects.",
+      "prior": 0.5,
+      "role": null
+    },
+    "c_const_delta": {
+      "label": "c_const_delta",
+      "content": "The order parameter components Δ_j = √(n_{s,j}/2) e^{iφ_j} are approximately constant inside the bulk superconducting regions on either side of the tunnel barrier because: (i) coherence length ξ sets the scale for |Δ| variation, and electrode thickness d ≫ ξ so |Δ| → |Δ_eq| far from interfaces; (ii) in the absence of supercurrents, ∇φ ≈ 0 from j_s ∝ n_s ∇φ; (iii) GL free-energy minimization ∇²ψ=0 in uniform, field-free regions gives |ψ|=const; (iv) the constant-Δ approximation is equivalent to the rigid-boundary / infinite-reservoir model in standard STJ theory and breaks down only within a few ξ of the barrier interface.",
+      "prior": 0.75,
+      "role": null
+    },
+    "c_k0_eigenstates": {
+      "label": "c_k0_eigenstates",
+      "content": "When K=0, H = diag(eV, −eV). The eigenstates are: ψ₁ = (1, 0)^T with eigenvalue E₁ = +eV (Cooper pair on side 1), and ψ₂ = (0, 1)^T with eigenvalue E₂ = −eV (Cooper pair on side 2). For ψ₁: |Δ₁| = √(n_{s,1}/2), Δ₂ = 0. For ψ₂: Δ₁ = 0, |Δ₂| = √(n_{s,2}/2). Wavefunction normalization |Δ₁|² + |Δ₂|² = const gives (n_{s,1}+n_{s,2})/2 = const, i.e., n_{s,1} + n_{s,2} = const (conserved total superfluid Cooper-pair density). In the K=0 eigenstates specifically, the pair is fully localized on one side: either (n_{s,1}=n_s_total, n_{s,2}=0) or (n_{s,1}=0, n_{s,2}=n_s_total).",
+      "prior": 0.8,
+      "role": null
+    },
+    "c_energy_change": {
+      "label": "c_energy_change",
+      "content": "At K=0, a Cooper pair moving from side 1 to side 2 changes energy by ΔE = E₂ − E₁ = −eV − (+eV) = −2eV (loses energy −2eV, i.e., lower energy on side 2 when V>0). With Cooper pair charge q = −2e, electrostatic energy U_j = −2e V_j, and the electrochemical potential difference is Δμ = μ₂ − μ₁ = −2e(V₂−V₁) = −2eV, matching the Hamiltonian eigenvalue splitting. The factor of 2 arises from the pair nature of the charge — a single electron would give e, but a Cooper pair gives 2e. The Hamiltonian diagonal entries ±eV are Cooper-pair energies, not single-electron energies.",
+      "prior": 0.75,
+      "role": null
+    },
+    "c_ac_response": {
+      "label": "c_ac_response",
+      "content": "When K≠0, off-diagonal terms describe Cooper pair coherent tunneling across the barrier. A Cooper pair tunneling side 1→2 changes diagonal energy by ΔE = −2eV. Energy conservation requires compensation by emission/absorption of a quantum ℏω = 2|eV|. This fixes the Josephson frequency ω_J = 2eV/ℏ (f_J = 2eV/h ≈ 483.6 MHz/μV). The current response is I(t) = I_c sin(φ₁−φ₂ + ω_J t) — an AC current even under DC bias. The time-averaged DC current is zero for a pure Josephson element. This is fundamentally different from Ohm's law — the response is quantum-coherent and oscillatory, not dissipative. Each tunneling event transfers charge 2e and energy 2eV to the electromagnetic environment.",
+      "prior": 0.7,
+      "role": null
+    },
+    "c_schrodinger_eqns": {
+      "label": "c_schrodinger_eqns",
+      "content": "From iℏ dΨ/dt = H Ψ with Ψ = (|Δ₁|e^{iφ₁}, |Δ₂|e^{iφ₂})^T and |Δ_j| = √(n_{s,j}/2), the coupled first-order ODEs are obtained by separating real and imaginary parts. Density-rate equations: dn_{s,1}/dt = (2K/ℏ)√(n_{s,1}n_{s,2}) sin(φ₂−φ₁) and dn_{s,2}/dt = (2K/ℏ)√(n_{s,1}n_{s,2}) sin(φ₁−φ₂) = −dn_{s,1}/dt, showing Cooper-pair number conservation (I_s ∝ dn_{s,1}/dt ∝ sin θ). Phase-evolution equations: dφ₁/dt = −(1/ℏ)[eV + K√(n_{s,2}/n_{s,1}) cos(φ₁−φ₂)], dφ₂/dt = −(1/ℏ)[−eV + K√(n_{s,1}/n_{s,2}) cos(φ₂−φ₁)]. With θ=φ₁−φ₂, the phase-difference equation is dθ/dt = −2eV/ℏ + (K/ℏ)[√(n_{s,1}/n_{s,2}) − √(n_{s,2}/n_{s,1})] cos θ. The supercurrent-phase relation I_s = I_c sin θ is embedded in dn_{s,1}/dt.",
+      "prior": 0.55,
+      "role": null
+    },
+    "c_josephson_effects": {
+      "label": "c_josephson_effects",
+      "content": "With n_{s,1} ≈ n_{s,2} ≈ n_s/2, the ODEs from (e) simplify. Density: dn_{s,1}/dt = (K n_s/ℏ) sin θ, giving the Josephson current-phase relation I_s = I_c sin θ with critical current I_c ∝ K n_s/ℏ. Phase: dθ/dt = −2eV/ℏ (the cosine term vanishes because √(n_{s,1}/n_{s,2}) − √(n_{s,2}/n_{s,1}) ≈ 0 when n_{s,1}≈n_{s,2}). DC Josephson effect (V=0): dθ/dt=0, θ=θ₀=const, I = I_c sin θ₀ — dissipationless DC supercurrent, magnitude between 0 and I_c depending on the initial phase difference. AC Josephson effect (V≠0, DC bias): θ(t)=θ₀−(2eV/ℏ)t, I(t)=I_c sin(θ₀−ω_J t) with ω_J = 2|eV|/ℏ; current oscillates at Josephson frequency, time average ⟨I(t)⟩=0. In practical units: f_J = (2e/h)|V| ≈ 483.6 MHz/μV, the precision relation used in the Josephson voltage standard. The sign dθ/dt = −2eV/ℏ follows from the convention θ = φ₁−φ₂ with H = [[eV, K], [K, −eV]]; using θ' = φ₂−φ₁ gives dθ'/dt = +2eV/ℏ — the observable frequency |2eV|/ℏ is invariant.",
+      "prior": 0.6,
+      "role": null
+    },
+    "c_schrodinger_sign_resolved": {
+      "label": "c_schrodinger_sign_resolved",
+      "content": "The coupled ODEs derived from iℏ dΨ/dt = HΨ with H = [[eV, K], [K, −eV]] and θ = φ₁−φ₂ produce dθ/dt = −2eV/ℏ + (K/ℏ)[√(n_{s,1}/n_{s,2}) − √(n_{s,2}/n_{s,1})] cos θ. With the n_{s,1}≈n_{s,2} limit, this gives dθ/dt = −2eV/ℏ. The Josephson current-phase relation I_s = I_c sin θ, combined with the time-integrated phase θ(t) = θ₀ − (2eV/ℏ)t, yields I(t) = I_c sin(θ₀ − ω_J t) with ω_J = 2|eV|/ℏ. Because sin is odd, I(t) = −I_c sin(ω_J t − θ₀) and the current oscillates at frequency ω_J = 2|eV|/ℏ, identical to the physical AC Josephson frequency. The sign convention choice (θ = φ₁−φ₂ vs θ = φ₂−φ₁) does not affect the observable oscillation frequency or the zero-DC-average property.",
+      "prior": 0.5,
+      "role": null
+    }
+  },
+  "compile_status": "ok",
+  "error": null,
+  "ir_warnings": [],
+  "project_dir": "/root/gaia-discovery/projects_v39/fs010_bf7d23f3",
+  "iter_id": null,
+  "timestamp": 1778264614.3558285
+}

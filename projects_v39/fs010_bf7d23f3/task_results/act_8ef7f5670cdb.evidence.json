@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "stance": "support",
+  "summary": "At K=0, H=diag(eV,-eV) has eigenstates ψ₁=(1,0)^T with E₁=+eV (Cooper pair on side 1) and ψ₂=(0,1)^T with E₂=-eV (Cooper pair on side 2). Normalization |Δ₁|²+|Δ₂|²=const with |Δ_j|²=n_{s,j}/2 directly yields n_{s,1}+n_{s,2}=const, a superfluid density conservation law. The K=0 eigenstates are the K→0 limits of the finite-K mixed eigenstates.",
+  "premises": [
+    {
+      "text": "H = diag(eV, -eV) at K=0: the eigenvalue equation Hψ=Eψ decouples into eV·a=Ea and -eV·b=Eb, yielding two solutions: (a,b)=(1,0), E=+eV and (a,b)=(0,1), E=-eV. Verified by direct substitution: Hψ₁=(eV,0)^T=eV·(1,0)^T.",
+      "confidence": 0.99,
+      "source": "derivation",
+      "claim_id": "discovery:fs010_bf7d23f3::c_k0_eigenstates"
+    },
+    {
+      "text": "Physical interpretation: ψ₁=(1,0)^T has Δ₂=0, meaning the Cooper pair is fully localized on side 1; ψ₂=(0,1)^T has Δ₁=0, meaning the Cooper pair is fully localized on side 2. The K=0 eigenstates are fully localized (definite-electrode) states with no tunneling amplitude.",
+      "confidence": 0.98,
+      "source": "derivation",
+      "claim_id": "discovery:fs010_bf7d23f3::c_k0_eigenstates"
+    },
+    {
+      "text": "Wavefunction normalization |Δ₁|²+|Δ₂|²=const, combined with the BCS-GL relation |Δ_j|²=n_{s,j}/2, gives (n_{s,1}+n_{s,2})/2=const, hence n_{s,1}+n_{s,2}=const. This is superfluid Cooper-pair density conservation for the closed two-reservoir system.",
+      "confidence": 0.98,
+      "source": "derivation",
+      "claim_id": "discovery:fs010_bf7d23f3::c_k0_eigenstates"
+    },
+    {
+      "text": "Eigenstate-limit relationship: the finite-K eigenstates ψ_± = (cos(α/2), ±sin(α/2))^T with tan α = K/eV reduce in the K→0 limit (α→0) to ψ_+→(1,0)^T, ψ_-→(0,-1)^T, recovering the K=0 eigenvectors. The K=0 basis is the localized limit of the mixing-angle parameterization.",
+      "confidence": 0.97,
+      "source": "derivation",
+      "claim_id": "discovery:fs010_bf7d23f3::c_k0_eigenstates"
+    },
+    {
+      "text": "Orthonormality and completeness verified: ψ₁^†ψ₁=ψ₂^†ψ₂=1, ψ₁^†ψ₂=0, ψ₁ψ₁^†+ψ₂ψ₂^†=I₂. These form a complete orthonormal basis for the two-level system at K=0.",
+      "confidence": 0.99,
+      "source": "derivation",
+      "claim_id": "discovery:fs010_bf7d23f3::c_k0_eigenstates"
+    }
+  ],
+  "counter_evidence": [
+    {
+      "text": "The constant-Δ approximation (sub-question (a)) is a prerequisite: if |Δ_j| varies spatially near the interface, the simple diagonalization of the uniform Hamiltonian may not capture boundary effects within ~ξ of the barrier.",
+      "weight": 0.15
+    },
+    {
+      "text": "The conservation law n_{s,1}+n_{s,2}=const assumes no pair-breaking (quasiparticle tunneling) and no normal-state leakage current. In real junctions, these dissipative channels exist but are subdominant in the tunneling regime.",
+      "weight": 0.10
+    },
+    {
+      "text": "The K=0 limit is degenerate when eV=0 (both eigenvalues 0, any vector is an eigenvector). The eigenstate-limit relationship requires eV≠0 for the non-degenerate analysis to apply without additional care.",
+      "weight": 0.05
+    }
+  ],
+  "uncertainty": "The derivation is mathematically exact for the given Hamiltonian model. The primary uncertainty is not in the algebra but in the model assumptions: (i) that the constant-Δ approximation holds (addressed in sub-question (a)); (ii) that the two-level description with uniform Δ_j adequately captures the junction physics; (iii) that the normalization |Δ₁|²+|Δ₂|²=const maps exactly to superfluid density conservation without additional factors. These are standard BCS-STJ assumptions validated experimentally in tunnel junctions at T≪T_c.",
+  "formal_artifact": "task_results/act_8ef7f5670cdb.lean"
+}

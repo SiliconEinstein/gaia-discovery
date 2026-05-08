@@ -1,0 +1,15 @@
+[project]
+name = "discovery-fs010_bf7d23f3-gaia"
+version = "0.1.0"
+description = "gaia-discovery-v3 case for open problem fs010_bf7d23f3"
+requires-python = ">=3.12"
+dependencies = ["gaia-lang"]
+
+[tool.gaia]
+type = "knowledge-package"
+namespace = "discovery"
+uuid = "09dfd3e6-e8e6-45f4-a903-09681f7001e2"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

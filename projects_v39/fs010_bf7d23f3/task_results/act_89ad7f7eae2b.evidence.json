@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "stance": "support",
+  "summary": "The constant-Δ approximation for Josephson junctions is rigorously justified by four independent physical arguments converging on the same conclusion: the BCS coherence length ξ sets the minimum scale for |Δ| variation; electrodes with thickness d ≫ ξ have bulk |Δ| saturated at the equilibrium gap; zero supercurrent implies ∇φ = 0; and GL free-energy minimization demands |ψ| = const in uniform, field-free regions. The approximation breaks down only within ∼ξ of the barrier, which is acceptable in the infinite-reservoir STJ model. Supported by Tinkham (Introduction to Superconductivity, §6.1) and Feynman Lectures on Physics, Vol. III, Ch. 21.",
+  "premises": [
+    {
+      "text": "The BCS coherence length ξ is the characteristic length scale over which the superconducting order parameter |Δ| can vary. Microscopically, ξ₀ = ℏv_F/πΔ(0) in the clean limit, or ξ = √(ξ₀ℓ) in the dirty limit. The gap equation is nonlocal with kernel range ∼ξ₀, so |Δ| cannot change appreciably on scales shorter than ξ. In Ginzburg-Landau theory, the coherence length ξ(T) = ξ₀/√(1−T/T_c) appears as the natural length scale in the gradient term of the free energy, F_grad ∝ ℏ²|∇ψ|²/2m*, making ξ the healing length over which ψ recovers its bulk value after a perturbation (Tinkham §2.2, §4.2).",
+      "confidence": 0.95,
+      "source": "literature:Tinkham §§2.2,4.2"
+    },
+    {
+      "text": "In bulk superconducting electrodes with thickness d ≫ ξ, the order parameter |Δ(r)| at distances r ≫ ξ from the tunnel-barrier interface saturates to its equilibrium BCS value |Δ_eq|. This follows from the solution of the GL differential equation: near an interface, |ψ| is suppressed (boundary condition at a normal-metal interface typically reduces |ψ|), but it recovers exponentially to the bulk value |ψ_∞| with characteristic length ξ. For electrodes with d ≫ ξ (typically ξ ∼ 10–100 nm in elemental superconductors, while electrodes are μm-scale), the vast majority of the electrode volume has |Δ(r)| ≈ |Δ_eq|, making the spatial variation of |Δ| negligible for the global junction dynamics.",
+      "confidence": 0.95,
+      "source": "derivation"
+    },
+    {
+      "text": "In field-free, current-free bulk regions, the supercurrent density is j_s = (e*ℏ/m*)n_s ∇φ = (2eℏ/m*)n_s ∇φ (with e* = 2e for Cooper pairs). When no net supercurrent flows across a given bulk region (j_s = 0), this forces ∇φ = 0, implying the phase φ(r) is spatially uniform within that region. Crucially, this establishes φ_j = const independently in each electrode (j = 1, 2), but does NOT impose any constraint on the phase difference φ₁ − φ₂ across the junction — the Josephson current-phase relation I = I_c sin(φ₁ − φ₂) is precisely sustained by the phase difference between the two separately-uniform electrodes.",
+      "confidence": 0.97,
+      "source": "derivation"
+    },
+    {
+      "text": "Ginzburg-Landau free-energy minimization in uniform, field-free regions yields the equation ∇²ψ = 0 (from δF/δψ* = 0 with A = 0 and no spatial variation in the coefficients α, β). The general solution ∇²ψ = 0 in a uniform region with no sources or sinks is ψ(r) = const. Since ψ(r) ∝ √(n_s(r)/2) e^{iφ(r)}, this gives simultaneous constancy of both |ψ| and φ (up to a global phase). This is a variational-principle argument independent of the kinetic (current-based) argument in premise 3: the GL energy is minimized when the wavefunction is as uniform as possible, because any gradient costs energy ∝ |∇ψ|².",
+      "confidence": 0.93,
+      "source": "literature:Tinkham §4.3"
+    },
+    {
+      "text": "Magnitude constancy (|Δ| = const) and phase constancy (φ = const) are distinct physical conditions that must both hold for the STJ approximation to be valid. Magnitude constancy follows from ξ ≪ d and the GL healing-length argument (premises 1–2). Phase constancy follows from j_s = 0 ⇒ ∇φ = 0 (premise 3) and ∇²φ = 0 from GL minimization. These can be violated independently: a flowing DC supercurrent through a uniform electrode would give |Δ| = const but ∇φ ≠ 0 (linear phase gradient); conversely, a non-equilibrium injected quasiparticle distribution could suppress |Δ| locally while maintaining ∇φ = 0. The STJ model requires both — only then does Ψ = (|Δ₁|e^{iφ₁}, |Δ₂|e^{iφ₂})^T with constant parameters properly represent the bulk state on each side.",
+      "confidence": 0.92,
+      "source": "derivation"
+    },
+    {
+      "text": "The constant-Δ approximation breaks down within a distance of order ξ from the tunnel barrier interface. At the SN (superconductor-normal) or SIS (superconductor-insulator-superconductor) interfaces, the order parameter is perturbed: (i) proximity-induced gap suppression extends ∼ξ into the electrode; (ii) the Josephson current itself induces a phase gradient near the barrier; (iii) Andreev bound states at the interface modify the local density of states within ξ. However, in the standard STJ 'infinite-reservoir' model (Tinkham §6.1, Feynman III Ch. 21), these boundary effects are excluded from the model by treating the electrodes as infinite, homogeneous reservoirs that are only weakly perturbed by tunneling. Since the tunneling probability |K|² is small (tunnel barrier transmission ≪ 1), the perturbation to the bulk |Δ| is second-order and the approximation is self-consistent.",
+      "confidence": 0.90,
+      "source": "literature:Tinkham §6.1; Feynman Lectures III Ch. 21"
+    },
+    {
+      "text": "Experimental validation: the constant-Δ approximation in the STJ model predicts the Josephson frequency f_J = 2eV/h, which has been experimentally confirmed to a precision better than 10⁻⁹, forming the basis of the international Josephson voltage standard. The agreement between the STJ model's predictions (DC Josephson effect, AC Josephson effect, Shapiro steps, Fraunhofer diffraction pattern in magnetic field) and experiment over six decades of measurements confirms that the constant-Δ approximation — while approximate — captures the essential physics of SIS tunnel junctions with negligible error for d ≫ ξ and T ≪ T_c (Barone & Paterno 1982, Likharev 1986, Clarke & Braginski 2004).",
+      "confidence": 0.95,
+      "source": "literature:Barone & Paterno 1982; Likharev 1986; Clarke & Braginski 2004"
+    }
+  ],
+  "counter_evidence": [
+    {
+      "text": "The approximation fails for nanoscale junctions where electrode dimensions are comparable to ξ (d ∼ ξ). In such mesoscopic junctions, proximity effect, Andreev bound states, and gap suppression become first-order effects. The STJ model with constant Δ_j would need modification (e.g., quasiclassical Eilenberger/Usadel equations) for quantitative accuracy in the ξ-scale regime.",
+      "weight": 0.20
+    },
+    {
+      "text": "High-transparency junctions (K large, low barrier) violate the weak-tunneling assumption. When K is comparable to the gap energy, the Josephson current significantly depletes the condensate near the barrier, and the infinite-reservoir approximation breaks down. This is the crossover from SIS to SNS or S-c-S (constriction) junctions, where the constant-Δ approximation must be replaced by a self-consistent treatment.",
+      "weight": 0.25
+    },
+    {
+      "text": "At temperatures approaching T_c (T ≳ 0.9 T_c), ξ(T) diverges as (1−T/T_c)^(−1/2), invalidating the d ≫ ξ condition even for thick electrodes. The GL theory's small-ψ assumption near T_c also introduces corrections. The approximation is quantitatively reliable only for T ≪ T_c (e.g., T < 0.5 T_c for Pb or Nb electrodes at typical operating temperatures of 4.2 K or below).",
+      "weight": 0.15
+    },
+    {
+      "text": "In the presence of strong magnetic fields, screening currents near the barrier interface can produce phase gradients and |Δ| suppression over distances comparable to λ (penetration depth), which may be larger than ξ. The STJ model's constant-phase assumption requires A ≈ 0 in the electrode bulk, i.e., field applied parallel to the barrier and electrode width ≪ λ_J (Josephson penetration depth).",
+      "weight": 0.10
+    }
+  ],
+  "uncertainty": "The constant-Δ approximation is a controlled approximation within the STJ model: the error scales as ξ/d (ratio of coherence length to electrode thickness) and |K|/Δ (ratio of tunneling amplitude to gap). For typical Nb/Al-AlO_x/Nb junctions at 4.2 K (ξ_Nb ≈ 38 nm, d ≈ 200 nm, ξ/d ≈ 0.19, |K|/Δ ≈ 10⁻³–10⁻⁴), both small parameters are satisfied and the approximation is quantitatively excellent. The main unresolved subtlety is the rigorous treatment of the order parameter's spatial profile within the GL or Bogoliubov-de Gennes framework near the barrier, which shows that |Δ| is suppressed by ∼5–10% within ξ of the interface — a correction that does not affect the leading-order Josephson relations but would be needed for precision metrology at the 10⁻¹⁰ level.",
+  "formal_artifact": null
+}

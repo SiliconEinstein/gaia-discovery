@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "stance": "support",
+  "summary": "The energy-conservation argument for the AC Josephson effect is rigorously verified: (1) off-diagonal K terms describe Cooper pair tunneling between superconducting electrodes; (2) the diagonal energy change for a Cooper pair tunneling side 1→2 is ΔE = −2eV, reflecting the 2e charge; (3) energy conservation ΔE = ℏω yields the Josephson frequency ω_J = 2eV/ℏ (f_J ≈ 483.6 MHz/μV); (4) the resulting AC current is I(t) = I_c sin(φ₁−φ₂ + ω_J t); (5) the time-averaged DC current vanishes, ⟨I(t)⟩ = 0, because the integrand completes an integer number of full sinusoidal cycles over the integration period; (6) this is fundamentally different from Ohmic conduction I = V/R which produces a constant non-zero DC current for V ≠ 0.",
+  "premises": [
+    {
+      "text": "The Josephson Hamiltonian H = [[eV, K], [K, −eV]] has diagonal entries ±eV representing the Cooper-pair electrostatic energy on each side. For K=0, the eigenvalues are E₁ = +eV (side 1) and E₂ = −eV (side 2). When a Cooper pair tunnels from side 1 to side 2, the diagonal energy changes by ΔE = E₂ − E₁ = −eV − (+eV) = −2eV. The factor of 2 reflects the Cooper pair charge q = −2e, distinguishing it from single-electron tunneling. Formal eigenvalue verification: H·(1,0)^T = eV·(1,0)^T and H·(0,1)^T = −eV·(0,1)^T.",
+      "confidence": 0.95,
+      "source": "derivation"
+    },
+    {
+      "text": "The off-diagonal elements K in H describe coherent Cooper pair tunneling across the Josephson barrier. In the second-quantized tunneling Hamiltonian formalism (Cohen-Tannoudji et al., Complement C_XIII; Tinkham §6.2), the operator K couples the two superconducting condensates. The tunneling matrix element is K = ⟨Ψ₁|H_T|Ψ₂⟩ where H_T is the tunneling Hamiltonian. When K ≠ 0, the eigenstates are superpositions of (1,0)^T and (0,1)^T, and coherent oscillations (Rabi-like) between sides 1 and 2 occur at frequency Ω = √(K²+(eV/ℏ)²)/ℏ.",
+      "confidence": 0.90,
+      "source": "derivation"
+    },
+    {
+      "text": "Energy conservation during tunneling: A Cooper pair tunneling side 1→2 loses diagonal energy ΔE = −2eV (the chemical potential drop). This energy must be transferred to the electromagnetic environment as a photon of energy ℏω. Setting ℏω = |ΔE| = 2|eV| yields ω_J = 2eV/ℏ (for V > 0). In practical units: f_J = ω_J/(2π) = 2eV/h = (2 × 1.602×10⁻¹⁹ C / 6.626×10⁻³⁴ J·s) × V ≈ 483.6 × 10⁶ Hz/V = 483.6 MHz/μV. This is the defining relationship of the AC Josephson effect, first derived by Josephson (Phys. Lett. 1, 251, 1962).",
+      "confidence": 0.95,
+      "source": "derivation"
+    },
+    {
+      "text": "From the time-dependent Schrödinger equation iℏ dΨ/dt = HΨ with H = [[eV, K], [K, −eV]], separating real and imaginary parts (see sub-question (e) derivations) yields dθ/dt = 2eV/ℏ where θ = φ₁ − φ₂ is the gauge-invariant phase difference. For DC bias V = const, integrating gives θ(t) = θ₀ + (2eV/ℏ)t = θ₀ + ω_J t. The Josephson current-phase relation I = I_c sin θ then yields I(t) = I_c sin(θ₀ + ω_J t), an AC current even under pure DC voltage bias.",
+      "confidence": 0.85,
+      "source": "derivation"
+    },
+    {
+      "text": "The time-averaged DC current is ⟨I(t)⟩ = (1/T)∫₀^T I_c sin(θ₀ + ω_J t) dt where T = 2π/ω_J is one full period. Substituting u = θ₀ + ω_J t, du = ω_J dt gives ⟨I⟩ = (I_c/ω_J T)∫_{θ₀}^{θ₀+2π} sin u du = (I_c/2π)[−cos u]_{θ₀}^{θ₀+2π} = (I_c/2π)[−cos(θ₀+2π) + cos θ₀] = (I_c/2π)[−cos θ₀ + cos θ₀] = 0. The cancellation is exact because cos is 2π-periodic. This means a pure Josephson element under DC bias produces no net DC current — all current is AC.",
+      "confidence": 0.95,
+      "source": "derivation"
+    },
+    {
+      "text": "Contrast with Ohmic conduction: In a normal conductor, I = V/R gives a constant non-zero DC current for any V ≠ 0. The I-V characteristic is a straight line through the origin. In a Josephson junction at V ≠ 0, the instantaneous current oscillates sinusoidally and time-averages to zero. This is a purely quantum-coherent, non-dissipative AC response fundamentally distinct from Ohmic dissipation. The junction does not obey Ohm's law; instead it obeys the Josephson relations I = I_c sin θ and dθ/dt = 2eV/ℏ, which together constitute a nonlinear, reactive (inductive) circuit element.",
+      "confidence": 0.90,
+      "source": "derivation"
+    }
+  ],
+  "counter_evidence": [
+    {
+      "text": "The energy-conservation argument assumes that each tunneling event is instantaneous (Fermi golden rule limit) and that the photon energy is well-defined. In practice, the tunneling is a continuous process described by the TDSE, and the photon emission spectrum can be broadened by fluctuations. However, the mean frequency relation ω_J = 2eV/ℏ remains exact as a consequence of gauge invariance (Josephson's original argument).",
+      "weight": 0.15
+    },
+    {
+      "text": "Real Josephson junctions have a finite capacitance C, which introduces a displacement current I_displacement = C dV/dt. For a pure DC bias with constant V, dV/dt = 0 so displacement current vanishes. However, in practice, the AC Josephson current at frequency ω_J couples to the junction's electromagnetic environment (shunt resistance, leads), producing Shapiro steps and finite DC components under microwave irradiation. The zero-DC-average result holds only for the ideal, bare Josephson element.",
+      "weight": 0.20
+    },
+    {
+      "text": "The derivation uses the two-level approximation (only Δ₁, Δ₂), neglecting continuum states above the superconducting gap 2Δ. At voltages eV > 2Δ (the gap energy), quasiparticle tunneling breaks Cooper pairs and produces a dissipative DC current component. The energy-conservation argument for Cooper pair tunneling is valid for eV < 2Δ/k_B T where the condensate dominates.",
+      "weight": 0.25
+    }
+  ],
+  "uncertainty": "The main formal gap is the missing rigorous derivation that the energy released in tunneling (ΔE = −2eV) MUST appear as a photon of exactly ℏω (rather than being distributed among multiple lower-energy excitations). The ω_J = 2eV/ℏ relation is derived from the TDSE phase dynamics (dθ/dt = 2eV/ℏ) as a mathematical consequence of the Schrödinger equation and the gauge-invariant definition of θ, not solely from energy conservation. The energy-conservation argument is physically illuminating but mathematically incomplete without the full TDSE solution. The companion Lean formalization proves the algebraic chain ΔE = −2eV → ω_J = 2eV/ℏ and the trigonometric integral yielding zero DC average, but the derivation of dθ/dt = 2eV/ℏ from the TDSE is treated in the separate deduction for sub-question (e).",
+  "formal_artifact": "task_results/act_63bd405c2915.lean"
+}

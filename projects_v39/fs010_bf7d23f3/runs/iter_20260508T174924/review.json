@@ -1,0 +1,357 @@
+{
+  "schema_version": 1,
+  "compile_status": "ok",
+  "compile_error": null,
+  "diagnostics": [
+    {
+      "severity": "warning",
+      "kind": "orphaned_claim",
+      "target": "__implication_result_20c82e66",
+      "label": "__implication_result_20c82e66",
+      "message": "Claim is not referenced by any strategy or operator.",
+      "suggested_edit": "Either connect `__implication_result_20c82e66` to a strategy/operator, or remove it."
+    },
+    {
+      "severity": "warning",
+      "kind": "orphaned_claim",
+      "target": "__implication_result_256636a7",
+      "label": "__implication_result_256636a7",
+      "message": "Claim is not referenced by any strategy or operator.",
+      "suggested_edit": "Either connect `__implication_result_256636a7` to a strategy/operator, or remove it."
+    },
+    {
+      "severity": "warning",
+      "kind": "orphaned_claim",
+      "target": "__implication_result_2b59f790",
+      "label": "__implication_result_2b59f790",
+      "message": "Claim is not referenced by any strategy or operator.",
+      "suggested_edit": "Either connect `__implication_result_2b59f790` to a strategy/operator, or remove it."
+    },
+    {
+      "severity": "warning",
+      "kind": "orphaned_claim",
+      "target": "__implication_result_7587c1fb",
+      "label": "__implication_result_7587c1fb",
+      "message": "Claim is not referenced by any strategy or operator.",
+      "suggested_edit": "Either connect `__implication_result_7587c1fb` to a strategy/operator, or remove it."
+    },
+    {
+      "severity": "warning",
+      "kind": "orphaned_claim",
+      "target": "__implication_result_a19cecb0",
+      "label": "__implication_result_a19cecb0",
+      "message": "Claim is not referenced by any strategy or operator.",
+      "suggested_edit": "Either connect `__implication_result_a19cecb0` to a strategy/operator, or remove it."
+    },
+    {
+      "severity": "warning",
+      "kind": "orphaned_claim",
+      "target": "__implication_result_a2d9d68f",
+      "label": "__implication_result_a2d9d68f",
+      "message": "Claim is not referenced by any strategy or operator.",
+      "suggested_edit": "Either connect `__implication_result_a2d9d68f` to a strategy/operator, or remove it."
+    },
+    {
+      "severity": "warning",
+      "kind": "orphaned_claim",
+      "target": "__implication_result_ad0e967d",
+      "label": "__implication_result_ad0e967d",
+      "message": "Claim is not referenced by any strategy or operator.",
+      "suggested_edit": "Either connect `__implication_result_ad0e967d` to a strategy/operator, or remove it."
+    },
+    {
+      "severity": "warning",
+      "kind": "orphaned_claim",
+      "target": "__implication_result_b861b12c",
+      "label": "__implication_result_b861b12c",
+      "message": "Claim is not referenced by any strategy or operator.",
+      "suggested_edit": "Either connect `__implication_result_b861b12c` to a strategy/operator, or remove it."
+    },
+    {
+      "severity": "warning",
+      "kind": "orphaned_claim",
+      "target": "__implication_result_cf134b9c",
+      "label": "__implication_result_cf134b9c",
+      "message": "Claim is not referenced by any strategy or operator.",
+      "suggested_edit": "Either connect `__implication_result_cf134b9c` to a strategy/operator, or remove it."
+    },
+    {
+      "severity": "warning",
+      "kind": "orphaned_claim",
+      "target": "__implication_result_f101b8f7",
+      "label": "__implication_result_f101b8f7",
+      "message": "Claim is not referenced by any strategy or operator.",
+      "suggested_edit": "Either connect `__implication_result_f101b8f7` to a strategy/operator, or remove it."
+    },
+    {
+      "severity": "info",
+      "kind": "unreviewed_warrant",
+      "target": "",
+      "label": "",
+      "message": "Strategy `` has no review judgment yet.",
+      "suggested_edit": "Run a review pass on `` and record a judgment in its metadata (e.g. metadata={\"judgment\": \"accepted\"})."
+    },
+    {
+      "severity": "info",
+      "kind": "unreviewed_warrant",
+      "target": "",
+      "label": "",
+      "message": "Strategy `` has no review judgment yet.",
+      "suggested_edit": "Run a review pass on `` and record a judgment in its metadata (e.g. metadata={\"judgment\": \"accepted\"})."
+    },
+    {
+      "severity": "info",
+      "kind": "unreviewed_warrant",
+      "target": "",
+      "label": "",
+      "message": "Strategy `` has no review judgment yet.",
+      "suggested_edit": "Run a review pass on `` and record a judgment in its metadata (e.g. metadata={\"judgment\": \"accepted\"})."
+    },
+    {
+      "severity": "info",
+      "kind": "unreviewed_warrant",
+      "target": "",
+      "label": "",
+      "message": "Strategy `` has no review judgment yet.",
+      "suggested_edit": "Run a review pass on `` and record a judgment in its metadata (e.g. metadata={\"judgment\": \"accepted\"})."
+    },
+    {
+      "severity": "info",
+      "kind": "unreviewed_warrant",
+      "target": "",
+      "label": "",
+      "message": "Strategy `` has no review judgment yet.",
+      "suggested_edit": "Run a review pass on `` and record a judgment in its metadata (e.g. metadata={\"judgment\": \"accepted\"})."
+    },
+    {
+      "severity": "info",
+      "kind": "unreviewed_warrant",
+      "target": "",
+      "label": "",
+      "message": "Strategy `` has no review judgment yet.",
+      "suggested_edit": "Run a review pass on `` and record a judgment in its metadata (e.g. metadata={\"judgment\": \"accepted\"})."
+    },
+    {
+      "severity": "info",
+      "kind": "unreviewed_warrant",
+      "target": "",
+      "label": "",
+      "message": "Strategy `` has no review judgment yet.",
+      "suggested_edit": "Run a review pass on `` and record a judgment in its metadata (e.g. metadata={\"judgment\": \"accepted\"})."
+    },
+    {
+      "severity": "info",
+      "kind": "unreviewed_warrant",
+      "target": "",
+      "label": "",
+      "message": "Strategy `` has no review judgment yet.",
+      "suggested_edit": "Run a review pass on `` and record a judgment in its metadata (e.g. metadata={\"judgment\": \"accepted\"})."
+    },
+    {
+      "severity": "info",
+      "kind": "unreviewed_warrant",
+      "target": "",
+      "label": "",
+      "message": "Strategy `` has no review judgment yet.",
+      "suggested_edit": "Run a review pass on `` and record a judgment in its metadata (e.g. metadata={\"judgment\": \"accepted\"})."
+    },
+    {
+      "severity": "info",
+      "kind": "unreviewed_warrant",
+      "target": "",
+      "label": "",
+      "message": "Strategy `` has no review judgment yet.",
+      "suggested_edit": "Run a review pass on `` and record a judgment in its metadata (e.g. metadata={\"judgment\": \"accepted\"})."
+    },
+    {
+      "severity": "info",
+      "kind": "prior_without_justification",
+      "target": "discovery:discovery_fs010_bf7d23f3::c_const_delta",
+      "label": "c_const_delta",
+      "message": "Claim `c_const_delta` has prior=0.75 but no `prior_justification` recorded.",
+      "suggested_edit": "Update priors.py: set_prior(\"c_const_delta\", 0.75, justification=\"...\").",
+      "data": {
+        "prior": 0.75
+      },
+      "source_anchor": {
+        "file": "discovery_fs010_bf7d23f3/__init__.py",
+        "line": 70,
+        "column": 0
+      }
+    },
+    {
+      "severity": "info",
+      "kind": "prior_without_justification",
+      "target": "discovery:discovery_fs010_bf7d23f3::c_k0_eigenstates",
+      "label": "c_k0_eigenstates",
+      "message": "Claim `c_k0_eigenstates` has prior=0.8 but no `prior_justification` recorded.",
+      "suggested_edit": "Update priors.py: set_prior(\"c_k0_eigenstates\", 0.8, justification=\"...\").",
+      "data": {
+        "prior": 0.8
+      },
+      "source_anchor": {
+        "file": "discovery_fs010_bf7d23f3/__init__.py",
+        "line": 101,
+        "column": 0
+      }
+    },
+    {
+      "severity": "info",
+      "kind": "prior_without_justification",
+      "target": "discovery:discovery_fs010_bf7d23f3::c_schrodinger_eqns",
+      "label": "c_schrodinger_eqns",
+      "message": "Claim `c_schrodinger_eqns` has prior=0.55 but no `prior_justification` recorded.",
+      "suggested_edit": "Update priors.py: set_prior(\"c_schrodinger_eqns\", 0.55, justification=\"...\").",
+      "data": {
+        "prior": 0.55
+      },
+      "source_anchor": {
+        "file": "discovery_fs010_bf7d23f3/__init__.py",
+        "line": 185,
+        "column": 0
+      }
+    },
+    {
+      "severity": "info",
+      "kind": "overstrong_strategy_without_provenance",
+      "target": "",
+      "label": "",
+      "message": "Strategy `` has no `provenance` or `justification` recorded in its metadata.",
+      "suggested_edit": "Update ``.metadata with a non-empty \"provenance\" or \"justification\" field describing why this warrant is taken to hold.",
+      "data": {
+        "strength_threshold": 0.8
+      }
+    },
+    {
+      "severity": "info",
+      "kind": "overstrong_strategy_without_provenance",
+      "target": "",
+      "label": "",
+      "message": "Strategy `` has no `provenance` or `justification` recorded in its metadata.",
+      "suggested_edit": "Update ``.metadata with a non-empty \"provenance\" or \"justification\" field describing why this warrant is taken to hold.",
+      "data": {
+        "strength_threshold": 0.8
+      }
+    },
+    {
+      "severity": "info",
+      "kind": "overstrong_strategy_without_provenance",
+      "target": "",
+      "label": "",
+      "message": "Strategy `` has no `provenance` or `justification` recorded in its metadata.",
+      "suggested_edit": "Update ``.metadata with a non-empty \"provenance\" or \"justification\" field describing why this warrant is taken to hold.",
+      "data": {
+        "strength_threshold": 0.8
+      }
+    },
+    {
+      "severity": "info",
+      "kind": "overstrong_strategy_without_provenance",
+      "target": "",
+      "label": "",
+      "message": "Strategy `` has no `provenance` or `justification` recorded in its metadata.",
+      "suggested_edit": "Update ``.metadata with a non-empty \"provenance\" or \"justification\" field describing why this warrant is taken to hold.",
+      "data": {
+        "strength_threshold": 0.8
+      }
+    },
+    {
+      "severity": "info",
+      "kind": "overstrong_strategy_without_provenance",
+      "target": "",
+      "label": "",
+      "message": "Strategy `` has no `provenance` or `justification` recorded in its metadata.",
+      "suggested_edit": "Update ``.metadata with a non-empty \"provenance\" or \"justification\" field describing why this warrant is taken to hold.",
+      "data": {
+        "strength_threshold": 0.8
+      }
+    },
+    {
+      "severity": "info",
+      "kind": "overstrong_strategy_without_provenance",
+      "target": "",
+      "label": "",
+      "message": "Strategy `` has no `provenance` or `justification` recorded in its metadata.",
+      "suggested_edit": "Update ``.metadata with a non-empty \"provenance\" or \"justification\" field describing why this warrant is taken to hold.",
+      "data": {
+        "strength_threshold": 0.8
+      }
+    },
+    {
+      "severity": "info",
+      "kind": "overstrong_strategy_without_provenance",
+      "target": "",
+      "label": "",
+      "message": "Strategy `` has no `provenance` or `justification` recorded in its metadata.",
+      "suggested_edit": "Update ``.metadata with a non-empty \"provenance\" or \"justification\" field describing why this warrant is taken to hold.",
+      "data": {
+        "strength_threshold": 0.8
+      }
+    },
+    {
+      "severity": "info",
+      "kind": "overstrong_strategy_without_provenance",
+      "target": "",
+      "label": "",
+      "message": "Strategy `` has no `provenance` or `justification` recorded in its metadata.",
+      "suggested_edit": "Update ``.metadata with a non-empty \"provenance\" or \"justification\" field describing why this warrant is taken to hold.",
+      "data": {
+        "strength_threshold": 0.8
+      }
+    },
+    {
+      "severity": "info",
+      "kind": "overstrong_strategy_without_provenance",
+      "target": "",
+      "label": "",
+      "message": "Strategy `` has no `provenance` or `justification` recorded in its metadata.",
+      "suggested_edit": "Update ``.metadata with a non-empty \"provenance\" or \"justification\" field describing why this warrant is taken to hold.",
+      "data": {
+        "strength_threshold": 0.8
+      }
+    },
+    {
+      "severity": "info",
+      "kind": "overstrong_strategy_without_provenance",
+      "target": "",
+      "label": "",
+      "message": "Strategy `` has no `provenance` or `justification` recorded in its metadata.",
+      "suggested_edit": "Update ``.metadata with a non-empty \"provenance\" or \"justification\" field describing why this warrant is taken to hold.",
+      "data": {
+        "strength_threshold": 0.8
+      }
+    }
+  ],
+  "next_edits": [
+    "Either connect `__implication_result_20c82e66` to a strategy/operator, or remove it.",
+    "Either connect `__implication_result_256636a7` to a strategy/operator, or remove it.",
+    "Either connect `__implication_result_2b59f790` to a strategy/operator, or remove it.",
+    "Either connect `__implication_result_7587c1fb` to a strategy/operator, or remove it.",
+    "Either connect `__implication_result_a19cecb0` to a strategy/operator, or remove it.",
+    "Either connect `__implication_result_a2d9d68f` to a strategy/operator, or remove it.",
+    "Either connect `__implication_result_ad0e967d` to a strategy/operator, or remove it.",
+    "Either connect `__implication_result_b861b12c` to a strategy/operator, or remove it.",
+    "Either connect `__implication_result_cf134b9c` to a strategy/operator, or remove it.",
+    "Either connect `__implication_result_f101b8f7` to a strategy/operator, or remove it.",
+    "Run a review pass on `` and record a judgment in its metadata (e.g. metadata={\"judgment\": \"accepted\"}).",
+    "Update priors.py: set_prior(\"c_const_delta\", 0.75, justification=\"...\"). (discovery_fs010_bf7d23f3/__init__.py:70)",
+    "Update priors.py: set_prior(\"c_k0_eigenstates\", 0.8, justification=\"...\"). (discovery_fs010_bf7d23f3/__init__.py:101)",
+    "Update priors.py: set_prior(\"c_schrodinger_eqns\", 0.55, justification=\"...\"). (discovery_fs010_bf7d23f3/__init__.py:185)",
+    "Update ``.metadata with a non-empty \"provenance\" or \"justification\" field describing why this warrant is taken to hold."
+  ],
+  "blockers": [],
+  "belief_summary": {
+    "discovery:discovery_fs010_bf7d23f3::_anon_004": 0.9997900068591712,
+    "discovery:discovery_fs010_bf7d23f3::c_ac_response": 0.9863378286021829,
+    "discovery:discovery_fs010_bf7d23f3::c_const_delta": 0.8506150726635421,
+    "discovery:discovery_fs010_bf7d23f3::c_energy_change": 0.990191944483199,
+    "discovery:discovery_fs010_bf7d23f3::c_josephson_effects": 0.9560419911406467,
+    "discovery:discovery_fs010_bf7d23f3::c_k0_eigenstates": 0.9302550743351703,
+    "discovery:discovery_fs010_bf7d23f3::c_schrodinger_eqns": 0.8616494204018662,
+    "discovery:discovery_fs010_bf7d23f3::c_schrodinger_sign_resolved": 0.8617842862026427,
+    "discovery:discovery_fs010_bf7d23f3::t_target": 0.9999824787506126
+  },
+  "belief_stale": false,
+  "mode": "explore",
+  "review_id": "2026-05-08T17-52-30Z_556a44e2_explore"
+}

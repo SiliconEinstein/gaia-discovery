@@ -1,0 +1,58 @@
+{
+  "action_id": "act_63bd405c2915",
+  "action_kind": "deduction",
+  "router": "structural",
+  "verdict": "inconclusive",
+  "backend": "lean_lake",
+  "confidence": 0.4,
+  "evidence": "lake build 失败（returncode=1），证明未完成",
+  "raw": {
+    "mode": "isolated",
+    "returncode": 1,
+    "stdout_tail": "",
+    "stderr_tail": "error: error during download\ninfo: caused by: [28] Timeout was reached (Failed to connect to github.com port 443 after 130723 ms: Could not connect to server)\n",
+    "error_parse": {
+      "available": true,
+      "errors": [
+        {
+          "errorHash": "bb1ffaff1ad8",
+          "errorType": "unknown",
+          "message": "info: caused by: [28] Timeout was reached (Failed to connect to github.com port 443 after 130723 ms: Could not connect to server)",
+          "file": "unknown",
+          "line": 0,
+          "column": 0,
+          "goal": null,
+          "localContext": [],
+          "codeSnippet": "",
+          "suggestionKeywords": []
+        }
+      ],
+      "count": 1,
+      "tool": "vendor/archon_lean4/parse_lean_errors.py"
+    },
+    "error_taxonomy": {
+      "schema_version": 1,
+      "reason": "lean_compile_error",
+      "detail": "lake build rc=1",
+      "extras": {
+        "errors": [
+          {
+            "errorHash": "bb1ffaff1ad8",
+            "errorType": "unknown",
+            "message": "info: caused by: [28] Timeout was reached (Failed to connect to github.com port 443 after 130723 ms: Could not connect to server)",
+            "file": "unknown",
+            "line": 0,
+            "column": 0,
+            "goal": null,
+            "localContext": [],
+            "codeSnippet": "",
+            "suggestionKeywords": []
+          }
+        ],
+        "error_parse_skipped": null
+      }
+    }
+  },
+  "elapsed_s": 130.80510365401278,
+  "error": "lean build failed: rc=1"
+}

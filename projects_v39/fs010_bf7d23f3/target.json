@@ -1,0 +1,7 @@
+{
+  "target_qid": "discovery:fs010_bf7d23f3::target",
+  "threshold": 0.75,
+  "strict_publish": false,
+  "max_iter": 4,
+  "stuck_window": 3
+}
