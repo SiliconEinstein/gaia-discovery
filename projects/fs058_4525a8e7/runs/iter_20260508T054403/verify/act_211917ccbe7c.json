@@ -1,0 +1,63 @@
+{
+  "action_id": "act_211917ccbe7c",
+  "action_kind": "abduction",
+  "router": "heuristic",
+  "verdict": "refuted",
+  "backend": "inquiry_review",
+  "confidence": 0.85,
+  "evidence": "gaia 原生结构判别失败: gaia 结构检查失败: abduction formalization requires observation plus optional alternative explanation",
+  "raw": {
+    "gaia_native_check": "gaia 结构检查失败: abduction formalization requires observation plus optional alternative explanation",
+    "action_kind": "abduction",
+    "evidence": {
+      "schema_version": 1,
+      "stance": "support",
+      "summary": "The proposed shRNA target sequence 5'-GCAACAGTATTTCATTAGA-3' (claimed positions 868-886) was invalidated by NCBI sequence analysis: it does not exist anywhere in NM_001274.3 or any of 15 CHEK1 transcript variants. A corrected shRNA target was designed from actual sequence data: 5'-GCAACAGTATTTCGGTATA-3' at positions 608-626 (CDS), with complete hairpin 5'-GCAACAGTATTTCGGTATA-TTCAAGAGA-TATACCGAAATACTGTTGC-TTTTTT-3'. All design rules verified: GC 36.8%, starts with G, BLAST-unique to CHEK1, CDS-localized, no homopolymer runs.",
+      "premises": [
+        {
+          "text": "CHEK1 mRNA NM_001274.3 (2037 nt) was retrieved from NCBI Nucleotide. The CDS spans positions 155-1585 (1431 nt). The actual sequence at the claimed target position 868-886 is TCTAGCTCTGCTGCATAAA, not the proposed GCAACAGTATTTCATTAGA. The proposed sequence does not exist anywhere in this transcript.",
+          "confidence": 0.99,
+          "source": "derivation"
+        },
+        {
+          "text": "Systematic screening of all 19-nt windows in the CDS (excluding proximal start/stop regions) yielded 115 candidates passing all standard shRNA design filters: GC 30-52%, 5' G start, no homopolymer runs >=4 nt, no internal TTTTT terminator, no immunostimulatory motifs.",
+          "confidence": 0.95,
+          "source": "derivation"
+        },
+        {
+          "text": "BLASTn of candidate GCAACAGTATTTCGGTATA (pos 608-626) against the human RefSeq RNA database returned 15 hits, all of which are CHEK1 transcript variants, with zero off-target matches at E-value < 1. This confirms the 19-mer is unique to CHEK1 in the human transcriptome.",
+          "confidence": 0.9,
+          "source": "experiment"
+        },
+        {
+          "text": "The corrected target sequence GCAACAGTATTTCGGTATA (pos 608-626) satisfies all standard shRNA design criteria: 19 nt length, GC content 36.8% (within 30-52%), starts with G for Pol III promoter compatibility, located in CDS not UTR, no homopolymer runs, no internal TTTTT, A/T-rich 3' end favorable for RISC strand selection.",
+          "confidence": 0.92,
+          "source": "derivation"
+        },
+        {
+          "text": "The complete miR-30-based shRNA hairpin is: 5'-GCAACAGTATTTCGGTATA-TTCAAGAGA-TATACCGAAATACTGTTGC-TTTTTT-3' (53 nt total: 19 nt sense + 9 nt loop + 19 nt antisense + 6 nt Pol III terminator). The antisense strand TATACCGAAATACTGTTGC was verified as the exact reverse complement of the sense strand.",
+          "confidence": 0.95,
+          "source": "derivation"
+        }
+      ],
+      "counter_evidence": [
+        {
+          "text": "The originally proposed sequence GCAACAGTATTTCATTAGA does not match any position in NM_001274.3; the best match across all 15 CHEK1 RefSeq variants is GCAACAGTATTTCGGTATA with 16/19 identity (nucleotides 15-18 differ: CATT vs CGGT). This indicates the original sequence was either fabricated or derived from an incorrect/outdated source, not from the actual NCBI sequence record.",
+          "weight": 0.8
+        },
+        {
+          "text": "BLAST coverage is limited to RefSeq RNA database only; full genome-wide off-target analysis (e.g., against the entire human genome with seed-region focused search) was not performed due to tool constraints. Standard practice for therapeutic-grade shRNA would include genome-wide specificity validation.",
+          "weight": 0.4
+        },
+        {
+          "text": "The candidate was selected algorithmically based on design rules, but experimental validation of knockdown efficiency is required to confirm efficacy. In silico design cannot predict Dicer processing efficiency, RISC loading preference, or mRNA secondary structure effects at the target site.",
+          "weight": 0.6
+        }
+      ],
+      "uncertainty": "Sequence corrected from invalid original (GCAACAGTATTTCATTAGA not found in NM_001274.3). Corrected target GCAACAGTATTTCGGTATA (nt 608-626, GC 36.8%). BLAST confirmed unique. Moderate confidence (0.55) reflects lack of experimental knockdown validation.",
+      "formal_artifact": "task_results/act_211917ccbe7c.py"
+    }
+  },
+  "elapsed_s": 0.000876104983035475,
+  "error": null
+}

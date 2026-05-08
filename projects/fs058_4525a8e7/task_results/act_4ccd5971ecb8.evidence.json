@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "stance": "support",
+  "summary": "All five computational verification criteria for the shRNA sequence GCAACAGTATTTCGGTATA targeting human CHEK1 (NM_001274.3) have been independently confirmed: (1) BLASTn against human RefSeq RNA returns 15 hits, all CHEK1 transcript variants; (2) GC content = 7/19 = 36.84% (matches claimed 36.8%); (3) CDS position verified as 454-472 (mRNA position 608-626) within the 155-1585 CDS boundaries; (4) antisense strand TATACCGAAATACTGTTGC is the exact reverse complement; (5) complete hairpin sequence 5'-GCAACAGTATTTCGGTATA-TTCAAGAGA-TATACCGAAATACTGTTGC-TTTTTT-3' passes all 9 miR-30 design rules (stem base-pairing 19/19 Watson-Crick, loop length 9 nt, no internal terminator, proper RISC asymmetry, no homopolymer runs, Pol III-compatible 5' G start).",
+  "premises": [
+    {
+      "text": "BLASTn of 19-mer GCAACAGTATTTCGGTATA against human RefSeq RNA database returns 15 hits, all of which are Homo sapiens checkpoint kinase 1 (CHEK1) transcript variants (NM_001274.5, NM_001114122.3, NM_001244846.1, NM_001330428.1, NR_045205.1, and 10 RefSeq XM/XR predicted variants). Zero off-target matches. E-value = 0.061 for all hits (exact 19/19 identity). Confirmed by both local cached results (blast_results.json cand3_608) and the NCBI Entrez-based CDS position extraction on NM_001274.3.",
+      "confidence": 0.95,
+      "source": "experiment",
+      "claim_id": "s_t_struct"
+    },
+    {
+      "text": "GC content of GCAACAGTATTTCGGTATA: G=4, C=3, total GC=7/19=36.84%, matching the claimed 36.8%. This falls within the standard shRNA design range of 30-52% and is in the optimal 36-45% window for efficient RNAi processing (Reynolds et al. 2004, Ui-Tei et al. 2004).",
+      "confidence": 0.99,
+      "source": "derivation",
+      "claim_id": "s_t_struct"
+    },
+    {
+      "text": "CDS position verified via direct NCBI GenBank feature extraction (NM_001274.3, accession retrieved live): CDS spans 155-1585 (1-based, 1431 nt). Target sequence GCAACAGTATTTCGGTATA found at mRNA position 608, corresponding to CDS-relative position 454-472. Both the start (454) and end (472) are well within the CDS, avoiding the 5' term (position 1-75) and 3' term (position 1356-1431) of the CDS, consistent with standard shRNA targeting guidelines.",
+      "confidence": 0.99,
+      "source": "derivation",
+      "claim_id": "s_t_struct"
+    },
+    {
+      "text": "Antisense strand TATACCGAAATACTGTTGC verified as the exact reverse complement of sense strand GCAACAGTATTTCGGTATA: all 19 positions confirmed Watson-Crick complementarity (position-by-position check: G-C, C-G, A-T, A-T, C-G, A-T, G-C, T-A, A-T, T-A, T-A, T-A, C-G, G-C, G-C, T-A, A-T, T-A, A-T). Computed antisense via Bio.Seq.reverse_complement() matches the claimed antisense exactly.",
+      "confidence": 0.99,
+      "source": "derivation",
+      "claim_id": "s_t_struct"
+    },
+    {
+      "text": "Complete miR-30-based hairpin structure passes all 9 standard design rules: (1) sense length 19 nt [PASS: 19-22], (2) GC content 36.8% [PASS: 30-55%], (3) loop length 9 nt TTCAAGAGA [PASS: 5-9 nt, miR-30 standard], (4) antisense = exact revcomp of sense [PASS], (5) no internal TTTTT before terminator [PASS], (6) stem base-pairing 19/19 Watson-Crick pairs [PASS: >=15/19], (7) sense 3'=A for RISC asymmetry [PASS], (8) no homopolymer runs >=4 nt [PASS], (9) sense 5'=G for Pol III promoter [PASS]. Full hairpin: 5'-GCAACAGTATTTCGGTATA-TTCAAGAGA-TATACCGAAATACTGTTGC-TTTTTT-3' (53 nt total).",
+      "confidence": 0.92,
+      "source": "derivation",
+      "claim_id": "s_t_struct"
+    }
+  ],
+  "counter_evidence": [
+    {
+      "text": "BLAST was performed against RefSeq RNA database only, not the complete human genome. A seed-region focused off-target scan (positions 2-8 of the antisense strand) against the full genome would be required for therapeutic-grade specificity validation. However, for research-grade shRNA specificity, RefSeq-level verification is the published standard.",
+      "weight": 0.25
+    },
+    {
+      "text": "In silico verification cannot predict experimental knockdown efficiency, which depends on factors including mRNA secondary structure at the target site, Dicer processing efficiency, RISC loading preference, and the competitive effect of the passenger strand. The computational evidence establishes that the sequence is correctly designed, but actual knockdown efficacy requires experimental validation.",
+      "weight": 0.4
+    }
+  ],
+  "uncertainty": "All 5 computational criteria PASS: BLAST (15/15 CHEK1 hits, zero off-target), GC=36.8%, CDS pos 454-472 confirmed, antisense=exact revcomp, miR-30 hairpin 9/9 design rules pass. Computationally verified.",
+  "formal_artifact": "task_results/act_4ccd5971ecb8.py"
+}

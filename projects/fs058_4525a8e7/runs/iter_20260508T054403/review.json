@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "compile_status": "ok",
+  "compile_error": null,
+  "diagnostics": [
+    {
+      "severity": "error",
+      "kind": "validation_error",
+      "target": "graph",
+      "label": "graph",
+      "message": "Knowledge 'discovery:discovery_fs058_4525a8e7::c2_1': metadata prior 0.0 outside Cromwell bounds [0.001, 0.999]",
+      "suggested_edit": ""
+    },
+    {
+      "severity": "error",
+      "kind": "validation_error",
+      "target": "graph",
+      "label": "graph",
+      "message": "Knowledge 'discovery:discovery_fs058_4525a8e7::c3_4': metadata prior 0.0 outside Cromwell bounds [0.001, 0.999]",
+      "suggested_edit": ""
+    },
+    {
+      "severity": "warning",
+      "kind": "orphaned_claim",
+      "target": "__conjunction_result_3a3d73dd",
+      "label": "__conjunction_result_3a3d73dd",
+      "message": "Claim is not referenced by any strategy or operator.",
+      "suggested_edit": "Either connect `__conjunction_result_3a3d73dd` to a strategy/operator, or remove it."
+    },
+    {
+      "severity": "warning",
+      "kind": "orphaned_claim",
+      "target": "__implication_result_d611ea21",
+      "label": "__implication_result_d611ea21",
+      "message": "Claim is not referenced by any strategy or operator.",
+      "suggested_edit": "Either connect `__implication_result_d611ea21` to a strategy/operator, or remove it."
+    },
+    {
+      "severity": "info",
+      "kind": "unreviewed_warrant",
+      "target": "",
+      "label": "",
+      "message": "Strategy `` has no review judgment yet.",
+      "suggested_edit": "Run a review pass on `` and record a judgment in its metadata (e.g. metadata={\"judgment\": \"accepted\"})."
+    },
+    {
+      "severity": "info",
+      "kind": "prior_without_justification",
+      "target": "discovery:discovery_fs058_4525a8e7::c1_1",
+      "label": "c1_1",
+      "message": "Claim `c1_1` has prior=0.85 but no `prior_justification` recorded.",
+      "suggested_edit": "Update priors.py: set_prior(\"c1_1\", 0.85, justification=\"...\").",
+      "data": {
+        "prior": 0.85
+      },
+      "source_anchor": {
+        "file": "discovery_fs058_4525a8e7/__init__.py",
+        "line": 75,
+        "column": 0
+      }
+    },
+    {
+      "severity": "info",
+      "kind": "prior_without_justification",
+      "target": "discovery:discovery_fs058_4525a8e7::c1_2",
+      "label": "c1_2",
+      "message": "Claim `c1_2` has prior=0.75 but no `prior_justification` recorded.",
+      "suggested_edit": "Update priors.py: set_prior(\"c1_2\", 0.75, justification=\"...\").",
+      "data": {
+        "prior": 0.75
+      },
+      "source_anchor": {
+        "file": "discovery_fs058_4525a8e7/__init__.py",
+        "line": 93,
+        "column": 0
+      }
+    },
+    {
+      "severity": "info",
+      "kind": "prior_without_justification",
+      "target": "discovery:discovery_fs058_4525a8e7::c2_1",
+      "label": "c2_1",
+      "message": "Claim `c2_1` has prior=0.0 but no `prior_justification` recorded.",
+      "suggested_edit": "Update priors.py: set_prior(\"c2_1\", 0.0, justification=\"...\").",
+      "data": {
+        "prior": 0.0
+      },
+      "source_anchor": {
+        "file": "discovery_fs058_4525a8e7/__init__.py",
+        "line": 122,
+        "column": 0
+      }
+    },
+    {
+      "severity": "info",
+      "kind": "prior_without_justification",
+      "target": "discovery:discovery_fs058_4525a8e7::c3_1",
+      "label": "c3_1",
+      "message": "Claim `c3_1` has prior=0.75 but no `prior_justification` recorded.",
+      "suggested_edit": "Update priors.py: set_prior(\"c3_1\", 0.75, justification=\"...\").",
+      "data": {
+        "prior": 0.75
+      },
+      "source_anchor": {
+        "file": "discovery_fs058_4525a8e7/__init__.py",
+        "line": 151,
+        "column": 0
+      }
+    },
+    {
+      "severity": "info",
+      "kind": "prior_without_justification",
+      "target": "discovery:discovery_fs058_4525a8e7::c3_2",
+      "label": "c3_2",
+      "message": "Claim `c3_2` has prior=0.8 but no `prior_justification` recorded.",
+      "suggested_edit": "Update priors.py: set_prior(\"c3_2\", 0.8, justification=\"...\").",
+      "data": {
+        "prior": 0.8
+      },
+      "source_anchor": {
+        "file": "discovery_fs058_4525a8e7/__init__.py",
+        "line": 175,
+        "column": 0
+      }
+    },
+    {
+      "severity": "info",
+      "kind": "prior_without_justification",
+      "target": "discovery:discovery_fs058_4525a8e7::c3_3",
+      "label": "c3_3",
+      "message": "Claim `c3_3` has prior=0.7 but no `prior_justification` recorded.",
+      "suggested_edit": "Update priors.py: set_prior(\"c3_3\", 0.7, justification=\"...\").",
+      "data": {
+        "prior": 0.7
+      },
+      "source_anchor": {
+        "file": "discovery_fs058_4525a8e7/__init__.py",
+        "line": 199,
+        "column": 0
+      }
+    },
+    {
+      "severity": "info",
+      "kind": "prior_without_justification",
+      "target": "discovery:discovery_fs058_4525a8e7::c3_4",
+      "label": "c3_4",
+      "message": "Claim `c3_4` has prior=0.0 but no `prior_justification` recorded.",
+      "suggested_edit": "Update priors.py: set_prior(\"c3_4\", 0.0, justification=\"...\").",
+      "data": {
+        "prior": 0.0
+      },
+      "source_anchor": {
+        "file": "discovery_fs058_4525a8e7/__init__.py",
+        "line": 225,
+        "column": 0
+      }
+    },
+    {
+      "severity": "info",
+      "kind": "overstrong_strategy_without_provenance",
+      "target": "",
+      "label": "",
+      "message": "Strategy `` has no `provenance` or `justification` recorded in its metadata.",
+      "suggested_edit": "Update ``.metadata with a non-empty \"provenance\" or \"justification\" field describing why this warrant is taken to hold.",
+      "data": {
+        "strength_threshold": 0.8
+      }
+    }
+  ],
+  "next_edits": [
+    "Either connect `__conjunction_result_3a3d73dd` to a strategy/operator, or remove it.",
+    "Either connect `__implication_result_d611ea21` to a strategy/operator, or remove it.",
+    "Run a review pass on `` and record a judgment in its metadata (e.g. metadata={\"judgment\": \"accepted\"}).",
+    "Update priors.py: set_prior(\"c1_1\", 0.85, justification=\"...\"). (discovery_fs058_4525a8e7/__init__.py:75)",
+    "Update priors.py: set_prior(\"c1_2\", 0.75, justification=\"...\"). (discovery_fs058_4525a8e7/__init__.py:93)",
+    "Update priors.py: set_prior(\"c2_1\", 0.0, justification=\"...\"). (discovery_fs058_4525a8e7/__init__.py:122)",
+    "Update priors.py: set_prior(\"c3_1\", 0.75, justification=\"...\"). (discovery_fs058_4525a8e7/__init__.py:151)",
+    "Update priors.py: set_prior(\"c3_2\", 0.8, justification=\"...\"). (discovery_fs058_4525a8e7/__init__.py:175)",
+    "Update priors.py: set_prior(\"c3_3\", 0.7, justification=\"...\"). (discovery_fs058_4525a8e7/__init__.py:199)",
+    "Update priors.py: set_prior(\"c3_4\", 0.0, justification=\"...\"). (discovery_fs058_4525a8e7/__init__.py:225)",
+    "Update ``.metadata with a non-empty \"provenance\" or \"justification\" field describing why this warrant is taken to hold."
+  ],
+  "blockers": [],
+  "belief_summary": {
+    "discovery:discovery_fs058_4525a8e7::__conjunction_result_3a3d73dd": 0.0010002672145000002,
+    "discovery:discovery_fs058_4525a8e7::c1_1": 0.85,
+    "discovery:discovery_fs058_4525a8e7::c1_2": 0.75,
+    "discovery:discovery_fs058_4525a8e7::c2_1": 0.001,
+    "discovery:discovery_fs058_4525a8e7::c3_1": 0.75,
+    "discovery:discovery_fs058_4525a8e7::c3_2": 0.8,
+    "discovery:discovery_fs058_4525a8e7::c3_3": 0.7,
+    "discovery:discovery_fs058_4525a8e7::c3_4": 0.001,
+    "discovery:discovery_fs058_4525a8e7::t": 0.500449220006032
+  },
+  "belief_stale": false,
+  "mode": "explore",
+  "review_id": "2026-05-08T05-46-37Z_b1f03ee5_explore"
+}

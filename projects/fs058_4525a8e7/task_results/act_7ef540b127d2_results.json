@@ -1,0 +1,95 @@
+{
+  "model": "first_order_protein_decay_after_inducible_shRNA",
+  "claim": "c3_2: shRNA-Control vs shRNA-Protein1 western blot at 72h post-dox",
+  "parameters_varied": {
+    "t_lag_shRNA_h": [
+      4,
+      6,
+      8
+    ],
+    "t_half_mRNA_h": [
+      2,
+      4,
+      6
+    ],
+    "t_half_protein_h": [
+      4,
+      6,
+      8,
+      24
+    ],
+    "knockdown_efficiency": [
+      0.8,
+      0.85,
+      0.9,
+      0.95
+    ]
+  },
+  "results": [
+    {
+      "t_measure_h": 72.0,
+      "shRNA_lag_h": 6.0,
+      "mRNA_half_life_h": 4.0,
+      "protein_half_life_h": 6.0,
+      "knockdown_efficiency_mRNA": 0.9,
+      "effective_lag_h": 18.0,
+      "control_lane_target_band": 1.0,
+      "kd_lane_target_band": 0.10175781249999993,
+      "control_lane_hk_band": 1.0,
+      "kd_lane_hk_band": 1.0,
+      "ctrl_target_hk_ratio": 1.0,
+      "kd_target_hk_ratio": 0.10175781249999993,
+      "knockdown_pct": 89.82421875,
+      "scenario": "baseline"
+    },
+    {
+      "t_measure_h": 72.0,
+      "shRNA_lag_h": 4.0,
+      "mRNA_half_life_h": 2.0,
+      "protein_half_life_h": 4.0,
+      "knockdown_efficiency_mRNA": 0.95,
+      "effective_lag_h": 10.0,
+      "control_lane_target_band": 1.0,
+      "kd_lane_target_band": 0.05002050022711568,
+      "control_lane_hk_band": 1.0,
+      "kd_lane_hk_band": 1.0,
+      "ctrl_target_hk_ratio": 1.0,
+      "kd_target_hk_ratio": 0.05002050022711568,
+      "knockdown_pct": 94.99794997728843,
+      "scenario": "optimistic (short half-lives)"
+    },
+    {
+      "t_measure_h": 72.0,
+      "shRNA_lag_h": 8.0,
+      "mRNA_half_life_h": 6.0,
+      "protein_half_life_h": 24.0,
+      "knockdown_efficiency_mRNA": 0.8,
+      "effective_lag_h": 26.0,
+      "control_lane_target_band": 1.0,
+      "kd_lane_target_band": 0.41189261887185913,
+      "control_lane_hk_band": 1.0,
+      "kd_lane_hk_band": 1.0,
+      "ctrl_target_hk_ratio": 1.0,
+      "kd_target_hk_ratio": 0.41189261887185913,
+      "knockdown_pct": 58.810738112814086,
+      "scenario": "conservative (long protein half-life)"
+    },
+    {
+      "t_measure_h": 72.0,
+      "shRNA_lag_h": 6.0,
+      "mRNA_half_life_h": 4.0,
+      "protein_half_life_h": 8.0,
+      "knockdown_efficiency_mRNA": 0.85,
+      "effective_lag_h": 18.0,
+      "control_lane_target_band": 1.0,
+      "kd_lane_target_band": 0.1578970784980649,
+      "control_lane_hk_band": 1.0,
+      "kd_lane_hk_band": 1.0,
+      "ctrl_target_hk_ratio": 1.0,
+      "kd_target_hk_ratio": 0.1578970784980649,
+      "knockdown_pct": 84.21029215019351,
+      "scenario": "typical published range"
+    }
+  ],
+  "conclusion": "In all parameter regimes, at t=72h post-doxycycline induction, the shRNA-Control lane shows normal target protein levels (band intensity = 1.0), the shRNA-Protein1 lane shows substantially reduced target protein (band intensity = 0.050\u20130.412), and housekeeping protein bands are equal between lanes. Expected knockdown efficiency: 59%\u201395%."
+}

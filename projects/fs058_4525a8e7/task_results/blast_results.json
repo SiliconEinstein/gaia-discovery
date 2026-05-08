@@ -1,0 +1,346 @@
+{
+  "cand1_240": {
+    "seq": "GAGTAACTGAAGAAGCAGT",
+    "error": "<urlopen error [Errno 101] Network is unreachable>"
+  },
+  "cand2_607": {
+    "seq": "GGCAACAGTATTTCGGTAT",
+    "hits": [
+      {
+        "title": "gi|349501083|ref|NR_045205.1| Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant 6, non-coding RNA",
+        "accession": "NR_045205",
+        "length": 3711,
+        "e_value": 0.0612223,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GGCAACAGTATTTCGGTAT",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GGCAACAGTATTTCGGTAT"
+      },
+      {
+        "title": "gi|2217280945|ref|XM_047426311.1| PREDICTED: Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant X3, mRNA",
+        "accession": "XM_047426311",
+        "length": 2225,
+        "e_value": 0.0612223,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GGCAACAGTATTTCGGTAT",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GGCAACAGTATTTCGGTAT"
+      },
+      {
+        "title": "gi|2217280948|ref|XM_047426312.1| PREDICTED: Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant X5, mRNA",
+        "accession": "XM_047426312",
+        "length": 3281,
+        "e_value": 0.0612223,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GGCAACAGTATTTCGGTAT",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GGCAACAGTATTTCGGTAT"
+      },
+      {
+        "title": "gi|2462522657|ref|XM_054367538.1| PREDICTED: Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant X4, mRNA",
+        "accession": "XM_054367538",
+        "length": 3599,
+        "e_value": 0.0612223,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GGCAACAGTATTTCGGTAT",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GGCAACAGTATTTCGGTAT"
+      },
+      {
+        "title": "gi|1060099146|ref|NM_001330428.1| Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant 8, mRNA",
+        "accession": "NM_001330428",
+        "length": 3480,
+        "e_value": 0.0612223,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GGCAACAGTATTTCGGTAT",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GGCAACAGTATTTCGGTAT"
+      },
+      {
+        "title": "gi|1905532647|ref|NM_001114122.3| Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant 1, mRNA",
+        "accession": "NM_001114122",
+        "length": 4128,
+        "e_value": 0.0612223,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GGCAACAGTATTTCGGTAT",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GGCAACAGTATTTCGGTAT"
+      },
+      {
+        "title": "gi|349501060|ref|NM_001244846.1| Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant 4, mRNA",
+        "accession": "NM_001244846",
+        "length": 4072,
+        "e_value": 0.0612223,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GGCAACAGTATTTCGGTAT",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GGCAACAGTATTTCGGTAT"
+      },
+      {
+        "title": "gi|2217280947|ref|XM_024448337.2| PREDICTED: Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant X4, mRNA",
+        "accession": "XM_024448337",
+        "length": 3844,
+        "e_value": 0.0612223,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GGCAACAGTATTTCGGTAT",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GGCAACAGTATTTCGGTAT"
+      },
+      {
+        "title": "gi|2217280944|ref|XR_007062447.1| PREDICTED: Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant X2, misc_RNA",
+        "accession": "XR_007062447",
+        "length": 5615,
+        "e_value": 0.0612223,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GGCAACAGTATTTCGGTAT",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GGCAACAGTATTTCGGTAT"
+      },
+      {
+        "title": "gi|2462522655|ref|XM_054367537.1| PREDICTED: Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant X3, mRNA",
+        "accession": "XM_054367537",
+        "length": 2225,
+        "e_value": 0.0612223,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GGCAACAGTATTTCGGTAT",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GGCAACAGTATTTCGGTAT"
+      },
+      {
+        "title": "gi|349501059|ref|NM_001274.5| Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant 3, mRNA",
+        "accession": "NM_001274",
+        "length": 3517,
+        "e_value": 0.0612223,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GGCAACAGTATTTCGGTAT",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GGCAACAGTATTTCGGTAT"
+      },
+      {
+        "title": "gi|2217280950|ref|XM_047426313.1| PREDICTED: Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant X6, mRNA",
+        "accession": "XM_047426313",
+        "length": 3620,
+        "e_value": 0.0612223,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GGCAACAGTATTTCGGTAT",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GGCAACAGTATTTCGGTAT"
+      },
+      {
+        "title": "gi|2217280943|ref|XM_011542560.3| PREDICTED: Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant X1, mRNA",
+        "accession": "XM_011542560",
+        "length": 3073,
+        "e_value": 0.0612223,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GGCAACAGTATTTCGGTAT",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GGCAACAGTATTTCGGTAT"
+      },
+      {
+        "title": "gi|2462522659|ref|XM_054367539.1| PREDICTED: Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant X5, mRNA",
+        "accession": "XM_054367539",
+        "length": 3285,
+        "e_value": 0.0612223,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GGCAACAGTATTTCGGTAT",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GGCAACAGTATTTCGGTAT"
+      },
+      {
+        "title": "gi|2462522652|ref|XM_054367536.1| PREDICTED: Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant X1, mRNA",
+        "accession": "XM_054367536",
+        "length": 3065,
+        "e_value": 0.0612223,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GGCAACAGTATTTCGGTAT",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GGCAACAGTATTTCGGTAT"
+      }
+    ]
+  },
+  "cand3_608": {
+    "seq": "GCAACAGTATTTCGGTATA",
+    "hits": [
+      {
+        "title": "gi|349501083|ref|NR_045205.1| Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant 6, non-coding RNA",
+        "accession": "NR_045205",
+        "length": 3711,
+        "e_value": 0.0612221,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GCAACAGTATTTCGGTATA",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GCAACAGTATTTCGGTATA"
+      },
+      {
+        "title": "gi|2217280945|ref|XM_047426311.1| PREDICTED: Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant X3, mRNA",
+        "accession": "XM_047426311",
+        "length": 2225,
+        "e_value": 0.0612221,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GCAACAGTATTTCGGTATA",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GCAACAGTATTTCGGTATA"
+      },
+      {
+        "title": "gi|2217280948|ref|XM_047426312.1| PREDICTED: Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant X5, mRNA",
+        "accession": "XM_047426312",
+        "length": 3281,
+        "e_value": 0.0612221,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GCAACAGTATTTCGGTATA",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GCAACAGTATTTCGGTATA"
+      },
+      {
+        "title": "gi|2462522657|ref|XM_054367538.1| PREDICTED: Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant X4, mRNA",
+        "accession": "XM_054367538",
+        "length": 3599,
+        "e_value": 0.0612221,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GCAACAGTATTTCGGTATA",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GCAACAGTATTTCGGTATA"
+      },
+      {
+        "title": "gi|1060099146|ref|NM_001330428.1| Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant 8, mRNA",
+        "accession": "NM_001330428",
+        "length": 3480,
+        "e_value": 0.0612221,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GCAACAGTATTTCGGTATA",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GCAACAGTATTTCGGTATA"
+      },
+      {
+        "title": "gi|1905532647|ref|NM_001114122.3| Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant 1, mRNA",
+        "accession": "NM_001114122",
+        "length": 4128,
+        "e_value": 0.0612221,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GCAACAGTATTTCGGTATA",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GCAACAGTATTTCGGTATA"
+      },
+      {
+        "title": "gi|349501060|ref|NM_001244846.1| Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant 4, mRNA",
+        "accession": "NM_001244846",
+        "length": 4072,
+        "e_value": 0.0612221,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GCAACAGTATTTCGGTATA",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GCAACAGTATTTCGGTATA"
+      },
+      {
+        "title": "gi|2217280947|ref|XM_024448337.2| PREDICTED: Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant X4, mRNA",
+        "accession": "XM_024448337",
+        "length": 3844,
+        "e_value": 0.0612221,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GCAACAGTATTTCGGTATA",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GCAACAGTATTTCGGTATA"
+      },
+      {
+        "title": "gi|2217280944|ref|XR_007062447.1| PREDICTED: Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant X2, misc_RNA",
+        "accession": "XR_007062447",
+        "length": 5615,
+        "e_value": 0.0612221,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GCAACAGTATTTCGGTATA",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GCAACAGTATTTCGGTATA"
+      },
+      {
+        "title": "gi|2462522655|ref|XM_054367537.1| PREDICTED: Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant X3, mRNA",
+        "accession": "XM_054367537",
+        "length": 2225,
+        "e_value": 0.0612221,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GCAACAGTATTTCGGTATA",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GCAACAGTATTTCGGTATA"
+      },
+      {
+        "title": "gi|349501059|ref|NM_001274.5| Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant 3, mRNA",
+        "accession": "NM_001274",
+        "length": 3517,
+        "e_value": 0.0612221,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GCAACAGTATTTCGGTATA",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GCAACAGTATTTCGGTATA"
+      },
+      {
+        "title": "gi|2217280950|ref|XM_047426313.1| PREDICTED: Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant X6, mRNA",
+        "accession": "XM_047426313",
+        "length": 3620,
+        "e_value": 0.0612221,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GCAACAGTATTTCGGTATA",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GCAACAGTATTTCGGTATA"
+      },
+      {
+        "title": "gi|2217280943|ref|XM_011542560.3| PREDICTED: Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant X1, mRNA",
+        "accession": "XM_011542560",
+        "length": 3073,
+        "e_value": 0.0612221,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GCAACAGTATTTCGGTATA",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GCAACAGTATTTCGGTATA"
+      },
+      {
+        "title": "gi|2462522659|ref|XM_054367539.1| PREDICTED: Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant X5, mRNA",
+        "accession": "XM_054367539",
+        "length": 3285,
+        "e_value": 0.0612221,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GCAACAGTATTTCGGTATA",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GCAACAGTATTTCGGTATA"
+      },
+      {
+        "title": "gi|2462522652|ref|XM_054367536.1| PREDICTED: Homo sapiens checkpoint kinase 1 (CHEK1), transcript variant X1, mRNA",
+        "accession": "XM_054367536",
+        "length": 3065,
+        "e_value": 0.0612221,
+        "identity": 19,
+        "align_len": 19,
+        "query_seq": "GCAACAGTATTTCGGTATA",
+        "match_seq": "|||||||||||||||||||",
+        "sbjct_seq": "GCAACAGTATTTCGGTATA"
+      }
+    ]
+  }
+}

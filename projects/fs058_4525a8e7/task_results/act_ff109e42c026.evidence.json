@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "stance": "support",
+  "summary": "HEK293T (or HEK293FT) is unequivocally the standard packaging cell line for lentivirus production in shRNA experiments, as confirmed by the entire foundational literature since 1996 and explicitly stated in major review articles.",
+  "premises": [
+    {
+      "text": "The seminal lentivirus papers by Naldini et al. 1996 (Science, cited 4896 times) and Dull et al. 1998 (J Virol, cited 3362 times) established HEK293T as the production cell line for HIV-based lentiviral vectors. Dull et al. developed the third-generation conditional packaging system now standard in shRNA work.",
+      "confidence": 0.98,
+      "source": "literature",
+      "claim_id": null
+    },
+    {
+      "text": "Stewart et al. 2003 (RNA, cited 1637 times) first demonstrated lentivirus-delivered stable shRNA-mediated gene silencing using HEK293T cells, directly establishing the cell line standard for the specific application context (shRNA + lentivirus).",
+      "confidence": 0.95,
+      "source": "literature",
+      "claim_id": null
+    },
+    {
+      "text": "Merten et al. 2016 (Mol Ther Methods Clin Dev, cited 282 times) explicitly states in its review of lentiviral vector production: 'clinical-grade LV are in most of the cases produced by transient transfection of 293 or 293T cells grown in cell factories.' This is a direct, unambiguous attestation that 293T is the standard.",
+      "confidence": 0.97,
+      "source": "literature",
+      "claim_id": null
+    },
+    {
+      "text": "Tiscornia et al. 2006 (Nature Protocols, cited 1029 times) published the canonical protocol for lentivirus production and purification in Nature Protocols, using 293T cells. This protocol is among the most widely cited methods papers for lentivirus production worldwide.",
+      "confidence": 0.95,
+      "source": "literature",
+      "claim_id": null
+    },
+    {
+      "text": "The biological mechanism for HEK293T superiority: constitutive expression of SV40 large T antigen enhances episomal replication of plasmids carrying SV40 origin of replication (present in standard packaging plasmids psPAX2, pMD2.G), leading to higher plasmid copy number and viral titers (typically 10^6-10^8 TU/mL).",
+      "confidence": 0.96,
+      "source": "derivation",
+      "claim_id": null
+    },
+    {
+      "text": "Campeau et al. 2009 (PLoS ONE, cited 1033 times) described a comprehensive Gateway-compatible lentiviral vector system for shRNA/miRNA/cDNA expression, one of the most widely adopted lentiviral shRNA platforms, all using 293T for virus production.",
+      "confidence": 0.94,
+      "source": "literature",
+      "claim_id": null
+    },
+    {
+      "text": "Addgene, the major non-profit plasmid repository serving the global molecular biology community, provides a standard lentivirus production protocol explicitly specifying HEK293T/HEK293FT cells with PEI or calcium phosphate transfection.",
+      "confidence": 0.93,
+      "source": "literature",
+      "claim_id": null
+    },
+    {
+      "text": "HEK293FT (Invitrogen/Thermo Fisher) is a fast-growing HEK293T derivative specifically marketed for lentivirus production as part of the ViraPower Lentiviral System, commercially validating HEK293T-based lines as the industry standard.",
+      "confidence": 0.92,
+      "source": "literature",
+      "claim_id": null
+    }
+  ],
+  "counter_evidence": [
+    {
+      "text": "Stable producer cell lines (e.g., based on 293, HT1080, or CHO cells) are used in GMP clinical/commercial manufacturing. However, these are alternatives for large-scale production, not the standard for research-scale shRNA experiments.",
+      "weight": 0.15
+    },
+    {
+      "text": "Suspension-adapted 293T variants are increasingly used in bioreactor-scale production. These are derivatives of the same 293T line and do not contradict the claim.",
+      "weight": 0.05
+    },
+    {
+      "text": "The parental HEK293 line (without SV40 large T antigen) can also be used for lentivirus production but yields lower titers. HEK293T is preferred precisely because of the T antigen, consistent with the claim.",
+      "weight": 0.10
+    }
+  ],
+  "uncertainty": "The evidence is overwhelmingly consistent across all sources. No credible alternative cell line has been proposed as a general replacement for HEK293T in research-scale shRNA lentivirus production. The only nuance is that for clinical GMP manufacturing, stable producer cell lines are preferred for regulatory consistency, which does not affect the claim about standard research protocols."
+}

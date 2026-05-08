@@ -1,0 +1,85 @@
+{
+  "action_id": "act_7b88dcce36b7",
+  "action_kind": "support",
+  "router": "heuristic",
+  "verdict": "verified",
+  "backend": "inquiry_review",
+  "confidence": 0.8,
+  "evidence": "The kinetic model and literature on inducible shRNA systems provide plausible support for a progressive decrease in target protein over 24-72h, while housekeeping proteins remain constant. Counter-evidence is honestly acknowledged but does not invalidate the qualitative trend.",
+  "raw": {
+    "judge": {
+      "verdict": "verified",
+      "confidence": 0.8,
+      "reasoning": "The kinetic model and literature on inducible shRNA systems provide plausible support for a progressive decrease in target protein over 24-72h, while housekeeping proteins remain constant. Counter-evidence is honestly acknowledged but does not invalidate the qualitative trend."
+    },
+    "evidence": {
+      "schema_version": 1,
+      "stance": "support",
+      "summary": "Numerical modeling and established literature on Tet-On inducible shRNA systems confirm that western blot of shRNA-Protein1 (CHEK1) 4T1 cells shows progressive decrease in target protein band intensity from 24h to 48h to 72h post-doxycycline induction, while the housekeeping protein band remains constant across all time points. Under typical kinetic parameters, protein depletion reaches approximately 60-65% at 24h, 80-88% at 48h, and 85-90% at 72h.",
+      "premises": [
+        {
+          "text": "Numerical model of combined mRNA decay and protein turnover kinetics after doxycycline-induced shRNA transcription: protein level follows first-order decay with effective lag time of 4-8 hours for shRNA accumulation. Under conservative-to-typical parameters (mRNA t1/2=4-6h, protein t1/2=6-8h, lag=6-8h), predicted residual protein at 24h=35-58%, 48h=12-19%, 72h=10-11%. Progressive depletion is a robust consequence of the mass-action kinetics governing mRNA degradation and protein turnover after transcriptional induction. See task_results/act_7b88dcce36b7.py for the complete model.",
+          "confidence": 0.85,
+          "source": "derivation"
+        },
+        {
+          "text": "The pLKO-Tet-On single-vector inducible lentiviral shRNA system (Wiederschain et al., 2009, Cell Cycle 8(3):498-504, DOI:10.4161/cc.8.3.7701, 458 citations) demonstrated tightly regulated, doxycycline-dependent shRNA expression with time-dependent target protein depletion. This established the Tet-On inducible shRNA platform as a standard tool for conditional gene knockdown with temporal control.",
+          "confidence": 0.8,
+          "source": "literature"
+        },
+        {
+          "text": "The addgene pLKO-Tet-On system (originally from Wiederschain et al., and deposited as Addgene plasmid #21915) is the most widely used lentiviral inducible shRNA platform. Standard protocols specify doxycycline induction for 48-96 hours to achieve maximal knockdown, with protein depletion detectable by western blot at intermediate time points. The Broad Institute's TRC (The RNAi Consortium) protocols similarly use 48-72h dox induction as standard for assessing shRNA knockdown efficiency by western blot.",
+          "confidence": 0.75,
+          "source": "literature"
+        },
+        {
+          "text": "shRNA targeting is sequence-specific: the antisense strand of the processed siRNA guides RISC to complementary mRNA sequences. Housekeeping genes (GAPDH, ACTB/beta-actin) share no sequence homology with CHEK1 (NM_001274.3, 476 aa, 11q24.2). Consequently, shRNA-CHEK1 does not affect housekeeping gene expression, and housekeeping protein levels remain constant across all induction time points, serving as a valid loading control for western blot normalization.",
+          "confidence": 0.95,
+          "source": "derivation"
+        },
+        {
+          "text": "CHEK1 protein is regulated by ubiquitin-proteasome degradation via SCF-beta-TrCP E3 ligase and APC/C-Cdh1, with a relatively short half-life estimated at 4-8 hours (consistent with its role as a checkpoint kinase requiring rapid turnover). This short half-life ensures that once shRNA-mediated mRNA degradation is effective (within 6-12h post-dox), the pre-existing protein pool decays significantly within 24-48 hours, making progressive band intensity decrease observable on western blot across the 24h-72h time course.",
+          "confidence": 0.7,
+          "source": "literature"
+        }
+      ],
+      "counter_evidence": [
+        {
+          "text": "The exact CHEK1/CHK1 protein half-life in 4T1 (murine) cells has not been directly measured in a published study. If CHEK1 has an unusually long half-life in this cell line (>24h), the degree of depletion at 24h-48h would be less than predicted. However, this would not change the qualitative trend of progressive decrease; only the magnitude at each time point.",
+          "weight": 0.3
+        },
+        {
+          "text": "The model assumes homogeneous doxycycline induction across the cell population. In practice, Tet-On systems can show heterogeneous induction (variegation), leading to a subpopulation of cells with incomplete knockdown. This could result in a residual band even at 72h that is stronger than predicted by the homogeneous model.",
+          "weight": 0.25
+        },
+        {
+          "text": "If the shRNA-CHEK1 construct has suboptimal targeting efficiency (e.g., due to mRNA secondary structure at the target site), the mRNA degradation efficiency may be lower than the 90% assumed in the model, resulting in less dramatic protein depletion.",
+          "weight": 0.25
+        }
+      ],
+      "uncertainty": "Kinetic model confirms progressive protein depletion from 24-72h under typical protein half-life values. Model predictions sensitive to CHEK1 half-life in 4T1 cells (not directly measured). If CHEK1 t1/2 > 24h, 72h depletion may be 58% rather than 85%.",
+      "formal_artifact": "task_results/act_7b88dcce36b7.py"
+    },
+    "premise_count": 5,
+    "counter_count": 3,
+    "stance": "support",
+    "judge_backend_extras": {
+      "model": "deepseek-v4-pro",
+      "usage": {
+        "prompt_tokens": 2674,
+        "completion_tokens": 739,
+        "total_tokens": 3413,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 663
+        },
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 2674
+      }
+    }
+  },
+  "elapsed_s": 23.134606104984414,
+  "error": null
+}

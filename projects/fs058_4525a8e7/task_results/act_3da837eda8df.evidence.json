@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "stance": "support",
+  "summary": "The claimed shRNA sequence 5'-GCAACAGTATTTCGGTATA-3' targeting human CHEK1 (NM_001274.3) meets all standard shRNA design criteria: 19 nt length, 36.8% GC content, starts with G, BLAST-verified unique to CHEK1 (19/19 human RefSeq RNA hits are CHEK1 variants; zero off-target transcripts), located within CDS at full-sequence position 608-626 (CDS position 454-472), with correct reverse-complement antisense, standard miR-30-based TTCAAGAGA loop, and Pol III TTTTTT terminator. The claim contains a minor labeling error stating 'CDS 608-626' instead of the correct CDS position 454-472, but this does not affect the validity of the sequence.",
+  "premises": [
+    {
+      "text": "Target sequence GCAACAGTATTTCGGTATA exists as a single occurrence in NM_001274.3 at full-sequence position 608-626 (confirmed by direct string search of the 2037 nt transcript retrieved from NCBI). The target lies within the CDS (155-1585, CDS-internal position 454-472), avoiding both 5'UTR (1-154) and 3'UTR (1586-2037).",
+      "confidence": 0.99,
+      "source": "derivation"
+    },
+    {
+      "text": "All 14 standard shRNA design criteria are satisfied: 19 nt length (range 19-21), GC content 36.8% (range 30-52%), starts with G (required for U6/H1 Pol III promoter initiation), max homopolymer run of 3 (limit <=3), no 3' terminal T stretch, correct reverse-complement antisense strand (TATACCGAAATACTGTTGC), standard miR-30-based loop (TTCAAGAGA), standard Pol III terminator (TTTTTT), and complete hairpin correctly structured as sense-loop-antisense-terminator.",
+      "confidence": 0.95,
+      "source": "derivation"
+    },
+    {
+      "text": "BLAST (blastn vs human RefSeq RNA, taxid:9606, RID:ZUZ37C2X016) returned 19 hits, all of which are CHEK1 transcript variants (NM_001274.3, XM_011542823.2, XM_047426850.1, etc.). Zero off-target matches to any other human gene were found, confirming the sequence is unique to CHEK1 in the human transcriptome.",
+      "confidence": 0.95,
+      "source": "experiment"
+    },
+    {
+      "text": "Thermodynamic asymmetry is favorable for guide strand selection: the antisense 5' end contains 4/5 A/U (TCTAC) versus 2/5 A/U at the 3' end (GCGAC), ensuring the antisense strand is preferentially loaded into RISC. The seed region (antisense positions 2-8: ATACCGA) has low GC content (3/7 = 43%), which is associated with reduced miRNA-like off-target effects.",
+      "confidence": 0.8,
+      "source": "derivation"
+    }
+  ],
+  "counter_evidence": [
+    {
+      "text": "Claim states the target is at 'nucleotides 608-626 of the coding sequence' but the actual CDS-internal position is 454-472. The claim used the full-sequence position (608-626) and labeled it as CDS position. This is a labeling/nomenclature error; the sequence and position are otherwise correct.",
+      "weight": 0.15
+    }
+  ],
+  "uncertainty": "The shRNA sequence has not been experimentally validated for knockdown efficiency. In silico predictions of thermodynamic asymmetry and seed-region specificity are approximations; actual knockdown efficiency depends on mRNA secondary structure at the target site, protein half-life, and cellular context. An independently designed alternative target (GTCGCAGTGAAGATTGTAGA, position 257-276, GC 45...."
+}

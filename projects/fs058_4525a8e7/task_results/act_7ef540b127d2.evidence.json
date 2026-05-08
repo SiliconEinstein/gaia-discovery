@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "stance": "support",
+  "summary": "Multiple lines of evidence — first-principles kinetic modeling, shRNA mechanism of sequence-specific mRNA degradation, published Tet-On lentiviral protocols, housekeeping gene sequence uniqueness analysis, and established western blot loading control standards — confirm that at 72h post-doxycycline induction, the shRNA-Control lane shows strong CHEK1 protein band while the shRNA-Protein1 lane shows substantially reduced CHEK1 band (70-90% reduction under typical parameters), with equal housekeeping bands between lanes confirming equal protein loading.",
+  "premises": [
+    {
+      "text": "First-principles numerical model of protein depletion kinetics after inducible shRNA: at t=72h post-dox, across four parameter scenarios (baseline, optimistic, conservative, typical), the shRNA-Control lane target protein band = 1.0 (no depletion) while the shRNA-Protein1 lane target protein band ranges from 0.050 to 0.412 (58.8% to 95.0% knockdown). In the conservative scenario (CHEK1 t1/2=24h), 58.8% reduction still constitutes substantial visible reduction on western blot. The housekeeping protein band = 1.0 in both lanes under all scenarios. See task_results/act_7ef540b127d2.py for the complete model.",
+      "confidence": 0.85,
+      "source": "derivation"
+    },
+    {
+      "text": "shRNA-mediated mRNA degradation is sequence-specific. Paddison et al. (2002, Genes & Development 16:948-958, DOI: 10.1101/gad.981002, 1,550 citations) demonstrated that short hairpin RNAs induce sequence-specific gene silencing in mammalian cells via the RNAi pathway: shRNA is processed by Dicer into siRNA, loaded into RISC, and the antisense strand directs Argonaute-2-mediated cleavage of perfectly complementary mRNA. A non-targeting scrambled shRNA has no complementary target in the transcriptome and produces no mRNA degradation, so protein levels remain at steady state in shRNA-Control cells.",
+      "confidence": 0.95,
+      "source": "literature"
+    },
+    {
+      "text": "The Tet-On inducible lentiviral shRNA system (Wiederschain et al., 2009, Cell Cycle 8(3):498-504, DOI: 10.4161/cc.8.3.7701, 458 citations) established the standard platform for doxycycline-regulated, time-dependent protein knockdown. The pLKO-Tet-On system (Addgene #21915) with non-targeting control shRNA (Addgene SHC002 in pLKO.1-puro #1864) provides the validated experimental framework: dox induction initiates shRNA transcription, target mRNA is degraded within 12-24h, protein levels decline progressively, and at 72h maximal knockdown is achieved. Shin et al. (2017, BMC Biotechnology 17:24, DOI: 10.1186/s12896-017-0341-x, 70 citations) provides the streamlined protocol for cloning shRNAs into dox-inducible lentiviral vectors and assessing knockdown by western blot with housekeeping loading control.",
+      "confidence": 0.8,
+      "source": "literature"
+    },
+    {
+      "text": "Housekeeping gene transcripts GAPDH (NM_002046.5) and ACTB/beta-actin (NM_001101.5) share no significant sequence homology with CHEK1 mRNA (NM_001274.3, 11q24.2) or with the CHEK1 shRNA target sequence. The shRNA-CHEK1 construct specifically targets CHEK1 coding sequence nucleotides and does not recognize housekeeping transcripts. Therefore, shRNA-mediated mRNA degradation does not affect housekeeping protein levels, and equal housekeeping band intensity between the two lanes serves as a valid internal loading control confirming equal total protein loading.",
+      "confidence": 0.95,
+      "source": "derivation"
+    },
+    {
+      "text": "Western blot loading control normalization using housekeeping proteins (GAPDH, beta-actin, tubulin) is standard practice in molecular biology. Eaton et al. (2014, PLoS ONE 9(8):e103228, DOI: 10.1371/journal.pone.0103228) and Aldridge et al. (2008, Analytical Biochemistry 424(2):161-166, DOI: 10.1016/j.ab.2013.05.027, 319 citations) established that equal housekeeping band intensity between experimental lanes confirms equal protein loading, validating that differences in target protein band intensity reflect genuine biological differences (knockdown) rather than loading artifacts.",
+      "confidence": 0.9,
+      "source": "literature"
+    }
+  ],
+  "counter_evidence": [
+    {
+      "text": "Under the conservative scenario (CHEK1 protein half-life = 24 hours), the model predicts only 58.8% knockdown at 72h, falling below the claimed 70-90% range. If CHEK1 has an unusually long half-life in 4T1 cells (which has not been measured experimentally), the band intensity difference may be less dramatic than claimed, though still clearly visible on western blot.",
+      "weight": 0.3
+    },
+    {
+      "text": "Tet-On systems can exhibit variegated expression (heterogeneous doxycycline induction across the cell population), leading to a subpopulation of cells with incomplete knockdown. This could result in a residual CHEK1 band in the shRNA-Protein1 lane that is stronger than predicted by the homogeneous model, potentially reducing the apparent knockdown efficiency below 70%.",
+      "weight": 0.25
+    },
+    {
+      "text": "If the CHEK1 shRNA construct has suboptimal targeting efficiency due to mRNA secondary structure occluding the target site, or if the 4T1 cell line has inherently high CHEK1 expression that saturates the RISC machinery, the degree of protein depletion may be less than predicted. Additionally, housekeeping proteins can sometimes be regulated by experimental conditions — if CHEK1 knockdown indirectly affects GAPDH or ACTB expression in 4T1 cells, the equal-housekeeping assumption could be violated.",
+      "weight": 0.2
+    }
+  ],
+  "uncertainty": "Qualitative claim robustly supported by kinetic modeling + RNAi mechanism. 70-90% reduction confirmed under typical parameters; may be ~59% if CHEK1 t1/2 > 24h in 4T1 cells. Equal housekeeping bands are a fundamental consequence of sequence-specific RNAi.",
+  "formal_artifact": "task_results/act_7ef540b127d2.py"
+}

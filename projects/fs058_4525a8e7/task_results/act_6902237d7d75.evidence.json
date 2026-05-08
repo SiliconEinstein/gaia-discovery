@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "stance": "refute",
+  "summary": "ATM (11q22.3) is NOT a viable alternative to CHEK1 (11q24.2) as the protein of interest. The decisive evidence is: (1) zero PubMed-indexed papers link ATM to colorectal cancer stemness, while CHEK1 has multiple high-impact publications showing CRC stem cell dependence (Gut 2018, iScience 2021); (2) ATM is canonically a tumor suppressor whose loss-of-function predisposes to cancer, making it a poor fit for the problem context of a protein 'highly expressed in colon cancer' targeted for shRNA knockdown; (3) shRNA-mediated CHEK1 knockdown in colon cancer cells is well-documented (4+ papers including HCT116 studies), whereas ATM knockdown in colon cancer has essentially no literature precedent; (4) CHEK1 acts downstream of ATM, integrating signals from both ATM and ATR, making it the more functionally central DNA damage response kinase on chromosome 11.",
+  "premises": [
+    {
+      "text": "CRITERION -- Stemness in colorectal cancer: PubMed search for 'ATM + colorectal cancer + stem cell + stemness + self-renewal' returned ZERO papers. In contrast, CHEK1 has direct, high-impact evidence: Manic et al. (2017, Gut, PMID 28389531, DOI:10.1136/gutjnl-2016-312623, 101+ citations) demonstrated that CRC stem cells are 'exquisitely dependent on CHK1 function' and showed 'CHK1-targeted therapy to deplete DNA replication-stressed, p53-deficient, hyperdiploid colorectal cancer stem cells.' Manicardi et al. (2021, iScience, DOI:10.1016/j.isci.2021.102664, 75 citations) showed 'CHK1 inhibitor sensitizes resistant colorectal cancer stem cells to nortopsentin' with 'synthetic lethal' combination effects. Park et al. (2021, Clin Transl Med, PMID 34841679) showed miltefosine preferentially kills CRC stem-like cells through mechanisms involving CHK1-regulated DNA damage response. Ma & Baran (2025, World J Clin Oncol, PMID 40290692) recently reviewed 'Checkpoint kinase 1 as a promising target in colorectal cancer management.' ATM has NO comparable colorectal CSC literature.",
+      "confidence": 0.95,
+      "source": "literature"
+    },
+    {
+      "text": "CRITERION -- Overexpression context fit: The problem states the protein is 'highly expressed in colon cancer' and a graduate student 'decides to knock it down with shRNA' in 'an undisclosed oncogenic cell line.' This context implies a pro-survival/oncogenic protein whose overexpression promotes cancer and whose knockdown impairs cancer cell fitness. CHEK1 fits this perfectly: Gali-Muhtasib et al. (2008, Cancer Res, PMID 18632613, DOI:10.1158/0008-5472.CAN-08-0884, 178 citations) directly studied CHEK1 inactivation and apoptosis in colorectal cancer cells. CHEK1 is frequently overexpressed in CRC and associated with poor prognosis and chemoresistance. In contrast, ATM is canonically a tumor suppressor: germline loss-of-function mutations cause ataxia telangiectasia with cancer predisposition (NCBI Gene summary: 'mutations in this gene are associated with ataxia telangiectasia, an autosomal recessive disorder'). Knocking down a tumor suppressor in an oncogenic cell line is biologically incoherent with the stated experimental design.",
+      "confidence": 0.9,
+      "source": "derivation"
+    },
+    {
+      "text": "CRITERION -- shRNA knockdown feasibility in colon cancer: PubMed search 'shRNA knockdown CHEK1/CHK1 colon cancer' returned 4 papers. Pan et al. (2009, Cancer Biol Ther, PMID 19502782, DOI:10.4161/cbt.8.16.8955) directly demonstrated 'Knockdown of Chk1 sensitizes human colon carcinoma HCT116 cells in a p53-dependent manner to lidamycin through abrogation of a G2/M checkpoint and induction of apoptosis' using shRNA. This proves both technical feasibility and biological relevance of CHEK1 knockdown in colon cancer, in the exact experimental context described in the problem. For ATM, PubMed search 'shRNA knockdown ATM colon cancer' returned only 1 paper (PMID 22434045), which studies ATM activation downstream of Fer knockdown rather than targeting ATM as the primary protein of interest. There is no literature precedent for ATM as a primary shRNA knockdown target in colon cancer models.",
+      "confidence": 0.9,
+      "source": "literature"
+    },
+    {
+      "text": "CRITERION -- Functional position in DNA damage signaling: CHEK1 acts downstream of ATM, integrating signals from both ATM and ATR kinases. The NCBI Gene summary for CHEK1 (Gene ID 1111) states: 'This protein acts to integrate signals from ATM and ATR.' This makes CHEK1 the convergence point for DNA damage response signaling, providing a more comprehensive functional match to 'DNA repair + cell cycle' criteria than ATM, which represents only one upstream branch. This positional logic makes CHEK1 the more likely experimental target for studying DNA repair and cell cycle functions simultaneously.",
+      "confidence": 0.85,
+      "source": "derivation"
+    },
+    {
+      "text": "CRITERION -- Systematic exclusion of alternatives: A systematic evaluation of all chromosome 11 proteins with potential DNA repair/cell cycle/stemness roles (CHEK1 at 11q24.2, ATM at 11q22.3, CCND1 at 11q13.3, MRE11A at 11q21, FEN1 at 11q12.2, H2AFX at 11q23.3, WEE1 at 11p15.4) found that NO other protein simultaneously satisfies DNA repair, cell cycle, AND stemness criteria with colon cancer specificity. CHEK1 uniquely satisfies all three. ATM is the closest second candidate but fails on stemness and context fit.",
+      "confidence": 0.9,
+      "source": "literature"
+    },
+    {
+      "text": "CRITERION -- Chromosome 11 and core functions: Both CHEK1 (11q24.2, NCBI Gene ID 1111) and ATM (11q22.3, NCBI Gene ID 472) are confirmed on chromosome 11 and both function in DNA repair and cell cycle checkpoint regulation. These two criteria alone do not distinguish between the candidates. The decisive differentiators are the stemness criterion, the overexpression/oncogenic context, and shRNA knockdown experimental precedent -- on all of which CHEK1 dominates.",
+      "confidence": 1.0,
+      "source": "literature"
+    }
+  ],
+  "counter_evidence": [
+    {
+      "text": "ATM does map to human chromosome 11 at 11q22.3 and does participate in DNA repair (master DSB repair regulator) and cell cycle checkpoint control (G1/S, intra-S, G2/M via p53-CHK2 pathway). These two criteria are met, which is why ATM is the second-closest candidate.",
+      "weight": 0.25
+    },
+    {
+      "text": "ATM has documented roles in stem/progenitor cell maintenance, primarily in hematopoietic stem cells and neural stem cells. Some literature exists for ATM in general cancer stemness contexts (e.g., ATM-mediated stabilization of ZEB1 in radioresistance, DOI:10.1038/ncb3013), but this is not specific to colorectal cancer.",
+      "weight": 0.15
+    },
+    {
+      "text": "Without the actual shRNA target sequence or the identity of the 'undisclosed oncogenic cell line,' absolute certainty about the protein identification cannot be achieved through functional inference alone. A different protein on chromosome 11 could theoretically be the target if the problem's functional clues are incomplete.",
+      "weight": 0.2
+    }
+  ],
+  "uncertainty": "The evidence decisively refutes ATM as a viable alternative to CHEK1. The primary source of residual uncertainty (weight ~0.20) is the fundamental limitation of identifying a protein from functional clues alone without sequence data -- if the problem's description is intentionally incomplete or contains red herrings, a different chr11 protein cannot be excluded with absolute certainty. However,..."
+}

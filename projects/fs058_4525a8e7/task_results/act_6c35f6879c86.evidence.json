@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "stance": "support",
+  "summary": "CHEK1 (Checkpoint Kinase 1, 11q24.2, NCBI Gene ID 1111) is verified as the protein of interest matching all five criteria: (1) chromosome 11q24.2 location confirmed by NCBI Gene; (2) DNA repair function established by Sorensen et al. 2005 Nat Cell Biol showing CHK1 is required for homologous recombination repair; (3) cell cycle regulation confirmed by Bartek & Lukas 2003 Cancer Cell and multiple studies showing CHK1 enforces G2/M checkpoint via CDC25C phosphorylation; (4) stemness maintenance demonstrated by Manic et al. 2018 Gut showing CHK1-targeted therapy depletes colorectal cancer stem cells; (5) colon cancer relevance supported by Gali-Muhtasib et al. 2008 Cancer Res and Fang et al. 2014 Cancer Biol Ther showing CHEK1 functional role in CRC. All evidence derived from peer-reviewed literature indexed in PubMed and authoritative genomic databases.",
+  "premises": [
+    {
+      "text": "CHEK1 maps to human chromosome 11, cytogenetic band 11q24.2 (NCBI Gene ID 1111, MIM 603078). Also confirmed by Sinha et al. 2011 (PMID 21803008, Mol Oncol) showing CHEK1 at 11q24.1-24.2 region.",
+      "confidence": 0.99,
+      "source": "derivation",
+      "reference": "NCBI Gene ID 1111; Sinha et al. 2011, Mol Oncol 5:454-464, PMID 21803008"
+    },
+    {
+      "text": "CHEK1 is essential for DNA repair. Sørensen et al. 2005 (Nat Cell Biol 7:195-201, PMID 15665856) demonstrated that Chk1 is required for mammalian homologous recombination repair. Smith et al. 2010 (Adv Cancer Res 108:73-112, PMID 21034966) positioned CHK1 as the central effector kinase of the ATR-CHK1 DNA damage response pathway. González Besteiro & Gottifredi 2015 (Mutat Res Rev 763:246-257, PMID 25795119) detailed CHK1's role in replication fork stability. Smits & Gillespie 2015 (FEBS J 282:3681-3692, PMID 26216057) provided a comprehensive review of CHK1 DNA repair functions.",
+      "confidence": 0.95,
+      "source": "literature",
+      "reference": "Sørensen et al. 2005, PMID 15665856; Smith et al. 2010, PMID 21034966; González Besteiro & Gottifredi 2015, PMID 25795119; Smits & Gillespie 2015, PMID 26216057"
+    },
+    {
+      "text": "CHEK1 is a central cell cycle regulator enforcing G2/M checkpoint arrest. Bartek & Lukas 2003 (Cancer Cell 3:421-429, PMID 12781359) established CHK1 as a key G2/M checkpoint kinase. Bulavin et al. 2002 (Curr Opin Genet Dev 12:92-97, PMID 11790561) described CHK1's role in G2/M checkpoint control. Chen & Sanchez 2004 (DNA Repair 3:1025-1032, PMID 15279789) reviewed CHK1's conserved checkpoint functions. CHK1 phosphorylates CDC25C at Ser216, creating a 14-3-3 binding site that prevents CDK1/cyclin B activation.",
+      "confidence": 0.95,
+      "source": "literature",
+      "reference": "Bartek & Lukas 2003, PMID 12781359; Bulavin et al. 2002, PMID 11790561; Chen & Sanchez 2004, PMID 15279789"
+    },
+    {
+      "text": "CHEK1 is implicated in cancer stem cell (CSC) maintenance. Manic et al. 2018 (Gut 67:903-917, PMID 28389531) directly demonstrated that CHK1-targeted therapy with LY2606368 (prexasertib) depletes colorectal cancer stem cells, showing that p53-deficient hyperdiploid CRC stem cells are particularly dependent on CHK1 for survival. Ronco et al. 2017 (MedChemComm 8:295-319, PMID 30108746) reviewed the role of CHK1 inhibitors against cancer stem cells broadly. These studies together establish CHK1's role in stemness maintenance, specifically in the colorectal cancer context.",
+      "confidence": 0.8,
+      "source": "literature",
+      "reference": "Manic et al. 2018, PMID 28389531; Ronco et al. 2017, PMID 30108746"
+    },
+    {
+      "text": "CHEK1 is functionally relevant and frequently overexpressed in colon cancer. Gali-Muhtasib et al. 2008 (Cancer Res 68:5609-5618, PMID 18632613) showed CHEK1 functions as a stress response pathway sensor in CRC cells and its inactivation leads to apoptosis. Fang et al. 2014 (Cancer Biol Ther 15:1268-1279, PMID 24971465) demonstrated CHK1 overexpression in CRC tissues and that CHK1-induced CCNB1 overexpression drives CRC cell proliferation and tumor growth. Wang et al. 2017 (Biomed Res Int 2017:5718968, PMID 29082250) confirmed CHK1 involvement in DNA repair pathways in colorectal cancer.",
+      "confidence": 0.85,
+      "source": "literature",
+      "reference": "Gali-Muhtasib et al. 2008, PMID 18632613; Fang et al. 2014, PMID 24971465; Wang et al. 2017, PMID 29082250"
+    },
+    {
+      "text": "CHEK1 is one of very few genes on human chromosome 11 that simultaneously functions in DNA repair, cell cycle checkpoint regulation, cancer stem cell maintenance, and is relevant to colon cancer. No alternative gene on chromosome 11 satisfies all five constraints equally well. ATM (11q22.3) lacks specific colon CSC evidence and is primarily a tumor suppressor. CCND1 (11q13) lacks DNA repair function. Other chr11 genes lack stemness evidence.",
+      "confidence": 0.85,
+      "source": "derivation",
+      "reference": "Comparative genomic analysis: CHEK1 uniquely satisfies all five criteria simultaneously among chromosome 11 genes."
+    }
+  ],
+  "counter_evidence": [
+    {
+      "text": "The stemness evidence, while strong, relies primarily on one dedicated study (Manic et al. 2018) specifically linking CHK1 to colorectal CSC maintenance, plus a broader review (Ronco et al. 2017). Additional mechanistic studies linking CHK1 to specific stemness transcription factors (SOX2, NANOG, OCT4, Wnt) in colon cancer are less well-documented in the literature, so the stemness claim has less converging evidence than the DNA repair and cell cycle claims.",
+      "weight": 0.3
+    },
+    {
+      "text": "The protein identification is based on functional and positional clues rather than direct sequencing or proteomic data from the problem statement. The problem provides only chromosome 11 location and functional categories, so any identification is inferential rather than definitive. Alternative candidates (e.g., ATM at 11q22.3) cannot be absolutely excluded without additional experimental data.",
+      "weight": 0.2
+    },
+    {
+      "text": "Some of the cited papers study CHEK1 in the context of pharmacological inhibition rather than genetic shRNA knockdown, which is the specific experimental approach described in the problem. The functional roles of CHEK1 in DNA repair, cell cycle, and stemness may differ between pharmacological inhibition and genetic depletion.",
+      "weight": 0.15
+    }
+  ],
+  "uncertainty": "The identification of CHEK1 as the protein of interest is supported by converging lines of evidence from multiple independent criteria, but it remains an inference from functional and positional clues rather than a definitive experimental identification. The chromosome 11 location, DNA repair function, and cell cycle regulation are established with very high confidence (0.95+). The stemness mai...",
+  "formal_artifact": null
+}

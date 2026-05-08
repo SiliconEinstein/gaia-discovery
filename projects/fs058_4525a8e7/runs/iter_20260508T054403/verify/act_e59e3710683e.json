@@ -1,0 +1,121 @@
+{
+  "action_id": "act_e59e3710683e",
+  "action_kind": "support",
+  "router": "heuristic",
+  "verdict": "verified",
+  "backend": "inquiry_review",
+  "confidence": 0.9,
+  "evidence": "The premises cite canonical, highly cited protocol papers (Tiscornia, Moffat, Kutner, etc.) that directly corroborate each major step of the claimed protocol, establishing it as standard practice. The counter-evidence highlights practical cautions (e.g., species mismatch, polybrene toxicity, Tet-On leakiness) but does not refute the claim; it only identifies optimization points that do not invalidate the protocol’s soundness.",
+  "raw": {
+    "judge": {
+      "verdict": "verified",
+      "confidence": 0.9,
+      "reasoning": "The premises cite canonical, highly cited protocol papers (Tiscornia, Moffat, Kutner, etc.) that directly corroborate each major step of the claimed protocol, establishing it as standard practice. The counter-evidence highlights practical cautions (e.g., species mismatch, polybrene toxicity, Tet-On leakiness) but does not refute the claim; it only identifies optimization points that do not invalidate the protocol’s soundness."
+    },
+    "evidence": {
+      "schema_version": 1,
+      "stance": "support",
+      "summary": "The protocol described for lentiviral shRNA knockdown efficiency testing is faithful to the standard, widely validated workflow established in canonical protocol papers. Each step — HEK293T packaging, polybrene transduction at 8 ug/mL and MOI 5-10, puromycin selection for 3-5 days, doxycycline induction at 1 ug/mL with 24/48/72h time course, SDS-PAGE/western blot with target+housekeeping dual probing, densitometric quantification, and qRT-PCR confirmation — is supported by the foundational protocol literature. The only significant concern is the species mismatch between a human CHEK1-targeting shRNA and mouse MC38 cells, requiring cross-species target site conservation verification.",
+      "premises": [
+        {
+          "text": "Tiscornia et al. 2006 (Nature Protocols 1:241-245, cited >1000 times) published the canonical protocol for lentivirus production and purification. The protocol specifies: co-transfection of 293T cells with transfer, packaging, and envelope plasmids; supernatant harvest at 48h and 72h post-transfection; filtration through 0.45 um PVDF membrane; concentration by ultracentrifugation at 50,000g for 2h at 4C. This is the single most widely cited lentivirus production protocol globally and directly validates the packaging/harvest/concentration steps of the claim.",
+          "confidence": 0.97,
+          "source": "literature",
+          "claim_id": null
+        },
+        {
+          "text": "Kutner et al. 2009 (Nature Protocols 4:495-505, cited >750 times) published the detailed protocol 'Production, concentration and titration of pseudotyped HIV-1-based lentiviral vectors,' confirming all parameters: 293T cells, 48-72h supernatant harvest, 0.45 um filtration, and both ultracentrifugation (50,000g, 2h) and PEG-8000 precipitation (8.5% w/v + 0.3M NaCl, overnight at 4C) as valid concentration methods. This directly validates the concentration options listed in the claim.",
+          "confidence": 0.95,
+          "source": "literature",
+          "claim_id": null
+        },
+        {
+          "text": "Moffat et al. 2006 (Cell 124:1283-1298, cited >2700 times), reporting the Broad Institute TRC lentiviral shRNA library, established the standard transduction protocol: polybrene at 8 ug/mL, puromycin selection at 2 ug/mL for 3-5 days, and MOI optimization (0.3-5 for arrayed screens; higher MOI for stable polyclonal lines). This paper is the authoritative reference for large-scale lentiviral shRNA experiments and directly validates the transduction and selection parameters.",
+          "confidence": 0.95,
+          "source": "literature",
+          "claim_id": null
+        },
+        {
+          "text": "Stewart et al. 2003 (RNA 9:493-501, cited >1600 times) first demonstrated lentivirus-delivered stable shRNA-mediated gene silencing, establishing the fundamental workflow of lentivirus production in 293T, transduction with polybrene, and antibiotic selection for stable lines — the precursor to all subsequent lentiviral shRNA protocols, including the one claimed.",
+          "confidence": 0.93,
+          "source": "literature",
+          "claim_id": null
+        },
+        {
+          "text": "Wiznerowicz and Trono 2003 (J Virol 77:8957-8961, cited >800 times) developed the first conditional, doxycycline-inducible lentiviral shRNA system, demonstrating that shRNA expression is tightly regulated by doxycycline addition and that protein depletion follows a time-dependent kinetic after induction. This directly validates the doxycycline induction step and the rationale for time-course sampling (24/48/72h). Doxycycline was used at 1-2 ug/mL, matching the claim's specification of 1 ug/mL.",
+          "confidence": 0.92,
+          "source": "literature",
+          "claim_id": null
+        },
+        {
+          "text": "Wiederschain et al. 2009 (Cell Cycle 8:498-504, cited >450 times) described the pLKO-Tet-On single-vector inducible lentiviral shRNA system (Addgene #21915), now the most widely used platform for conditional shRNA experiments. Standard protocols for this system specify doxycycline at 0.1-1 ug/mL and protein/mRNA analysis at time points spanning 24-96h post-induction, directly validating the induction and readout steps.",
+          "confidence": 0.9,
+          "source": "literature",
+          "claim_id": null
+        },
+        {
+          "text": "The transduction parameters (MOI 5-10, polybrene 8 ug/mL) are kinetically justified: at MOI 5, the Poisson probability of zero integration events per cell is e^(-5) ~ 0.67%, ensuring >99% of surviving cells carry the transgene after antibiotic selection. Polybrene at 8 ug/mL neutralizes electrostatic repulsion between negatively charged VSV-G pseudotyped envelope and the cell surface glycocalyx, increasing transduction efficiency 5-20 fold over no enhancer. These numerical parameters represent the established optimum for adherent cell lines.",
+          "confidence": 0.85,
+          "source": "derivation",
+          "claim_id": null
+        },
+        {
+          "text": "The western blot quantification formula — knockdown efficiency (%) = (1 - [ratio_dox+/ratio_dox-]) x 100% — is the standard method for normalizing target protein abundance to housekeeping protein and calculating relative depletion. Dual-probe fluorescent western blotting (e.g., Li-Cor Odyssey) enables simultaneous quantification of target and housekeeping proteins on the same membrane, eliminating inter-lane transfer variability. qRT-PCR confirmation using the delta-delta-Ct method (Livak and Schmittgen 2001, Methods 25:402-408, cited >150,000 times) is the standard orthogonal validation of shRNA-mediated mRNA depletion.",
+          "confidence": 0.92,
+          "source": "derivation",
+          "claim_id": null
+        },
+        {
+          "text": "Root et al. 2006 (Nature Methods 3:715-719, cited >900 times) published the genome-scale lentiviral shRNA screening protocol, using identical parameters (293T packaging, polybrene at 8 ug/mL, puromycin selection, viral concentration by ultracentrifugation) to the claim. The consistency across independent research groups and diverse screening applications demonstrates that these protocol parameters represent a robust, generalizable standard.",
+          "confidence": 0.9,
+          "source": "literature",
+          "claim_id": null
+        }
+      ],
+      "counter_evidence": [
+        {
+          "text": "Species mismatch: The claim describes testing shRNA knockdown efficiency in MC38 cells (murine C57BL/6 colorectal adenocarcinoma) using a human CHEK1-targeting shRNA. Human CHEK1 (NM_001274.3) and mouse Chek1 (NM_007691.3) share ~85% nucleotide identity in the coding region. If the shRNA targets a region with species-specific sequence divergence, knockdown efficiency in MC38 cells would be substantially reduced or absent. The protocol should verify cross-species target site conservation, or alternatively use a murine Chek1-targeting shRNA for MC38 cells.",
+          "weight": 0.4
+        },
+        {
+          "text": "Polybrene toxicity variability: While 8 ug/mL polybrene is standard for many adherent cell lines, some cell lines (including some murine lines) show reduced viability at this concentration. MC38-specific polybrene toxicity data are not widely published. A kill curve (0, 2, 4, 6, 8, 10 ug/mL) should be performed to confirm that 8 ug/mL does not exceed the IC10 for MC38 cells.",
+          "weight": 0.25
+        },
+        {
+          "text": "Tet-On leakiness: First-generation Tet-On systems (rtTA) can show detectable basal shRNA expression without doxycycline (leakiness), ranging from 1-10% of fully induced levels. This would result in some target protein depletion in the 'uninduced' control, artificially reducing the calculated knockdown efficiency. The protocol should specify use of Tet-On 3G or Tet-On Advanced systems with improved tightness, or include a TetR-KRAB repressor element to suppress basal transcription.",
+          "weight": 0.3
+        },
+        {
+          "text": "Absence of non-targeting shRNA control: The protocol describes only doxycycline +/- comparison within the same shRNA line, but does not explicitly include a non-targeting (scrambled) shRNA control line treated identically. Standard practice requires inclusion of a non-targeting shRNA control to distinguish sequence-specific knockdown from general shRNA toxicity, interferon response activation, or off-target effects.",
+          "weight": 0.35
+        },
+        {
+          "text": "Polyclonal vs monoclonal: The protocol selects polyclonal (pooled) lines, which incorporates cells with diverse integration sites and shRNA expression levels. While faster and less prone to clonal artifacts, polyclonal lines may mask variable knockdown efficiency across the population. Quantitative conclusions about % knockdown efficiency are more robust from monoclonal lines with characterized integration sites.",
+          "weight": 0.2
+        }
+      ],
+      "uncertainty": "Well-supported by canonical literature (Tiscornia 2006, Moffat 2006, Kutner 2009, Wiznerowicz & Trono 2003). Key uncertainties: species mismatch (human CHEK1 shRNA vs mouse MC38), cell-line-specific optimization needed, and missing explicit non-targeting shRNA control group."
+    },
+    "premise_count": 9,
+    "counter_count": 5,
+    "stance": "support",
+    "judge_backend_extras": {
+      "model": "deepseek-v4-pro",
+      "usage": {
+        "prompt_tokens": 3857,
+        "completion_tokens": 1019,
+        "total_tokens": 4876,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 901
+        },
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 3857
+      }
+    }
+  },
+  "elapsed_s": 32.11510484898463,
+  "error": null
+}

@@ -1,0 +1,85 @@
+{
+  "sequence": "GCAACAGTATTTCGGTATA",
+  "accession": "NM_001274.3",
+  "cds_start_1based": 155,
+  "cds_end_1based": 1585,
+  "verifications": {
+    "blast_all_chek1": {
+      "pass": true,
+      "num_hits": 15
+    },
+    "gc_content": {
+      "pass": true,
+      "computed": 36.84210526315789,
+      "claimed": 36.84210526315789
+    },
+    "cds_position": {
+      "pass": true,
+      "claimed": "454-472",
+      "actual": "454-472",
+      "mrna_position": 608
+    },
+    "reverse_complement": {
+      "pass": true,
+      "antisense": "TATACCGAAATACTGTTGC"
+    },
+    "hairpin_structure": {
+      "pass": true,
+      "checks": {
+        "sense_length": {
+          "criterion": "19-22 nt",
+          "value": 19,
+          "pass": true
+        },
+        "gc_content": {
+          "criterion": "30-55%",
+          "value": 36.8,
+          "pass": true
+        },
+        "loop_length": {
+          "criterion": "5-9 nt (miR-30 typically 8-9)",
+          "value": 9,
+          "pass": true
+        },
+        "reverse_complement": {
+          "criterion": "Antisense = revcomp(sense)",
+          "value": "match",
+          "pass": true
+        },
+        "no_internal_terminator": {
+          "criterion": "No TTTTT before final terminator",
+          "value": "clean",
+          "pass": true
+        },
+        "stem_complementarity": {
+          "criterion": "Stem base-pairing >= 15/19 for stable hairpin",
+          "value": "19/19 Watson-Crick pairs",
+          "pass": true
+        },
+        "risc_asymmetry": {
+          "criterion": "Sense 3' end should be A/T for efficient RISC loading of guide strand",
+          "value": "Sense 3'=A, Antisense 5'=T",
+          "pass": true
+        },
+        "no_homopolymer": {
+          "criterion": "No >=4 identical consecutive nt in sense strand",
+          "value": "OK",
+          "pass": true
+        },
+        "sense_5prime_G": {
+          "criterion": "Sense 5' nt = G (U6/H1 Pol III promoter)",
+          "value": "G",
+          "pass": true
+        }
+      }
+    }
+  },
+  "hairpin_full": "GCAACAGTATTTCGGTATATTCAAGAGATATACCGAAATACTGTTGCTTTTTT",
+  "hairpin_components": {
+    "sense": "GCAACAGTATTTCGGTATA",
+    "loop": "TTCAAGAGA",
+    "antisense": "TATACCGAAATACTGTTGC",
+    "terminator": "TTTTTT"
+  },
+  "overall_pass": true
+}
