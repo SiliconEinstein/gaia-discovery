@@ -1,0 +1,7 @@
+.lake/
+_gd_sandbox/
+toolchains/
+tmp/
+.gaia/
+known-projects
+settings.toml

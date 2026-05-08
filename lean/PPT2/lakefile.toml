@@ -1,0 +1,9 @@
+name = "PPT2"
+defaultTargets = ["PPT2"]
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+
+[[lean_lib]]
+name = "PPT2"
