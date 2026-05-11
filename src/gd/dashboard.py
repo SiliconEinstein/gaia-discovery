@@ -905,14 +905,79 @@ def make_app(roots: list[Path]) -> FastAPI:
                     )
             in_flight.sort(key=lambda x: -x["mtime"])
 
+        # 4. main_agent recent tool calls — what is the agent doing RIGHT NOW
+        # (we expose this so the UI can show "agent is researching" between
+        # iterations, instead of just rendering "no pending actions" which is
+        # technically correct but practically useless.)
+        main_recent_tools: list[dict[str, Any]] = []
+        # Look for the main agent's stdout log via the launcher convention:
+        # gaia-discovery/logs/<project_name>.stdout.log
+        log_candidates = [
+            project_dir.parent.parent / "logs" / f"{project_dir.name}.stdout.log",
+            Path("/root/gaia-discovery/logs") / f"{project_dir.name}.stdout.log",
+        ]
+        log_path = next((p for p in log_candidates if p.is_file()), None)
+        if log_path is not None:
+            try:
+                # tail last ~50KB of stdout
+                with open(log_path, "rb") as fh:
+                    fh.seek(0, 2)
+                    size = fh.tell()
+                    fh.seek(max(0, size - 50_000))
+                    chunk = fh.read().decode("utf-8", errors="ignore")
+                for ln in chunk.split("\n")[-200:]:
+                    if '"type":"tool_use"' not in ln:
+                        continue
+                    try:
+                        obj = json.loads(ln)
+                    except Exception:
+                        continue
+                    for c in (obj.get("message", {}) or {}).get("content") or []:
+                        if c.get("type") != "tool_use":
+                            continue
+                        inp = c.get("input") or {}
+                        info = (
+                            inp.get("description")
+                            or inp.get("file_path")
+                            or inp.get("command", "")[:120]
+                            or (inp.get("prompt", "") or "")[:120]
+                        )
+                        main_recent_tools.append({
+                            "tool": c.get("name"),
+                            "info": (info or "")[:160],
+                        })
+                main_recent_tools = main_recent_tools[-10:]
+            except OSError:
+                pass
+
+        # Derive a human status string for the UI header card.
+        phase = cycle.get("phase") or "idle"
+        if phase == "dispatched" and (cycle.get("pending_actions") or []):
+            status = f"dispatched ({len(cycle.get('pending_actions') or [])} waiting for evidence)"
+        elif phase == "dispatched":
+            status = "dispatched (no pending — likely transient)"
+        elif phase == "running":
+            status = "running (run-cycle in progress)"
+        elif todo:
+            status = f"queued ({len(todo)} action_status=pending/planned)"
+        elif in_flight:
+            status = f"sub-agent active ({len(in_flight)} files written < 5m)"
+        elif main_recent_tools:
+            last_tool = main_recent_tools[-1]
+            status = f"between iterations — main agent: {last_tool['tool']}"
+        else:
+            status = "idle (no activity)"
+
         return {
-            "phase": cycle.get("phase"),
+            "phase": phase,
+            "status": status,
             "current_run_id": cycle.get("current_run_id"),
             "last_dispatch_at": cycle.get("last_dispatch_at"),
             "last_bp_at": cycle.get("last_bp_at"),
             "todo": todo,
             "recent": recent,
             "in_flight": in_flight,
+            "main_recent_tools": main_recent_tools,
             "now": time.time(),
         }
 
@@ -1272,15 +1337,26 @@ async function loadView(name) {
     // -- "now" panel
     const main = procs.find(p => p.role === 'main_agent');
     document.getElementById('activity-now').innerHTML = `
-      <div class="card" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:16px;">
-        <div><div class="small muted">phase</div><div><strong>${escapeHtml(act.phase || 'idle')}</strong></div></div>
-        <div><div class="small muted">main agent</div>
-          <div>${main ? `<span class="pill role-main_agent">pid ${main.pid}</span> running ${fmtAge(main.etime_s)}` : '<span class="muted">none</span>'}</div></div>
-        <div><div class="small muted">last dispatch</div>
-          <div>${act.last_dispatch_at ? `<span class="small">${escapeHtml(act.last_dispatch_at)}</span>` : '<span class="muted">never</span>'}</div></div>
-        <div><div class="small muted">last BP</div>
-          <div>${act.last_bp_at ? `<span class="small">${escapeHtml(act.last_bp_at)}</span>` : '<span class="muted">never</span>'}</div></div>
+      <div class="card">
+        <div style="font-size:14px; margin-bottom:8px;">
+          <strong>Status:</strong> ${escapeHtml(act.status || act.phase || 'idle')}
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:16px;">
+          <div><div class="small muted">phase</div><div><strong>${escapeHtml(act.phase || 'idle')}</strong></div></div>
+          <div><div class="small muted">main agent</div>
+            <div>${main ? `<span class="pill role-main_agent">pid ${main.pid}</span> ${fmtAge(main.etime_s)}` : '<span class="muted">none</span>'}</div></div>
+          <div><div class="small muted">last dispatch</div>
+            <div>${act.last_dispatch_at ? `<span class="small">${escapeHtml(act.last_dispatch_at)}</span>` : '<span class="muted">never</span>'}</div></div>
+          <div><div class="small muted">last BP</div>
+            <div>${act.last_bp_at ? `<span class="small">${escapeHtml(act.last_bp_at)}</span>` : '<span class="muted">never</span>'}</div></div>
+        </div>
       </div>
+      ${act.main_recent_tools && act.main_recent_tools.length ? `<div class="card">
+        <div class="small muted" style="margin-bottom:6px;">main agent recent tool calls (latest last) — what it is doing right now</div>
+        ${act.main_recent_tools.slice(-8).map(t => `<div class="small" style="margin:2px 0;">
+          <span class="pill" style="background:#2a2e36;color:#c9cdd4;">${escapeHtml(t.tool || '?')}</span>
+          <code class="muted">${escapeHtml(t.info)}</code></div>`).join('')}
+      </div>` : ''}
       ${act.in_flight && act.in_flight.length ? `<div class="card">
         <div class="small muted" style="margin-bottom:6px;">files written in last 5 minutes (sub-agent likely active)</div>
         ${act.in_flight.slice(0, 6).map(f => `<div class="small">
@@ -1298,7 +1374,8 @@ async function loadView(name) {
            <td class="small"><code>${escapeHtml(t.lean_target || '')}</code></td>
            <td>${t.prior == null ? '' : (+t.prior).toFixed(2)}</td>
          </tr>`).join('')}</tbody></table>`
-      : '<p class="muted">no pending actions — every claim has action_status=done or no action assigned</p>';
+      : `<p class="muted">no actions with action_status ∈ {pending, planned, in_progress} in plan.gaia.py.
+         <br>This is normal between iterations — the main agent will edit the plan to add new pending claims, then <code>gd dispatch</code> will pick them up. Look at "main agent recent tool calls" above to see what it's working on.</p>`;
     // -- recent
     document.getElementById('activity-recent').innerHTML = act.recent.length
       ? `<table><thead><tr><th>when</th><th>action_id</th><th>stance</th><th>summary</th><th>artifacts</th></tr></thead>
