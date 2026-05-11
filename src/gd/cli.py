@@ -190,6 +190,40 @@ def _build_parser() -> argparse.ArgumentParser:
         *(["--iter-id", a.iter_id] if a.iter_id else []),
     ]))
 
+    # dashboard
+    sp = sub.add_parser(
+        "dashboard",
+        help="启动 web 控制台（默认 :8093，自动发现所有 gaia/archon 项目+活跃进程）",
+    )
+    sp.add_argument(
+        "project_dir", nargs="?", default=None,
+        help="(可选) 单项目路径；若给出则把它的父目录加入 roots",
+    )
+    sp.add_argument(
+        "--projects-root", action="append", default=None,
+        help="项目扫描根目录（可多次指定）。默认根据本模块位置探测 gaia-discovery 仓库根，"
+             "扫该仓库下的 projects / projects_* / cc_e2e_* 子目录，外加 CWD 下同名模式；"
+             "同时反向扫描所有活跃 claude/codex 进程的 cwd 兜底",
+    )
+    sp.add_argument("--host", default="127.0.0.1")
+    sp.add_argument("--port", type=int, default=8093)
+    sp.add_argument("--reload", action="store_true")
+    sp.set_defaults(func=lambda a: __import__("gd.dashboard", fromlist=["main"]).main([
+        *(["--projects-root", r] for r in (a.projects_root or [])),  # placeholder; expanded below
+    ] and []))
+    # the lambda above is replaced below with a proper builder so we can splat repeatable flags
+    def _dashboard_main(a):  # noqa: E306
+        argv: list[str] = []
+        if a.project_dir:
+            argv.append(a.project_dir)
+        for r in (a.projects_root or []):
+            argv.extend(["--projects-root", r])
+        argv.extend(["--host", a.host, "--port", str(a.port)])
+        if a.reload:
+            argv.append("--reload")
+        return __import__("gd.dashboard", fromlist=["main"]).main(argv)
+    sp.set_defaults(func=_dashboard_main)
+
     # inquiry
     sp = sub.add_parser("inquiry", help="跑 gaia.inquiry.run_review（read-only）")
     sp.add_argument("project_dir")

@@ -194,13 +194,14 @@ gd run-cycle projects/smoke
 
 ---
 
-## 9 个 CLI 子命令
+## 10 个 CLI 子命令
 
 | 命令 | 用途 | 影响状态机 |
 |---|---|---|
 | `gd init <name>` | scaffold `projects/<name>/` 模板 | — |
 | `gd doctor` | 检查 gaia / verify-server / lean | — |
 | `gd verify-server` | 启 FastAPI :8092 | — |
+| `gd dashboard` | 启 web 控制台 :8093（多项目自动发现 + 活跃进程 + Activity feed） | — |
 | `gd dispatch <pkg>` | 编译 plan + 扫 pending action + stamp action_id | `idle`/`dispatched` → `dispatched` |
 | `gd run-cycle <pkg>` | **闸 A**：`verify+ingest+BP+inquiry` 原子化 | `dispatched` → `idle` |
 | `gd inquiry <pkg> [--mode publish\|iterate]` | 跑 `gaia.inquiry.run_review`（read-only） | — |
@@ -209,6 +210,57 @@ gd run-cycle projects/smoke
 | `gd bp <pkg>` | escape hatch：单步全图 BP | — |
 
 每个子命令 stdout 是 `schemas/*.schema.json` 报文；exit code: 0=ok, 1=user-error, 2=system-error。
+
+---
+
+## Web 控制台 (`gd dashboard`)
+
+单文件 FastAPI + 内嵌单页 HTML（vanilla JS + ECharts via CDN，无 Node 工具链），用于实时监控所有正在跑的 gaia / archon 项目和它们的活跃进程。
+
+```bash
+gd dashboard                      # 自动发现：本仓库 projects/ + projects_*/ + cc_e2e_*/
+gd dashboard --host 0.0.0.0       # LAN 可达（默认 127.0.0.1）
+gd dashboard --projects-root /a   # 显式 root（可重复指定）
+gd dashboard projects/<name>      # legacy 单项目模式（仍工作）
+```
+
+**自动发现**
+
+- 仓库根从 `Path(__file__)` 探测（找最近一个含 `pyproject.toml` + `src/gd/` 的祖先），**无任何硬编码主机路径**
+- 默认 root = 仓库下 `projects/` + 所有 `projects_*/` / `cc_e2e_*/` / `projects_lkm_*/` 子目录（仓库的子项目）
+- 加上 sibling `../gaia-discovery-lkm-dev/projects*` 如果存在
+- 反向扫描所有活跃 `claude` / `codex` 进程的 cwd，把它们对应的项目也加入侧栏
+
+**视图**（左侧栏切换项目，顶部 7 个 tab）
+
+| Tab | 内容 |
+|---|---|
+| **Activity** *(默认)* | 当前 phase / 主 agent / pending actions / 最近 N 条 sub-agent task_results（带 stance pill + summary + 链接到 .md/.lean/.py/evidence.json） / 5 分钟内 in-flight 文件 |
+| Processes | OS 层进程列表（main_agent / watchdog / cycle_runner / inquiry / archon_prover / rethlas / verify_server / lake_build / other），带 pid / etime / state / cmdline |
+| Iterations | `runs/iter_*/` 历史，每行 method / elapsed / blockers / target_belief（含 fallback 标注） |
+| Claims | 编译后的 `plan.gaia.py` IR（label / type / action / status / prior / verify_history） |
+| Evidence | 完整 `task_results/*.evidence.json` 浏览器 |
+| Beliefs | BP 视角：belief over iterations 折线图 + 当前 belief 横向条形图 |
+| Memory | `memory/*.yaml` dump（decisions / patterns / pitfalls / review-insights） |
+
+**目标 belief 智能 fallback**：当 `target.json` 的 `target_qid` 在 BP 节点里不存在（常见于 fs_NNN benchmark 配错），自动 fallback 到最高 belief 的非内部 claim，并在 UI 上标 `≈<label>` 说明这是 fallback。
+
+**端口与配置**
+
+- 默认 `http://127.0.0.1:8093/`，pid 写到 `/tmp/gd_dashboard.<port>.pid`
+- 启动时若 pid 文件中的进程仍活，会先 SIGTERM 之，避免端口占用
+- 响应带 `Cache-Control: no-store`，迭代 dashboard 代码后浏览器自动拉新版（不用硬刷新）
+
+**自包含验证**：
+
+```bash
+git clone https://github.com/SiliconEinstein/gaia-discovery
+cd gaia-discovery && git checkout gaia-discovery-v3
+pip install -e .
+gd dashboard --host 0.0.0.0    # 任何机器都能跑
+```
+
+Dashboard 是只读视图，**不会**改动任何项目数据。
 
 ---
 
