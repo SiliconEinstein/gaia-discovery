@@ -43,9 +43,15 @@ from gd import cycle_state as cs
 from gd.belief_ingest import (
     IngestError, append_evidence_subgraph, apply_verdict,
 )
+from gd.belief_ranker import (
+    redact_belief_snapshot,
+    ranked_focus_queue,
+    write_private_snapshot,
+    write_public_redacted_snapshot,
+)
 from gd.cli_commands import dispatch as _dispatch
 from gd.gaia_bridge import (
-    BeliefSnapshot, CompileError, compile_and_infer, load_and_compile, write_snapshot,
+    BeliefSnapshot, CompileError, compile_and_infer, load_and_compile,
 )
 from gd.inquiry_bridge import publish_blockers_for, run_review, write_review
 
@@ -229,6 +235,9 @@ def _empty_review() -> dict[str, Any]:
         "blockers": [],
         "belief_summary": {},
         "belief_stale": True,
+        "belief_hidden": True,
+        "ranked_focus": [],
+        "terminal_review": None,
         "mode": "explore",
         "review_id": None,
     }
@@ -428,12 +437,14 @@ def run(
             f"BP 失败: {exc}",
             target_qid, target_thr, state,
         )
-    write_snapshot(snapshot, out_dir)
+    write_private_snapshot(snapshot, pkg, run_id)
+    write_public_redacted_snapshot(snapshot, out_dir)
     snap_dict = snapshot.to_dict()
+    public_snap_dict = redact_belief_snapshot(snap_dict)
 
     # 把最新 snapshot 同步进 ingest_results 的 belief_snapshot 字段
     for ir in ingest_results:
-        ir["belief_snapshot"] = snap_dict
+        ir["belief_snapshot"] = public_snap_dict
 
     # ---- 阶段 5: inquiry ----
     review_payload = run_review(pkg, mode="explore")
@@ -443,8 +454,11 @@ def run(
             "compile_status": "error",
             "compile_error": review_payload.get("error"),
             "diagnostics": [], "next_edits": [], "blockers": [],
-            "belief_summary": dict(snapshot.beliefs),
+            "belief_summary": {},
             "belief_stale": False,
+            "belief_hidden": True,
+            "ranked_focus": ranked_focus_queue(pkg),
+            "terminal_review": None,
             "mode": "explore",
             "review_id": None,
         }
@@ -457,8 +471,11 @@ def run(
             "diagnostics": list(review_payload.get("diagnostics") or []),
             "next_edits": list(review_payload.get("next_edits") or []),
             "blockers": [],
-            "belief_summary": dict(snapshot.beliefs),
+            "belief_summary": {},
             "belief_stale": False,
+            "belief_hidden": True,
+            "ranked_focus": ranked_focus_queue(pkg),
+            "terminal_review": None,
             "mode": "explore",
             "review_id": review_payload.get("review_id"),
         }
@@ -481,12 +498,17 @@ def run(
         "failed_reason": None,
         "actions_processed": len(pending),
         "ingest_results": ingest_results,
-        "belief_snapshot": snap_dict,
+        "belief_snapshot": public_snap_dict,
         "review": review_envelope,
         "next_blockers": next_blockers,
+        # target_belief is the single macro-progress signal that the main agent
+        # must see (otherwise it cannot tell whether it is converging). Per-claim
+        # beliefs remain redacted via review.belief_summary / public_snap_dict.
         "target_belief": target_belief,
         "target_qid": target_qid,
         "target_threshold": target_thr,
+        "belief_hidden": True,
+        "ranked_focus": ranked_focus_queue(pkg),
         "cycle_state": {
             "schema_version": cs.SCHEMA_VERSION,
             "phase": state.phase,
@@ -522,6 +544,8 @@ def _build_failure(
         "target_belief": None,
         "target_qid": target_qid,
         "target_threshold": target_thr,
+        "belief_hidden": True,
+        "ranked_focus": [],
         "cycle_state": {
             "schema_version": cs.SCHEMA_VERSION,
             "phase": state.phase,

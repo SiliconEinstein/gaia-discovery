@@ -29,6 +29,29 @@ OPERATOR_ACTIONS: frozenset[str] = _SCHEMAS_OPERATOR_ACTIONS
 ALLOWED_ACTIONS: frozenset[str] = _SCHEMAS_ALL_ACTIONS
 
 
+# v0.5 alias layer (cherry-picked from gaia-discovery-lkm-dev, 2026-05-13).
+# We KEEP v3 names as canonical here (matches verify-server router), so this
+# is a no-op identity map. Callers that depend on `canonicalize_action`
+# (e.g. `belief_ranker`) still work without any behavior change.
+LEGACY_ACTION_ALIASES: dict[str, str] = {}
+
+
+def canonicalize_action(action: str) -> str:
+    """Return canonical action name. In main repo (v3 schema), this is the
+    identity — v3 names are already canonical. lkm-dev uses this to translate
+    v3 → v0.5 names; we accept the same function signature for API
+    compatibility without changing dispatch semantics."""
+    return LEGACY_ACTION_ALIASES.get(action, action)
+
+
+def is_strategy(action: str) -> bool:
+    return canonicalize_action(action) in STRATEGY_ACTIONS
+
+
+def is_operator(action: str) -> bool:
+    return canonicalize_action(action) in OPERATOR_ACTIONS
+
+
 def _assert_gaia_lang_consistency() -> None:
     """import 时校验：每个 action_kind 都对应 gaia.lang 公开 callable。"""
     missing: list[str] = []

@@ -12,7 +12,9 @@
     "action_kind": {
       "type": "string",
       "enum": ["support", "deduction", "abduction", "induction",
-               "contradiction", "equivalence", "complement", "disjunction"]
+               "contradiction", "equivalence", "complement", "disjunction",
+               "associate", "compute", "contradict", "decompose", "derive",
+               "equal", "exclusive", "infer", "observe"]
     },
     "router": {"enum": ["quantitative", "structural", "heuristic"]},
     "verdict": {"enum": ["verified", "refuted", "inconclusive"]},

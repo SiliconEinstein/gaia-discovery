@@ -9,7 +9,7 @@
     * verified + heuristic on fresh    → prior=0.70 (state 不动), action_status="done"
     * verified 且老 prior 更高          → 不回退 prior, state 升级
     * refuted on lean-proven by 弱 backend → state="contested", prior 减半（不归零）
-    * refuted on 同级/无 proven        → state="refuted", prior=0.0
+    * refuted on 同级/无 proven        → state="refuted", prior=0.001 (Cromwell floor; v0.5 strict)
     * inconclusive on proven 同级或更强 backend → state="stale", prior 减半
     * inconclusive on proven 更弱 backend → 维持 proven（弱 backend 无权 invalidate 强证）
     * inconclusive on fresh             → 仅 action_status="failed"，state/prior 不动
@@ -84,7 +84,14 @@ def _plan_lock(plan_path: Path, timeout: float = _DEFAULT_LOCK_TIMEOUT_S):
 PRIOR_CAP_LEAN: float = 0.99
 PRIOR_CAP_EXPERIMENT: float = 0.85
 PRIOR_CAP_HEURISTIC: float = 0.70
-PRIOR_FLOOR_REFUTED: float = 0.00
+# v0.5+ register_prior() rejects values outside [CROMWELL_EPS, 1-CROMWELL_EPS]=[1e-3, 1-1e-3].
+# Use Cromwell floor (≈0) as the "refuted" prior — semantically identical to v0.4's prior=0.0
+# (which v0.4 silently Cromwell-clamped to 1e-3 inside BP anyway).
+try:  # pragma: no cover - simple constant lookup
+    from gaia.ir.parameterization import CROMWELL_EPS as _CROMWELL_EPS
+except Exception:  # pragma: no cover
+    _CROMWELL_EPS = 1e-3
+PRIOR_FLOOR_REFUTED: float = float(_CROMWELL_EPS)
 
 
 _BACKEND_TO_CAP: dict[str, float] = {
@@ -971,8 +978,13 @@ def _render_claim_assign(
 
 
 def _looks_like_label(name: str) -> bool:
-    """parent_label 必须是合法 Python 标识符（不能含点、空格、引号）。"""
-    return bool(name) and name.isidentifier()
+    """parent_label 必须是合法 Python 标识符或 Gaia QID（如 discovery:pkg::var）。"""
+    if not name:
+        return False
+    if name.isidentifier():
+        return True
+    # Gaia QID: backend:package::var_name — each segment must be a valid identifier
+    return all(part.isidentifier() for part in name.replace('::', ':').split(':') if part)
 
 
 def append_evidence_subgraph(

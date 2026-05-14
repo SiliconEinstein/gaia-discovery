@@ -26,15 +26,21 @@ def _patch_sse_data(raw: bytes) -> bytes:
     except Exception:
         return raw
     t = obj.get("type")
-    if t == "message_delta":
-        delta = obj.get("delta")
-        if not isinstance(delta, dict):
-            obj["delta"] = {"stop_reason": "end_turn", "stop_sequence": None}
-        else:
-            delta.setdefault("stop_reason", "end_turn")
-            delta.setdefault("stop_sequence", None)
-        return json.dumps(obj, ensure_ascii=False).encode()
-    return raw
+    # GPUGeek's Anthropic-compatible stream has historically emitted a final
+    # `message_delta` event without `delta.stop_reason`. Claude CLI's SDK then
+    # crashes while evaluating `event.delta.stop_reason`. Patch ONLY genuine
+    # `message_delta` events; never rename other event types (in particular
+    # `content_block_delta` carries `delta` too, but renaming it would make
+    # the SDK think the message ended after the first text chunk).
+    if t != "message_delta":
+        return raw
+    delta = obj.get("delta")
+    if not isinstance(delta, dict):
+        obj["delta"] = {"stop_reason": "end_turn", "stop_sequence": None}
+    else:
+        delta.setdefault("stop_reason", "end_turn")
+        delta.setdefault("stop_sequence", None)
+    return json.dumps(obj, ensure_ascii=False).encode()
 
 
 def _open_upstream(method: str, path: str, body: bytes, headers: dict):
@@ -91,8 +97,13 @@ class ProxyHandler(BaseHTTPRequestHandler):
                     if not line:
                         break
                     out = line
+                    # Forward `event:` headers verbatim (some SDK builds need
+                    # them to dispatch). Only patch `data:` JSON.
                     if line.startswith(b"data: "):
                         patched = _patch_sse_data(line[6:].rstrip(b"\r\n"))
+                        out = b"data: " + patched + b"\n"
+                    elif line.startswith(b"data:"):
+                        patched = _patch_sse_data(line[5:].rstrip(b"\r\n"))
                         out = b"data: " + patched + b"\n"
                     # chunked 写
                     self.wfile.write(f"{len(out):x}\r\n".encode() + out + b"\r\n")

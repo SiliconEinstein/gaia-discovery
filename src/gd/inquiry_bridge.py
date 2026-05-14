@@ -67,6 +67,33 @@ def _rank_report_in_place(report: Any, mode: str) -> None:
         logger.debug("rank_next_edits failed", exc_info=True)
 
 
+def _migrate_legacy_terminal_state(pkg_path: Path) -> None:
+    """Rewrite ``.gaia/inquiry/state.json`` ``mode='terminal'`` → ``'auto'``.
+
+    The gd 'terminal' mode is a gaia-discovery-only belief-hidden override that
+    is mapped to upstream 'auto'. Older runs persisted ``mode='terminal'`` to
+    state.json, which v0.5+ ``gaia.inquiry.state.load_state`` rejects. This
+    migration is idempotent and silently no-ops if the file is absent / valid.
+    """
+    state_path = pkg_path / ".gaia" / "inquiry" / "state.json"
+    if not state_path.is_file():
+        return
+    try:
+        data = json.loads(state_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return
+    if data.get("mode") != "terminal":
+        return
+    data["mode"] = "auto"
+    try:
+        state_path.write_text(
+            json.dumps(data, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+    except OSError:
+        pass
+
+
 def run_review(
     project_dir: str | Path,
     *,
@@ -85,10 +112,21 @@ def run_review(
     except ImportError as exc:
         return {"status": "error", "error": f"gaia.inquiry 不可用: {exc}"}
 
+    # 'terminal' is a gaia-discovery-only mode (belief-hidden override). gaia's
+    # core review only accepts {auto, explore, formalize, verify, publish}, so
+    # we forward terminal as 'auto' (most permissive) and let gd surface the
+    # raw belief snapshot through ``terminal_review`` separately.
+    upstream_mode = "auto" if mode == "terminal" else mode
+
+    # Backwards-compat: state.json persisted from earlier gd-only runs may carry
+    # mode='terminal', which v0.5+ gaia.inquiry.state.load_state rejects.
+    # Rewrite once so the next load succeeds. Idempotent.
+    _migrate_legacy_terminal_state(pkg_path)
+
     try:
         report = _run_review(
             pkg_path,
-            mode=mode,
+            mode=upstream_mode,
             focus_override=focus_override,
             no_infer=no_infer,
             depth=depth,

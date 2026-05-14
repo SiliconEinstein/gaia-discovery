@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gaia-discovery-v3/schemas/lkm_query_plan.schema.json",
+  "title": "LKM query plan (main-agent authored)",
+  "description": "Read-only retrieval plan written by the main agent after inspecting current inquiry/BP state. gd lkm-review executes exactly these queries and does not invent its own.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["queries"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "queries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/LkmQuery"}
+    }
+  },
+  "$defs": {
+    "LkmQuery": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id", "text"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unique id within this query plan; used for raw artifact filenames."
+        },
+        "target_qid": {
+          "type": ["string", "null"],
+          "description": "Optional Gaia claim qid this query is meant to inspect."
+        },
+        "intent": {
+          "type": "string",
+          "minLength": 1,
+          "default": "agent_authored",
+          "description": "Main-agent retrieval intent, e.g. support_check, conflict_check, frontier. This is not a Gaia action kind."
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Precise LKM search text authored by the main agent."
+        },
+        "rationale": {
+          "type": ["string", "null"],
+          "description": "Why current inquiry/BP state makes this query useful."
+        },
+        "top_k": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_chains": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

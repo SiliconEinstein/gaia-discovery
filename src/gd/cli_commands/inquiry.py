@@ -20,11 +20,14 @@ import argparse
 import json
 import logging
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from gd import cycle_state as cs
 from gd.belief_ingest import locate_plan_source, IngestError
+from gd.belief_ranker import ranked_focus_queue, terminal_bp_review, write_private_snapshot
+from gd.gaia_bridge import compile_and_infer
 from gd.inquiry_bridge import publish_blockers_for, run_review
 
 logger = logging.getLogger(__name__)
@@ -34,7 +37,7 @@ EXIT_OK = 0
 EXIT_USER = 1
 EXIT_SYSTEM = 2
 
-VALID_MODES = ("explore", "publish")
+VALID_MODES = ("explore", "publish", "terminal")
 
 
 # ---------- belief_summary 摘取 ----------
@@ -85,6 +88,29 @@ def _is_belief_stale(project_dir: Path) -> bool:
     return plan_mtime > bp_ts
 
 
+def _read_target(project_dir: Path) -> tuple[str | None, float | None]:
+    tp = project_dir / "target.json"
+    if not tp.is_file():
+        return None, None
+    try:
+        data = json.loads(tp.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None, None
+    qid = data.get("target_qid") or data.get("target_claim_qid")
+    thr = data.get("threshold")
+    return (
+        qid if isinstance(qid, str) else None,
+        float(thr) if isinstance(thr, (int, float)) else None,
+    )
+
+
+def _refresh_terminal_bp(project_dir: Path) -> None:
+    """Terminal review is allowed to compute a fresh BP snapshot."""
+    run_id = datetime.now(timezone.utc).strftime("terminal_%Y%m%dT%H%M%S")
+    snapshot = compile_and_infer(project_dir, iter_id=run_id)
+    write_private_snapshot(snapshot, project_dir, run_id)
+
+
 # ---------- 主入口 ----------
 
 def run(
@@ -102,6 +128,12 @@ def run(
     if mode not in VALID_MODES:
         print(f"[inquiry] 未知 mode: {mode}（合法 {VALID_MODES}）", file=sys.stderr)
         return EXIT_USER, {}
+
+    if mode == "terminal":
+        try:
+            _refresh_terminal_bp(pkg)
+        except Exception as exc:
+            logger.warning("terminal BP refresh failed: %s", exc)
 
     review = run_review(
         pkg,
@@ -133,6 +165,13 @@ def run(
 
     _, belief_summary = _latest_belief_snapshot(pkg)
     belief_stale = _is_belief_stale(pkg)
+    belief_hidden = mode != "terminal"
+    ranked_focus = [] if mode == "terminal" else ranked_focus_queue(pkg)
+    target_qid, target_thr = _read_target(pkg)
+    terminal_review = (
+        terminal_bp_review(pkg, target_qid=target_qid, threshold=target_thr)
+        if mode == "terminal" else None
+    )
 
     envelope = {
         "schema_version": 1,
@@ -141,8 +180,11 @@ def run(
         "diagnostics": diagnostics,
         "next_edits": next_edits,
         "blockers": blockers,
-        "belief_summary": belief_summary,
+        "belief_summary": belief_summary if mode == "terminal" else {},
         "belief_stale": belief_stale,
+        "belief_hidden": belief_hidden,
+        "ranked_focus": ranked_focus,
+        "terminal_review": terminal_review,
         "mode": mode,
         "review_id": review.get("review_id"),
     }

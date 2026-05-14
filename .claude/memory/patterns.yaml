@@ -85,3 +85,63 @@
     - /reflect 跑得出至少 1 条新 memory entry
     - memory yaml 条目带 id/date/title + 领域专用字段
     - CLAUDE.md 晋升条目必须有 memory 里 ≥5 次命中记录
+
+- id: pat-004
+  date: 2026-05-09
+  title: rubric-anticipator 在 iter 0.5 做一次性 grader 覆盖预测
+  domain: workflow
+  when_to_use: |
+    任何有 hidden rubric 的 open problem。在写完初始 plan.gaia.py 后、
+    第一次 dispatch 前跑 rubric-anticipator，预测 grader 会给每个子问题
+    打哪些评分 bullet。用 bullet 清单指导 claim 粒度（1 bullet ≈ 1 子断言）
+    和 FINAL_ANSWER 覆盖。
+  steps:
+    - |
+      iter 0: 写 q_main + settings + target claim + 初始 foundation claims。
+      此时 sub-agent 未 dispatch，claims 是 draft 级别。
+    - |
+      iter 0.5: 跑 rubric-anticipator agent。输入 PROBLEM.md + plan.gaia.py
+      当前草稿，输出 50 个 anticipated grader bullets [B1..B50]，
+      每个 bullet 标注对应子问题和评分维度。
+    - |
+      回到 plan.gaia.py：检查每个 bullet 是否有对应 claim 或
+      TEXT_ONLY 覆盖。gap 补 claim，overlap 合并。
+    - |
+      FINAL_ANSWER 阶段：每个子问题下建 "Anticipated grader bullets"
+      子节，逐 bullet 标注覆盖位置（BP_COVERED / TEXT_ONLY）。
+    - |
+      auditor 在 FINAL_ANSWER 前跑最终 bullet 覆盖审计。
+  verification:
+    - rubric-anticipator 恰跑一次（iter 0.5）
+    - auditor 确认 bullet 覆盖率 = 100%
+    - FINAL_ANSWER 含逐 bullet 映射表
+
+- id: pat-005
+  date: 2026-05-09
+  title: 多 agent 质量管道：oracle→red-team→pi-reviewer→auditor
+  domain: workflow
+  when_to_use: |
+    BP 循环完成后、写 FINAL_ANSWER 前。需要 4 个 advisory agent
+    依序跑完，各自独立判断，前一个的输出 inform 下一个。
+  steps:
+    - |
+      oracle（iter 1 末）：在第二轮 dispatch 前跑。读所有 evidence.json
+      做 UCB 排序，建议哪些 claim 最值得下一轮 refine。避免在 hopeless
+      claim 上浪费 dispatch budget。
+    - |
+      red-team（iter 2）：挑 verified claims（belief > 0.65）做对抗
+      falsification。每条 verified claim 输出 3-5 个 failure mode。
+      用于 FINAL_ANSWER 里加 caveats 和 qualification。
+    - |
+      pi-reviewer（iter 3 / FINAL_ANSWER 前）：整体质量门。检查
+      claim 正确性、citation 精度、逻辑连贯性、未覆盖子问题。
+      输出 numbered defects list（每项 actionable）。
+    - |
+      auditor（FINAL_ANSWER 前）：逐 bullet 覆盖审计。对比
+      rubric-anticipator 的 50 bullets 和 FINAL_ANSWER 内容，
+      输出 covered/at-risk/uncovered 矩阵。
+  verification:
+    - oracle 输出 UCB ranking table
+    - red-team 为每条 verified claim 输出 ≥3 failure modes
+    - pi-reviewer defects ≤5（否则 FINAL_ANSWER 不可提交）
+    - auditor 覆盖率 = 100%

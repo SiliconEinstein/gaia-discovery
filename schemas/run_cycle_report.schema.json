@@ -35,6 +35,15 @@
     },
     "target_qid": {"type": ["string", "null"]},
     "target_threshold": {"type": ["number", "null"], "minimum": 0.0, "maximum": 1.0},
-    "cycle_state": {"$ref": "cycle_state.schema.json"}
+    "cycle_state": {"$ref": "cycle_state.schema.json"},
+    "belief_hidden": {
+      "type": "boolean",
+      "description": "belief-hidden 模式：True 时主 agent 看不到 raw belief（只看 ranked_focus）"
+    },
+    "ranked_focus": {
+      "type": "array",
+      "items": {"type": ["object", "string"]},
+      "description": "belief-hidden 模式下，给主 agent 的 ranked 任务队列（不带数值）"
+    }
   }
 }

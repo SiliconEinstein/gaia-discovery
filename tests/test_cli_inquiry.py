@@ -132,7 +132,7 @@ def test_inquiry_envelope_shape_and_schema(tmp_path: Path, cleanup_modules) -> N
     assert isinstance(env["blockers"], list)
     assert isinstance(env["belief_summary"], dict)
     assert isinstance(env["belief_stale"], bool)
-    assert env["mode"] == "iterate"
+    assert env["mode"] == "explore"
     _validate(env)
 
 
@@ -150,7 +150,8 @@ def test_inquiry_compile_error(tmp_path: Path, cleanup_modules) -> None:
 def test_inquiry_picks_latest_belief_summary(tmp_path: Path, cleanup_modules) -> None:
     pkg = _make_pkg(tmp_path, "inq_belief", "from gaia.lang import claim\nK = claim('x', prior=0.5)\n")
     _seed_belief_snapshot(pkg, {"x": 0.42})
-    _, env = inquiry.run(pkg)
+    # belief-hidden: explore mode redacts belief_summary; only terminal mode exposes it
+    _, env = inquiry.run(pkg, mode="terminal")
     assert env["belief_summary"].get("x") == pytest.approx(0.42)
 
 

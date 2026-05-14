@@ -2,8 +2,8 @@
 
 职责（plan 6.4 子命令）：
   1. compile_and_infer → BeliefSnapshot
-  2. write_snapshot 到 <runs_dir>/belief_snapshot.json
-  3. stdout: BeliefSnapshot JSON
+  2. full snapshot 写入 .gaia/internal/belief_snapshots（默认）
+  3. stdout 默认 redacted；只有 --reveal 才输出完整 BP
 
 不写 cycle_state.json（escape hatch 单步，不卷入状态机）。
 
@@ -21,7 +21,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from gd.gaia_bridge import compile_and_infer, write_snapshot
+from gd.belief_ranker import redact_belief_snapshot, write_private_snapshot, write_public_redacted_snapshot
+from gd.gaia_bridge import compile_and_infer
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,7 @@ def run(
     runs_dir: str | Path | None = None,
     method: str = "auto",
     iter_id: str | None = None,
+    reveal: bool = False,
 ) -> tuple[int, dict[str, Any]]:
     pkg = Path(project_dir).resolve()
     if not pkg.is_dir():
@@ -53,13 +55,15 @@ def run(
 
     out_dir = _resolve_runs_dir(pkg, runs_dir)
     try:
-        write_snapshot(snapshot, out_dir)
+        write_private_snapshot(snapshot, pkg, iter_id or "manual_bp")
+        write_public_redacted_snapshot(snapshot, out_dir)
     except OSError as exc:
         print(f"[bp] write_snapshot 失败: {exc}", file=sys.stderr)
         return EXIT_SYSTEM, {}
 
-    payload = snapshot.to_dict()
+    payload = snapshot.to_dict() if reveal else redact_belief_snapshot(snapshot.to_dict())
     payload["runs_dir"] = str(out_dir)
+    payload["full_snapshot_storage"] = "internal" if not reveal else "revealed_by_request"
     return EXIT_OK, payload
 
 
@@ -71,6 +75,7 @@ def main(argv: list[str] | None = None) -> int:
                    choices=["auto", "exact", "loopy"],
                    help="BP 推理方法（compile_and_infer 透传）")
     p.add_argument("--iter-id", default=None, help="可选 iter_id 标签")
+    p.add_argument("--reveal", action="store_true", help="显式输出完整 BP 数值（仅终局/debug 使用）")
     args = p.parse_args(argv)
 
     try:
@@ -79,6 +84,7 @@ def main(argv: list[str] | None = None) -> int:
             runs_dir=args.runs_dir,
             method=args.method,
             iter_id=args.iter_id,
+            reveal=args.reveal,
         )
     except Exception as exc:
         logger.exception("bp unexpected failure")

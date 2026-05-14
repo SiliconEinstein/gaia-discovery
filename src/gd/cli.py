@@ -224,10 +224,37 @@ def _build_parser() -> argparse.ArgumentParser:
         return __import__("gd.dashboard", fromlist=["main"]).main(argv)
     sp.set_defaults(func=_dashboard_main)
 
+    # lkm-review (external Bohrium LKM literature retrieval, read-only)
+    # Cherry-picked from gaia-discovery-lkm-dev on 2026-05-13.
+    sp = sub.add_parser(
+        "lkm-review",
+        help="Bohrium LKM 文献检索 (read-only)，给当前 plan 找 support/conflict/frontier 候选",
+    )
+    sp.add_argument("project_dir")
+    sp.add_argument("--query-plan", required=True)
+    sp.add_argument("--top-k", type=int, default=10)
+    sp.add_argument("--max-chains", type=int, default=5)
+    sp.add_argument("--out-dir", default=None)
+    sp.add_argument("--timeout", type=float, default=30.0)
+    sp.add_argument("--dry-run", action="store_true")
+    def _lkm_review_main(a):  # noqa: E306
+        from gd.cli_commands import lkm_review as _lkm_review
+        argv = [
+            a.project_dir, "--query-plan", a.query_plan,
+            "--top-k", str(a.top_k), "--max-chains", str(a.max_chains),
+            "--timeout", str(a.timeout),
+        ]
+        if a.out_dir:
+            argv.extend(["--out-dir", a.out_dir])
+        if a.dry_run:
+            argv.append("--dry-run")
+        return _lkm_review.main(argv)
+    sp.set_defaults(func=_lkm_review_main)
+
     # inquiry
     sp = sub.add_parser("inquiry", help="跑 gaia.inquiry.run_review（read-only）")
     sp.add_argument("project_dir")
-    sp.add_argument("--mode", default="explore", choices=["explore", "publish"])
+    sp.add_argument("--mode", default="explore", choices=["explore", "publish", "terminal"])
     sp.add_argument("--focus", default=None)
     sp.add_argument("--since", default=None)
     sp.add_argument("--strict", action="store_true")

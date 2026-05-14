@@ -10,6 +10,8 @@ dist/
 
 # 运行产物（用户自己 gd init 生成）
 projects/
+projects_v40/
+projects_v40_*/
 
 # 评测产物（运行 fs_run_baseline / fs_v3_runner 生成）
 eval/frontierscience/results/

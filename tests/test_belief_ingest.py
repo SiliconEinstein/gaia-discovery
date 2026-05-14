@@ -201,7 +201,7 @@ def test_apply_refuted(stamped_pkg):
     assert res.new_state == "refuted"
     src = locate_plan_source(stamped_pkg).read_text(encoding="utf-8")
     assert 'state="refuted"' in src
-    assert 'prior=0.0' in src
+    assert f"prior={PRIOR_FLOOR_REFUTED:.3f}" in src
 
 
 def test_apply_inconclusive(stamped_pkg):

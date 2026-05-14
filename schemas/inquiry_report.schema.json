@@ -59,8 +59,12 @@
     },
     "mode": {
       "enum": [
-        "iterate",
-        "publish"
+        "auto",
+        "formalize",
+        "explore",
+        "verify",
+        "publish",
+        "terminal"
       ]
     },
     "review_id": {
@@ -78,6 +82,19 @@
         ]
       },
       "description": "next_edits 提案（gaia.inquiry 给的）"
+    },
+    "belief_hidden": {
+      "type": "boolean",
+      "description": "belief-hidden 模式标记：explore 模式下 True（belief_summary 已脱敏），terminal 模式 False"
+    },
+    "ranked_focus": {
+      "type": "array",
+      "items": {"type": ["object", "string"]},
+      "description": "belief-hidden 模式下给主 agent 的 ranked 任务队列（无数值）"
+    },
+    "terminal_review": {
+      "type": ["object", "null"],
+      "description": "terminal 模式下的完整 BP review（含 target/threshold/raw beliefs）"
     }
   }
 }

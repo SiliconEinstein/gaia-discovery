@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gaia-discovery-v3/schemas/lkm_review.schema.json",
+  "title": "LKM review report (gd lkm-review output)",
+  "description": "Read-only external feedback report. The main agent decides whether candidates become Gaia actions; this report never changes belief/verdict/state by itself.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "generated_at",
+    "project_dir",
+    "mode",
+    "inputs",
+    "queries",
+    "retrievals",
+    "review_candidates",
+    "suggested_actions",
+    "errors",
+    "summary"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "generated_at": {"type": "string"},
+    "project_dir": {"type": "string"},
+    "mode": {"enum": ["live_lkm", "dry_run"]},
+    "inputs": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["query_plan", "top_k", "max_chains"],
+      "properties": {
+        "belief_snapshot": {"type": ["string", "null"]},
+        "review": {"type": ["string", "null"]},
+        "query_plan": {"type": "string"},
+        "target_qid": {"type": ["string", "null"]},
+        "top_k": {"type": "integer", "minimum": 1},
+        "max_chains": {"type": "integer", "minimum": 0},
+        "inquiry_next_edits_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "queries": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/ExecutedQuery"}
+    },
+    "retrievals": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/Retrieval"}
+    },
+    "review_candidates": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/ReviewCandidate"}
+    },
+    "suggested_actions": {
+      "type": "array",
+      "description": "Low-risk mechanical hints such as chain-derived frontier claims. The main agent still reviews them before editing plan.gaia.py.",
+      "items": {"type": "object", "additionalProperties": true}
+    },
+    "errors": {
+      "type": "array",
+      "items": {"type": "object", "additionalProperties": true}
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["claims_considered", "queries", "retrieval_queries", "review_candidates", "suggested_actions", "errors"],
+      "properties": {
+        "claims_considered": {"type": "integer", "minimum": 0},
+        "queries": {"type": "integer", "minimum": 0},
+        "retrieval_queries": {"type": "integer", "minimum": 0},
+        "review_candidates": {"type": "integer", "minimum": 0},
+        "suggested_actions": {"type": "integer", "minimum": 0},
+        "errors": {"type": "integer", "minimum": 0}
+      }
+    },
+    "output_path": {"type": "string"}
+  },
+  "$defs": {
+    "ExecutedQuery": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["query_id", "text", "intent"],
+      "properties": {
+        "query_id": {"type": "string", "minLength": 1},
+        "text": {"type": "string", "minLength": 1},
+        "intent": {"type": "string", "minLength": 1},
+        "target_qid": {"type": ["string", "null"]},
+        "rationale": {"type": ["string", "null"]},
+        "top_k": {"type": ["integer", "null"], "minimum": 1},
+        "max_chains": {"type": ["integer", "null"], "minimum": 0}
+      }
+    },
+    "Retrieval": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["query_id", "intent", "query", "candidates"],
+      "properties": {
+        "query_id": {"type": "string", "minLength": 1},
+        "claim": {"type": "object", "additionalProperties": true},
+        "intent": {"type": "string", "minLength": 1},
+        "query": {"type": "string", "minLength": 1},
+        "rationale": {"type": ["string", "null"]},
+        "top_k": {"type": "integer", "minimum": 1},
+        "max_chains": {"type": "integer", "minimum": 0},
+        "match_raw_path": {"type": ["string", "null"]},
+        "trace_id": {"type": ["string", "null"]},
+        "candidates": {
+          "type": "array",
+          "items": {"type": "object", "additionalProperties": true}
+        },
+        "error": {"type": "string"}
+      }
+    },
+    "ReviewCandidate": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "agent_decision_required",
+        "search_intent",
+        "lkm_claim_id",
+        "lkm_claim_text",
+        "decision_options"
+      ],
+      "properties": {
+        "agent_decision_required": {"const": true},
+        "query_id": {"type": "string"},
+        "query_text": {"type": "string"},
+        "query_rationale": {"type": ["string", "null"]},
+        "search_intent": {"type": "string", "minLength": 1},
+        "target_qid": {"type": "string"},
+        "target_label": {"type": ["string", "null"]},
+        "target_content": {"type": "string"},
+        "lkm_claim_id": {"type": "string", "minLength": 1},
+        "lkm_claim_text": {"type": "string", "minLength": 1},
+        "score": {"type": ["number", "null"]},
+        "total_chains": {"type": ["integer", "null"], "minimum": 0},
+        "source_packages": {"type": "array"},
+        "decision_options": {
+          "type": "array",
+          "items": {"enum": ["observe", "derive", "infer", "contradict", "frontier", "background", "ignore"]}
+        },
+        "decision_note": {"type": "string"}
+      }
+    }
+  }
+}

@@ -81,7 +81,7 @@ def _read_json(path: Path) -> dict[str, Any]:
 
 
 def _find_parent_label(project_dir: Path, action_id: str) -> str | None:
-    """从 plan 扫一遍找 action_id 对应的 claim_qid（== Python 变量名 == parent_label）。"""
+    """从 plan 扫一遍找 action_id 对应的 Python 变量名（node_label）用作 parent_label。"""
     try:
         _, compiled = load_and_compile(project_dir)
     except CompileError:
@@ -89,7 +89,7 @@ def _find_parent_label(project_dir: Path, action_id: str) -> str | None:
     actions, _ = _dispatch.scan(compiled.graph)
     for a in actions:
         if a.action_id == action_id:
-            return a.claim_qid
+            return a.node_label or a.claim_qid
     return None
 
 

@@ -104,3 +104,96 @@
     evidence.prior_justification: list[str]，绝不 grep claim_text。
   prevention: |
     schemas.py 强 typing；verify_server heuristic 路明确不做文本匹配。
+
+- id: pit-007
+  date: 2026-05-08
+  title: 单体 claim 装 6+ 子断言 → verify server inconclusive
+  domain: dsl
+  symptom: |
+    c5_likelihood 把 likelihood form、PSF model、background method、
+    Feldman-Cousins limits、systematics profiling、TS-to-cross-section
+    六件事捆成一个 claim。verify server 对各子项 plausibility 认可
+    (~0.74 confidence)，但无法确认全集，verdict=inconclusive，belief 卡
+    在 prior 0.40。
+  root_cause: |
+    verify server heuristic 路对一个 claim 做整体真值判断；子断言越多，
+    整体为真的概率越低，LLM 偏向保守→inconclusive。单体 claim 的粒度
+    与 verify server 的判别粒度不匹配。
+  fix: |
+    每个 claim 限 1-3 个可独立验证的断言。c5 应拆为：
+    (a) likelihood form + signal prediction formula
+    (b) PSF + energy migration convolution
+    (c) background estimation + RA scrambling
+    (d) TS + nuisance profiling + FC limits
+    分拆后各 claim 分别 verify，再用 support/deduction 拼回。
+  prevention: |
+    写 claim 前自检：这个 claim 包含几个独立断言？>3 就拆。
+
+- id: pit-008
+  date: 2026-05-08
+  title: support strategy prior 设 0.85 给 t_target 加了天花板
+  domain: bp
+  symptom: |
+    support(premises=[c1..c5], conclusion=t_target, prior=0.85) 下，
+    即使 5 个 premise 全 verified=0.99，t_target 也超不过 0.85。
+    真实 case：5 个 premise 在 [0.40, 0.70]，t_target 收敛到 ~0.53。
+  root_cause: |
+    support 语义是 "每个 premise 独立支撑结论"，结论信念 =
+    f(premise_beliefs, prior_edge)。prior_edge 是 support edge 本身
+    的先验可信度，数学上是结论信念的上界。
+  fix: |
+    两种策略：(a) 前提强时降低 support prior（如 0.70），让 BP 更多
+    依赖 premise 证据而非 edge prior；(b) 用 deduction 当且仅当结论
+    是前提的逻辑合取——但 deduction 有 AND-gate 瓶颈（一个 weak premise
+    拖全盘），需评估前提是否真的强合取关系。
+  prevention: |
+    选 support vs deduction 时做信念传播估算：support 下
+    B_target ≈ B_edge_prior × mean(B_premises)；deduction 下
+    B_target ≈ min(B_premises)。选能让目标达标的策略。
+
+- id: pit-009
+  date: 2026-05-09
+  title: 7+ 前提 conjunction → target belief 数学下界不可逾越
+  domain: bp
+  symptom: |
+    support([c1..c7], t, prior=0.8) 下 7 个 premise 在 [0.497, 0.698]，
+    target 三轮停滞在 0.304→0.300→0.307，距 threshold 0.75 差 0.45。
+    单个 premise 再 refine 也无法改变结构性天花板。
+  root_cause: |
+    junction-tree inference 下 support edge 的结论信念 ≈
+    edge_prior × product(premise_beliefs)^{1/n}。7 个 ~0.55 的前提
+    几何平均 ~0.55，× 0.80 ≈ 0.44 是理论上界。0.307 是实际收敛值。
+    7-premise conjunction 的数学下界约 0.55^7 ≈ 0.015，即使全部升到
+    0.95 也才 ~0.95^7 × 0.8 ≈ 0.56。multiplier ceiling 纯结构性的，
+    跟证据质量无关。
+  fix: |
+    拆 target：把 multi-part 问题拆成每个子问题一个独立 target_qid，
+    各自有 threshold=0.75。每个子 target 只挂 ≤3 个 premise（可及的）。
+    或者重组为两层的 support 图（底层 premise→子结论，子结论→总结论），
+    让 BP 在中间层积累信息。
+  prevention: |
+    写 plan.gaia.py 前估算：target 挂几个 premise？>4 就拆。计算公式：
+    ceiling = edge_prior × (max_premise_belief)^(1/n)（n=premise 数）。
+    ceiling < threshold → 必须重构，不要指望 BP 突破数学上界。
+
+- id: pit-010
+  date: 2026-05-09
+  title: evidence.json stance 字段控制 verdict，无视 judge reasoning
+  domain: verify
+  symptom: |
+    c6 (median fin LPM) evidence.json 里 stance=refute（残留自上一版错误的
+    neural crest claim），但 judge 的 reasoning 明确写 "The sub-agent's
+    premises substantially support the claim" 。verdict 仍返回 refuted，
+    BP 把 c6 压到接近 0。
+  root_cause: |
+    verify-server heuristic 路在评估 evidence 时，verdict 直接 key off
+    evidence.stance 字段而非 judge 的独立 judgment。judge 只在
+    stance=support 时做 plausibility 判断；stance=refute 直接返回 refuted。
+  fix: |
+    重新 dispatch sub-agent 写出 stance=support 的 evidence.json。
+    更根本的修复：verify-server 应让 judge 独立判断 stance，只在 judge
+    与 evidence stance 冲突时标 flag 而非直接采纳 evidence stance。
+  prevention: |
+    sub-agent dispatch 前确认 claim 文本正确；若 claim 在 dispatch 后
+    被修正（如此例 neural crest→LPM），必须重新 dispatch，不能复用旧
+    evidence.json。
