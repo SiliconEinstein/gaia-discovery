@@ -33,6 +33,22 @@ UPSTREAM = os.environ.get(
 USER_ID_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
 SAFE_USER_ID = os.environ.get("DS_PROXY_USER_ID", "gaia_discovery")
 
+# Reasoning-mode injection.
+#   DS_PROXY_REASONING_MODE = "off" | "low" | "medium" | "high" (default "high")
+#   DS_PROXY_THINKING_BUDGET = anthropic-style budget_tokens (default 16000)
+# When != "off", every POST /v1/messages request body is augmented with BOTH:
+#   - `thinking: {type: "enabled", budget_tokens: <budget>}`   (Anthropic-native)
+#   - `reasoning_effort: <mode>`                                (OpenAI/DS-native)
+# DS's Anthropic endpoint silently ignores whichever it doesn't recognize.
+# The other side is whatever the upstream actually consumes to enable
+# deeper reasoning. Users can disable per-request by passing
+# `reasoning_effort: "off"` in their own body (we only inject when absent).
+REASONING_MODE = os.environ.get("DS_PROXY_REASONING_MODE", "high").strip().lower()
+try:
+    THINKING_BUDGET = int(os.environ.get("DS_PROXY_THINKING_BUDGET", "16000"))
+except ValueError:
+    THINKING_BUDGET = 16000
+
 logging.basicConfig(level=logging.INFO, format="[ds-proxy] %(message)s")
 log = logging.getLogger("ds-proxy")
 
@@ -46,7 +62,43 @@ def _sanitize_user_id(value: str | None) -> str:
     return SAFE_USER_ID
 
 
-def _rewrite_body(raw: bytes) -> bytes:
+def _inject_reasoning(body: dict, path: str) -> bool:
+    """Inject thinking + reasoning_effort into messages-style request body.
+
+    Returns True if any field was added. Idempotent — won't override user-set
+    values (they take precedence; we only fill absent fields).
+
+    Only applies to /v1/messages (Anthropic-shape) and /v1/chat/completions
+    (OpenAI-shape) endpoints. Other endpoints (/v1/models, /__health, etc.)
+    are left untouched.
+
+    Honors DS_PROXY_REASONING_MODE env: "off" → no injection.
+    """
+    if REASONING_MODE == "off":
+        return False
+    if not isinstance(body, dict):
+        return False
+    # Only touch chat/completions-shaped requests
+    if "messages" not in body:
+        return False
+    is_messages_endpoint = path.endswith("/v1/messages") or path.endswith("v1/messages")
+    is_chat_endpoint = path.endswith("/v1/chat/completions") or path.endswith("chat/completions")
+    if not (is_messages_endpoint or is_chat_endpoint):
+        return False
+
+    changed = False
+    # Anthropic-native: thinking block. Don't override if user supplied.
+    if "thinking" not in body:
+        body["thinking"] = {"type": "enabled", "budget_tokens": THINKING_BUDGET}
+        changed = True
+    # OpenAI/DS-native: reasoning_effort string. Don't override if user supplied.
+    if "reasoning_effort" not in body:
+        body["reasoning_effort"] = REASONING_MODE
+        changed = True
+    return changed
+
+
+def _rewrite_body(raw: bytes, path: str = "") -> bytes:
     if not raw:
         return raw
     try:
@@ -61,6 +113,7 @@ def _rewrite_body(raw: bytes) -> bytes:
         cleaned = _sanitize_user_id(original)
         if cleaned != original:
             md["user_id"] = cleaned
+    _inject_reasoning(body, path)
     return json.dumps(body, ensure_ascii=False).encode("utf-8")
 
 
@@ -88,7 +141,7 @@ async def health():
 async def proxy(path: str, request: Request) -> Response:
     upstream_url = f"{UPSTREAM}/{path}"
     raw_body = await request.body()
-    new_body = _rewrite_body(raw_body) if raw_body else raw_body
+    new_body = _rewrite_body(raw_body, path=path) if raw_body else raw_body
     headers = _filter_request_headers(request.headers)
 
     upstream_req = _client.build_request(

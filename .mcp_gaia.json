@@ -1,0 +1,10 @@
+{
+  "_comment": "MCP server bundle for non-Lean projects (fs60 benchmark, generic discovery). Only gaia-lkm + WebSearch (built-in). Lean-lsp-mcp is intentionally omitted to keep tool surface small for non-Lean agents. Use .mcp_gaia_lean.json for Lean projects.",
+  "mcpServers": {
+    "gaia-lkm": {
+      "command": "gaia-lkm-mcp",
+      "args": [],
+      "env": {}
+    }
+  }
+}

@@ -9,6 +9,7 @@
 """
 from __future__ import annotations
 
+import json
 import textwrap
 import uuid
 from pathlib import Path
@@ -131,10 +132,37 @@ def test_stamp_compiles_after_patch(tmp_path):
 # apply_verdict
 # ---------------------------------------------------------------------------
 
+def _write_evidence(pkg: Path, action_id: str, *, formal_artifact: str | None = None) -> None:
+    """Write a minimal evidence.json so the ingest novelty check sees a high-novelty
+    artifact (avoids auto-downgrade in the test fixtures)."""
+    tr = pkg / "task_results"
+    tr.mkdir(parents=True, exist_ok=True)
+    payload: dict[str, Any] = {
+        "schema_version": 1,
+        "stance": "support",
+        "summary": f"test evidence for {action_id}",
+        "action_id": action_id,
+        "premises": [{"text": "p1", "source": "experiment"}],
+    }
+    if formal_artifact:
+        artifact_path = pkg / formal_artifact
+        artifact_path.parent.mkdir(parents=True, exist_ok=True)
+        artifact_path.write_text("# test artifact\n", encoding="utf-8")
+        payload["formal_artifact"] = formal_artifact
+    (tr / f"{action_id}.evidence.json").write_text(
+        json.dumps(payload), encoding="utf-8"
+    )
+
+
 @pytest.fixture()
 def stamped_pkg(tmp_path):
     pkg = _make_pkg(tmp_path, _PLAN_TWO_CLAIMS)
     stamp_action_ids(pkg, {"A": "act_aaaaaaaaaaaa", "B": "act_bbbbbbbbbbbb"})
+    # Default each stamped action gets a high-novelty evidence file so the
+    # baseline prior-cap assertions are not auto-downgraded. The novelty
+    # downgrade itself is covered by dedicated tests below.
+    _write_evidence(pkg, "act_aaaaaaaaaaaa", formal_artifact="task_results/act_a.lean")
+    _write_evidence(pkg, "act_bbbbbbbbbbbb", formal_artifact="task_results/act_b.lean")
     return pkg
 
 
@@ -247,6 +275,115 @@ def test_apply_unknown_verdict(stamped_pkg):
     )
     assert not res.patched
     assert "未知 verdict" in (res.error or "")
+
+
+# ---------------------------------------------------------------------------
+# Novelty-aware prior cap (anti reward-hacking)
+# ---------------------------------------------------------------------------
+
+def test_novelty_downgrades_missing_evidence(tmp_path, monkeypatch):
+    """verdict=verified + evidence.json 缺失 + strong backend → cap 软降到 0.70。"""
+    pkg = _make_pkg(tmp_path, _PLAN_TWO_CLAIMS)
+    stamp_action_ids(pkg, {"A": "act_aaaaaaaaaaaa", "B": "act_bbbbbbbbbbbb"})
+    # 故意不写 evidence.json
+    monkeypatch.delenv("GD_REWARD_NOVELTY_CHECK", raising=False)
+    res = apply_verdict(
+        pkg, action_id="act_bbbbbbbbbbbb",
+        verdict="verified", backend="lean_lake",
+        confidence=0.99, evidence="lake build OK (claimed)",
+    )
+    assert res.patched
+    assert res.new_prior == pytest.approx(PRIOR_CAP_HEURISTIC)
+    # state 仍升为 proven —— state 是 backend-driven，不被 novelty 降级影响
+    assert res.new_state == "proven"
+    novelty = res.diff_summary.get("novelty") or {}
+    assert novelty.get("kind") == "absent"
+    assert novelty.get("downgraded") is True
+    assert "artifact_missing" in (novelty.get("synthetic_warning") or "")
+    src = locate_plan_source(pkg).read_text(encoding="utf-8")
+    assert "synthetic_warning" in src  # provenance 留痕
+    assert "novelty_kind" in src
+
+
+def test_novelty_high_keeps_full_cap(tmp_path):
+    """formal_artifact 文件存在 → 不降级，prior 走 backend natural cap。"""
+    pkg = _make_pkg(tmp_path, _PLAN_TWO_CLAIMS)
+    stamp_action_ids(pkg, {"A": "act_aaaaaaaaaaaa", "B": "act_bbbbbbbbbbbb"})
+    artifact = pkg / "task_results" / "act_b.lean"
+    artifact.parent.mkdir(parents=True, exist_ok=True)
+    artifact.write_text("theorem trivial : True := trivial\n", encoding="utf-8")
+    (pkg / "task_results" / "act_bbbbbbbbbbbb.evidence.json").write_text(json.dumps({
+        "schema_version": 1, "stance": "support",
+        "summary": "lake build green",
+        "action_id": "act_bbbbbbbbbbbb",
+        "formal_artifact": "task_results/act_b.lean",
+        "premises": [{"text": "ok", "source": "lean"}],
+    }), encoding="utf-8")
+    res = apply_verdict(
+        pkg, action_id="act_bbbbbbbbbbbb",
+        verdict="verified", backend="lean_lake",
+        confidence=0.99, evidence="lake build OK",
+    )
+    assert res.patched
+    assert res.new_prior == pytest.approx(PRIOR_CAP_LEAN)
+    novelty = res.diff_summary.get("novelty") or {}
+    assert novelty.get("kind") == "high"
+    assert novelty.get("downgraded") is False
+
+
+def test_novelty_medium_path_in_text(tmp_path):
+    """没有 formal_artifact，但 summary 提到 .lean 路径 → medium，仍不降级。"""
+    pkg = _make_pkg(tmp_path, _PLAN_TWO_CLAIMS)
+    stamp_action_ids(pkg, {"A": "act_aaaaaaaaaaaa", "B": "act_bbbbbbbbbbbb"})
+    (pkg / "task_results").mkdir(parents=True, exist_ok=True)
+    (pkg / "task_results" / "act_aaaaaaaaaaaa.evidence.json").write_text(json.dumps({
+        "schema_version": 1, "stance": "support",
+        "summary": "Edited PPT2/Cases/Bloch4.lean:147-154 to use sum_rearrange.",
+        "action_id": "act_aaaaaaaaaaaa",
+        "premises": [{"text": "p1", "source": "derivation"}],
+    }), encoding="utf-8")
+    res = apply_verdict(
+        pkg, action_id="act_aaaaaaaaaaaa",
+        verdict="verified", backend="sandbox_python",
+        confidence=0.9, evidence="ok",
+    )
+    assert res.patched
+    assert res.new_prior == pytest.approx(PRIOR_CAP_EXPERIMENT)
+    novelty = res.diff_summary.get("novelty") or {}
+    assert novelty.get("kind") == "medium"
+    assert "PPT2/Cases/Bloch4.lean" in (novelty.get("mentioned_paths") or [])
+
+
+def test_novelty_check_disabled_via_env(tmp_path, monkeypatch):
+    """GD_REWARD_NOVELTY_CHECK=0 → 整个检查跳过，full cap。"""
+    pkg = _make_pkg(tmp_path, _PLAN_TWO_CLAIMS)
+    stamp_action_ids(pkg, {"A": "act_aaaaaaaaaaaa", "B": "act_bbbbbbbbbbbb"})
+    monkeypatch.setenv("GD_REWARD_NOVELTY_CHECK", "0")
+    res = apply_verdict(
+        pkg, action_id="act_bbbbbbbbbbbb",
+        verdict="verified", backend="lean_lake",
+        confidence=0.99, evidence="lake build OK",
+    )
+    assert res.patched
+    assert res.new_prior == pytest.approx(PRIOR_CAP_LEAN)  # 不降级
+    novelty = res.diff_summary.get("novelty") or {}
+    assert novelty.get("downgraded") is False
+
+
+def test_novelty_refuted_not_downgraded(tmp_path):
+    """verdict=refuted 不奖励 prior，不应被 novelty 检查影响。"""
+    pkg = _make_pkg(tmp_path, _PLAN_TWO_CLAIMS)
+    stamp_action_ids(pkg, {"A": "act_aaaaaaaaaaaa", "B": "act_bbbbbbbbbbbb"})
+    # 无 evidence.json
+    res = apply_verdict(
+        pkg, action_id="act_aaaaaaaaaaaa",
+        verdict="refuted", backend="sandbox_python",
+        confidence=0.95, evidence="counterexample at n=7",
+    )
+    assert res.patched
+    assert res.new_prior == pytest.approx(PRIOR_FLOOR_REFUTED)
+    novelty = res.diff_summary.get("novelty") or {}
+    assert novelty.get("downgraded") is False
 
 
 def test_apply_compiles_after_patch(stamped_pkg):

@@ -307,8 +307,25 @@ def test_apply_verdict_inconclusive_on_fresh_claim_only_flips_status(tmp_path):
 
 
 def test_apply_verdict_verified_lean_on_fresh(tmp_path):
-    """e2e: lean_lake 证过 → state=proven, prior=0.99。"""
+    """e2e: lean_lake 证过 → state=proven, prior=0.99。
+
+    要求 evidence.json 带 formal_artifact —— v3.5+ novelty 检查会把无 artifact 的
+    verified 软降到 heuristic cap，避免 BP 奖励"刷 verify"行为。这里写一个真实
+    artifact 跑 happy path；novelty downgrade 在 test_belief_ingest 里专测。
+    """
     project = _make_pkg(tmp_path, _plan_with(prior=0.5))
+    artifact = project / "task_results" / "fsm_proof.lean"
+    artifact.parent.mkdir(parents=True, exist_ok=True)
+    artifact.write_text("theorem trivial : True := trivial\n", encoding="utf-8")
+    import json as _json
+    (project / "task_results" / "act_test_fsm_0001.evidence.json").write_text(
+        _json.dumps({
+            "schema_version": 1, "stance": "support",
+            "summary": "lake build green", "action_id": "act_test_fsm_0001",
+            "formal_artifact": "task_results/fsm_proof.lean",
+            "premises": [{"text": "ok", "source": "lean"}],
+        }), encoding="utf-8",
+    )
     res = apply_verdict(
         project,
         action_id="act_test_fsm_0001",

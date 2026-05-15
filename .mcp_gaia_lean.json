@@ -1,0 +1,15 @@
+{
+  "_comment": "MCP server bundle for Lean-formalization projects (PPT2 + lean_swarm + any project that writes .lean files). Lean-lsp-mcp is the Archon fork (v0.25.1+ with rate limit adjustments). gaia-lkm-mcp is our wrapper around the Bohrium LKM client. Both run via stdio transport. Edit env section if endpoints change.",
+  "mcpServers": {
+    "lean-lsp": {
+      "command": "lean-lsp-mcp",
+      "args": [],
+      "env": {}
+    },
+    "gaia-lkm": {
+      "command": "gaia-lkm-mcp",
+      "args": [],
+      "env": {}
+    }
+  }
+}

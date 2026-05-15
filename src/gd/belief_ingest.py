@@ -26,6 +26,8 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import re
 import shutil
 import tempfile
 import tomllib
@@ -103,6 +105,175 @@ _BACKEND_TO_CAP: dict[str, float] = {
 
 
 # ---------------------------------------------------------------------------
+# Novelty-aware prior cap (anti reward-hacking)
+# ---------------------------------------------------------------------------
+#
+# 设计原则（非教条）：
+# - 不阻断任何 verdict / 不删 action 自由度 / 不动 USER_HINTS
+# - 仅在 verdict=verified 且 sub-agent 的 evidence.json 看不到任何 artifact 指针时，
+#   把 prior cap 软降级到 PRIOR_CAP_HEURISTIC (0.70)。
+# - "Artifact 指针"刻意宽松：formal_artifact 文件存在、或 summary/premise 文本里
+#   提到 .lean / .py 路径、或 premise 数 ≥ N。任何一个命中就算高新颖度。
+# - 软降级写入 synthetic_warning 进 verify_history，dashboard / red-team 看得见。
+# - 可用 GD_REWARD_NOVELTY_CHECK=0 整体关掉（开发期 / false positive 时）。
+#
+# Capability-preserving: agent 实际改了代码 / 写了 sandbox artifact 时，cap 不降；
+# 只有"verify 过去几个 LLM judge 但没动一行代码"的情形才被压回 heuristic 上限。
+
+NOVELTY_HIGH: str = "high"      # formal_artifact 文件存在
+NOVELTY_MEDIUM: str = "medium"  # 文本提到具体文件路径
+NOVELTY_LOW: str = "low"        # 仅有 summary，无文件引用
+NOVELTY_ABSENT: str = "absent"  # evidence.json 缺失 / 解析失败
+
+# 文件路径正则：匹配 X.lean / X.py，可选 `:<line>` 后缀。
+# 故意避免太宽 —— 不匹配纯字符串名（如 "Foo" 没扩展名）以减少 false positive。
+_ARTIFACT_PATH_RE = re.compile(
+    r"(?:^|[\s\(\[])([A-Za-z_][A-Za-z0-9_./-]*\.(?:lean|py))(?::\d+)?\b"
+)
+
+# Premise 数量阈值：≥ 3 条带 source=experiment/derivation 的 premise 视为已"做事"。
+_PREMISE_NOVELTY_THRESHOLD: int = 3
+_SUBSTANTIVE_SOURCES: frozenset[str] = frozenset({
+    "experiment", "derivation", "computation", "proof", "lean", "sandbox",
+})
+
+
+def _scan_text_for_artifact(text: str) -> bool:
+    """summary / premise text 里有没有 .lean / .py 文件路径。"""
+    if not text:
+        return False
+    return bool(_ARTIFACT_PATH_RE.search(text))
+
+
+def _evidence_artifact_score(
+    project_dir: Path | str, action_id: str
+) -> dict[str, Any]:
+    """读 ``task_results/<action_id>.evidence.json``，评估 artifact 新颖度。
+
+    Returns a dict with keys:
+      - ``kind``: NOVELTY_HIGH / MEDIUM / LOW / ABSENT
+      - ``formal_artifact``: str | None — declared path (if any)
+      - ``formal_artifact_exists``: bool — whether the declared path resolves
+      - ``mentioned_paths``: list[str] — file paths found in text scan
+      - ``substantive_premise_count``: int
+      - ``rationale``: str — one-line explanation for the audit log
+    """
+    pd = Path(project_dir).resolve()
+    ev_path = pd / "task_results" / f"{action_id}.evidence.json"
+    out: dict[str, Any] = {
+        "kind": NOVELTY_ABSENT,
+        "formal_artifact": None,
+        "formal_artifact_exists": False,
+        "mentioned_paths": [],
+        "substantive_premise_count": 0,
+        "rationale": "",
+    }
+    if not ev_path.is_file():
+        out["rationale"] = f"evidence.json missing: {ev_path.name}"
+        return out
+    try:
+        data = json.loads(ev_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        out["rationale"] = f"evidence.json unreadable: {exc}"
+        return out
+    if not isinstance(data, dict):
+        out["rationale"] = "evidence.json is not a JSON object"
+        return out
+
+    fa = data.get("formal_artifact")
+    if isinstance(fa, str) and fa.strip():
+        out["formal_artifact"] = fa
+        # Resolve relative to project_dir; also try absolute as-is.
+        candidates = [pd / fa, Path(fa)]
+        if any(c.is_file() for c in candidates):
+            out["formal_artifact_exists"] = True
+
+    summary = data.get("summary") or ""
+    mentioned: list[str] = []
+    if isinstance(summary, str):
+        for m in _ARTIFACT_PATH_RE.finditer(summary):
+            mentioned.append(m.group(1))
+
+    sub_count = 0
+    for p in data.get("premises") or []:
+        if not isinstance(p, dict):
+            continue
+        src = (p.get("source") or "").strip().lower()
+        text = p.get("text") or ""
+        if src in _SUBSTANTIVE_SOURCES:
+            sub_count += 1
+        if isinstance(text, str):
+            for m in _ARTIFACT_PATH_RE.finditer(text):
+                mentioned.append(m.group(1))
+    out["mentioned_paths"] = sorted(set(mentioned))[:8]
+    out["substantive_premise_count"] = sub_count
+
+    if out["formal_artifact_exists"]:
+        out["kind"] = NOVELTY_HIGH
+        out["rationale"] = f"formal_artifact resolves: {out['formal_artifact']}"
+    elif out["mentioned_paths"]:
+        out["kind"] = NOVELTY_MEDIUM
+        out["rationale"] = (
+            f"text references {len(out['mentioned_paths'])} file path(s); "
+            f"first: {out['mentioned_paths'][0]}"
+        )
+    elif sub_count >= _PREMISE_NOVELTY_THRESHOLD:
+        out["kind"] = NOVELTY_MEDIUM
+        out["rationale"] = (
+            f"{sub_count} substantive premises ({','.join(sorted(_SUBSTANTIVE_SOURCES))[:40]}...) "
+            f"but no file path detected"
+        )
+    else:
+        out["kind"] = NOVELTY_LOW
+        out["rationale"] = (
+            f"no formal_artifact, no file path in text, substantive premises={sub_count}"
+        )
+    return out
+
+
+def _resolve_prior_cap(
+    *,
+    backend: str,
+    verdict: str,
+    novelty: dict[str, Any] | None,
+) -> tuple[float, str | None]:
+    """根据 backend + novelty 返回 (cap, synthetic_warning_or_None)。
+
+    Verdict 不是 verified（refuted/inconclusive）→ 不动 cap（这些不奖励 prior）。
+    Verdict=verified + novelty=high/medium → 返回 backend 的自然 cap。
+    Verdict=verified + novelty=low/absent + strong backend → 降到 PRIOR_CAP_HEURISTIC，
+        附带 synthetic_warning 说明降级原因。
+    """
+    default_cap = _BACKEND_TO_CAP.get(backend, PRIOR_CAP_HEURISTIC)
+    if verdict != "verified":
+        return default_cap, None
+    if _reward_novelty_check_enabled() is False:
+        return default_cap, None
+    if novelty is None:
+        return default_cap, None
+    kind = novelty.get("kind")
+    if kind in (NOVELTY_HIGH, NOVELTY_MEDIUM):
+        return default_cap, None
+    if backend not in ("lean_lake", "sandbox_python"):
+        # heuristic / unavailable 的 cap 已经是 0.70，没必要再降
+        return default_cap, None
+    if default_cap <= PRIOR_CAP_HEURISTIC:
+        return default_cap, None
+    warning = (
+        f"artifact_missing: novelty={kind}; {novelty.get('rationale', '')}; "
+        f"prior cap downgraded {backend} {default_cap:.2f} → "
+        f"heuristic {PRIOR_CAP_HEURISTIC:.2f}"
+    )
+    return PRIOR_CAP_HEURISTIC, warning
+
+
+def _reward_novelty_check_enabled() -> bool:
+    """Read GD_REWARD_NOVELTY_CHECK env (default on; '0'/'false'/'off' to disable)."""
+    val = os.environ.get("GD_REWARD_NOVELTY_CHECK", "1").strip().lower()
+    return val not in ("0", "false", "off", "no", "")
+
+
+# ---------------------------------------------------------------------------
 # 状态机：verdict × old_state × backend_rank → (new_state, new_prior)
 # ---------------------------------------------------------------------------
 #
@@ -156,16 +327,24 @@ def _transition_state(
     old_prior: float | None,
     new_verdict: str,
     new_backend: str,
+    prior_cap_override: float | None = None,
 ) -> StateDecision:
     """决策新 state/prior。详见模块头注释。
 
     只在 belief_ingest 内部调用，不对外导出（测试通过 __all__ 可见）。
+
+    ``prior_cap_override`` 由 _apply_verdict_locked 注入：当 sub-agent evidence.json
+    没有 artifact 指针时，把 verified 的 cap 软降到 PRIOR_CAP_HEURISTIC，避免 BP 奖励"刷 verify"。
     """
     new_rank = _rank(new_backend)
     old_rank = _rank(old_backend)
 
     if new_verdict == "verified":
-        cap = _BACKEND_TO_CAP.get(new_backend, PRIOR_CAP_HEURISTIC)
+        cap = (
+            prior_cap_override
+            if prior_cap_override is not None
+            else _BACKEND_TO_CAP.get(new_backend, PRIOR_CAP_HEURISTIC)
+        )
         if old_state == "refuted":
             # 跨 backend 翻案：标 contested，prior 给新 cap（但保留审计痕迹）
             return StateDecision(
@@ -611,12 +790,14 @@ class _VerdictTransformer(cst.CSTTransformer):
         verdict: str,
         new_backend: str,
         provenance_entry: dict[str, str] | None,
+        prior_cap_override: float | None = None,
     ) -> None:
         super().__init__()
         self._target = target_action_id
         self._verdict = verdict
         self._new_backend = new_backend
         self._provenance = provenance_entry
+        self._prior_cap_override = prior_cap_override
         self.matched: int = 0
         # 单 action_id 应唯一匹配；若多于 1 上层会报错。这里记录最后一次决策即可。
         self.decision: StateDecision | None = None
@@ -648,6 +829,7 @@ class _VerdictTransformer(cst.CSTTransformer):
             old_prior=old_prior,
             new_verdict=self._verdict,
             new_backend=self._new_backend,
+            prior_cap_override=self._prior_cap_override,
         )
         self.decision = decision
 
@@ -816,6 +998,27 @@ def _apply_verdict_locked(
             error=f"未知 verdict: {verdict!r}",
         )
 
+    # Anti reward-hacking: 看 sub-agent 的 evidence.json 有没有 artifact 指针。
+    # 没有 → verdict=verified 时把 prior cap 软降到 heuristic (0.70)。不阻断。
+    novelty = _evidence_artifact_score(project_dir, action_id)
+    prior_cap_override, synthetic_warning = _resolve_prior_cap(
+        backend=backend, verdict=verdict, novelty=novelty,
+    )
+    # 让 cap 显式 None 时走默认；只有真的需要降级才传值
+    cap_override_arg = (
+        prior_cap_override
+        if (synthetic_warning is not None)
+        else None
+    )
+    if synthetic_warning:
+        logger.info(
+            "action_id=%s: novelty downgrade applied (%s) — %s",
+            action_id, novelty.get("kind"), synthetic_warning,
+        )
+        # 让降级 confidence 也跟着 reflect — sub-agent 没拿出 artifact，
+        # confidence 也该相应降。不动 verdict（仍是 verified）。
+        confidence = min(confidence, 0.60)
+
     provenance_entry: dict[str, str] = {
         "source": f"verify:{backend}",
         "action_id": action_id,
@@ -823,12 +1026,16 @@ def _apply_verdict_locked(
         "confidence": f"{confidence:.3f}",
         "evidence": evidence[:200].replace("\n", " "),
     }
+    if synthetic_warning:
+        provenance_entry["synthetic_warning"] = synthetic_warning
+        provenance_entry["novelty_kind"] = str(novelty.get("kind"))
 
     transformer = _VerdictTransformer(
         target_action_id=action_id,
         verdict=verdict,
         new_backend=backend,
         provenance_entry=provenance_entry,
+        prior_cap_override=cap_override_arg,
     )
     new_module = module.visit(transformer)
 
@@ -895,6 +1102,14 @@ def _apply_verdict_locked(
             "transition": decision.reason if decision else None,
             "provenance_appended": True,
             "inquiry_events_emitted": True,
+            "novelty": {
+                "kind": novelty.get("kind"),
+                "rationale": novelty.get("rationale"),
+                "formal_artifact_exists": novelty.get("formal_artifact_exists"),
+                "mentioned_paths": novelty.get("mentioned_paths"),
+                "downgraded": synthetic_warning is not None,
+                "synthetic_warning": synthetic_warning,
+            },
         },
     )
 

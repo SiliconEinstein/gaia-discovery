@@ -1,4 +1,4 @@
-# gaia-discovery v3
+# gaia-discovery v3.5
 
 **Claude Code skill-driven Gaia DSL 探索系统**
 
@@ -7,6 +7,23 @@
 verify / BP / inquiry 全程在 `gd run-cycle` 内闭环。
 
 **外层不再有 Python orchestrator**（v2 的 ~3300 行 `orchestrator.run_iteration` 已删除）。
+
+## 与 v3.4 的差异（v3.5 主线增量）
+
+| 主题 | v3.4 | v3.5 |
+|---|---|---|
+| 主 agent prompt | 单一 Step 2 终止条件（`target_belief ≥ threshold` 立即 quit），导致 agent 频繁早退 + watchdog 死循环 | 终止条件回归 `target.json` 用户契约；`ranked_focus` 替代 `belief_summary` 作为主工作信号；明确 raw belief 是审计量不是 reward |
+| Sub-agent 角色生态 | AGENTS.md 仅曝露 `gaia-action-runner`，其余 12 个角色 0 调用 | 13 个角色全部列表 + heuristic trigger 表（不强制配额）|
+| MCP 工具栈 | `--strict-mcp-config --mcp-config .empty_mcp.json`（禁用所有 MCP） | 双 config：`.mcp_gaia_lean.json` (lean-lsp + gaia-lkm) / `.mcp_gaia.json` (gaia-lkm only)。子 agent 可随时查 Mathlib + 文献 |
+| 终止信号文件 | bare `SUCCESS.md` / `STUCK.md` / `REFUTED.md`（语义混淆，watchdog 一直 rename） | `TERMINAL.<verdict>.iter<N>.md`（终止）vs `MILESTONE.iter<N>_<topic>.md`（checkpoint），bare 名自动 rename 但不退出 |
+| Watchdog | 早退立即重启 → 烧 token 死循环 | `subtype=success` honest quit → 30min cooldown（不立即重启）；双命名信号识别 |
+| Context discipline | 无相关条款 → agent 反复全文 Read 91K plan.gaia.py → autocompact thrash | 硬约束：主 agent grep 局部 + tail 200 行；子 agent 仅读 dispatcher 给的 prompt |
+| 反 reward-hacking | 无 | `belief_ingest` 加 novelty soft-cap：verify=verified 但 evidence.json 没 artifact 指针 → prior cap 软降到 heuristic 0.70 + `synthetic_warning` 留痕 |
+| DS API reasoning | DS-v4-pro 默认 chat 模式 | `ds_anthropic_proxy` 自动注入 `thinking: {enabled, budget_tokens=16000}` + `reasoning_effort=high` |
+| Launcher / watchdog 模板 | 每个 launcher 75-189 行，per-project 反复抄 boilerplate | 共享 `scripts/launcher_common.sh` + `scripts/watchdog_common.sh`，per-project 文件 11-50 行 |
+| 测试 | 246 pytest | **279 pytest + 41 bash test = 320 test，0 fail** |
+
+详见各节。
 
 ---
 
@@ -39,19 +56,123 @@ projects/<name>/                     ← 主 agent 在这里启 Claude Code
    └── .gaia/cycle_state.json        ← 状态机（idle/dispatched/running）
 
 仓库根:
-   ├── AGENTS.md                     ← 主 agent 角色契约（单角色）
+   ├── AGENTS.md                     ← 主 agent 角色契约（v3.5：终止契约+role 生态+context discipline+MCP+TERMINAL 命名）
    ├── commands/gaia-*.md            ← 7 个 slash skill（Archon 风格）
    ├── agents/gaia-action-runner.md  ← sub-agent 角色（Archon 风格）
-   ├── schemas/*.json                ← 8 份 JSON Schema（IO 报文）
-   ├── src/gd/cli_commands/          ← 9 个 CLI 子命令实现
+   ├── .mcp_gaia.json                ← MCP server bundle（非 Lean 项目：gaia-lkm only）
+   ├── .mcp_gaia_lean.json           ← MCP server bundle（Lean 项目：lean-lsp + gaia-lkm）
+   ├── schemas/*.json                ← 10 份 JSON Schema（IO 报文 + lkm_*）
+   ├── src/gd/cli_commands/          ← 10 个 CLI 子命令实现
    ├── src/gd/verify_server/         ← FastAPI :8092 + Archon lean4 audit
    ├── src/gd/{action_allowlist, cycle_state, belief_ingest,
-   │           gaia_bridge, inquiry_bridge}.py
-   ├── .claude/agents/               ← playground 12 角色（红蓝/PI review/archivist…）
+   │           gaia_bridge, inquiry_bridge, belief_ranker, lkm_client}.py
+   ├── src/gd_mcp_lkm/               ← gaia-lkm-mcp server（FastMCP, 子 agent 快查 LKM）
+   ├── ds_anthropic_proxy.py         ← DS API 反代 + thinking/reasoning_effort 注入
+   ├── scripts/launcher_common.sh    ← 共享 launcher 流程（10 个 per-project launcher 复用）
+   ├── scripts/watchdog_common.sh    ← 共享 watchdog 逻辑（双命名识别 + honest-quit cooldown）
+   ├── scripts/{launch,watchdog}_*.sh ← thin wrappers per project
+   ├── .claude/agents/               ← 12 角色（红蓝/PI review/auditor/oracle/rubric-anticipator/…）
    ├── .claude/skills/               ← playground 21 skill
    ├── .claude/memory/*.yaml         ← 跨会话记忆（decisions/patterns/pitfalls）
    └── ears/{ears-trace, ears-state} ← PostToolUse hook，自动捕获行为轨迹
 ```
+
+---
+
+## v3.5 关键设计 (1) — Sub-agent MCP 工具栈
+
+子 agent 通过 `--mcp-config` 自动挂上下面两个 MCP server，**可在写 evidence 的过程中随时**做查询，不需要等下一轮 BP 收口。
+
+### `lean-lsp` (Archon 上游 [lean-lsp-mcp](https://github.com/oOo0oOo/lean-lsp-mcp) v0.25+)
+
+22 个工具，覆盖 Lean 4 全流程：
+
+| 类别 | 工具 |
+|---|---|
+| **Lean 状态查询** | `lean_goal`, `lean_diagnostic_messages`, `lean_hover_info`, `lean_completions`, `lean_term_goal`, `lean_file_outline` |
+| **Mathlib 搜索** | `lean_leansearch` (NL→Mathlib, rate-limited 3/30s), `lean_loogle` (type→Mathlib), `lean_leanfinder` (semantic), `lean_state_search` (goal→closing lemmas), `lean_hammer_premise`, `lean_local_search` |
+| **执行/测试** | `lean_multi_attempt` (试 tactic 不动文件), `lean_run_code`, `lean_verify` (axiom check) |
+| **重型** | `lean_declaration_file`, `lean_build`, `lean_profile_proof` |
+
+### `gaia-lkm` (本仓库 `src/gd_mcp_lkm/`)
+
+3 个工具，wrap `gd.lkm_client.LkmClient`：
+
+- `lkm_health()` — 服务可达 + access-key 状态（不消耗配额）
+- `lkm_match(text, top_k)` — 自然语言 → claim 候选
+- `lkm_evidence(claim_id)` — claim_id → evidence chains
+
+LKM_ACCESS_KEY 未设 → `lkm_health.available=false`，agent 自然 fallback 到 Claude Code 内建 `WebSearch`。
+
+### MCP config 矩阵
+
+| 项目类型 | 配置文件 | 挂载 |
+|---|---|---|
+| **Lean 形式化** (PPT² + lean_swarm) | `.mcp_gaia_lean.json` | `lean-lsp` + `gaia-lkm` |
+| **非 Lean** (fs60 benchmark / 一般 discovery) | `.mcp_gaia.json` | `gaia-lkm` only |
+
+不强制使用 — 工具只是"挂着"。
+
+---
+
+## v3.5 关键设计 (2) — 终止信号 + Watchdog cooldown
+
+### 文件命名（替代 bare SUCCESS.md / STUCK.md / REFUTED.md）
+
+| 文件 | 含义 | 触发 watchdog 退出？ |
+|---|---|---|
+| `MILESTONE.iter<N>_<topic>.md` | per-iter 检查点（多个 OK，仅归档） | 否 |
+| `TERMINAL.success.iter<N>.md` | 全项目完成（target.json 条件成立） | **是** |
+| `TERMINAL.refuted.iter<N>.md` | 结构性证伪 | **是** |
+| `TERMINAL.stuck.iter<N>.md` | 短探索循环触顶（**必带**下轮 next-PR 计划） | **是** |
+| bare `SUCCESS.md` / `STUCK.md` / `REFUTED.md` | **deprecated** | 否（auto-rename 到 `MILESTONE.iter_AUTO_*`）|
+
+### Watchdog: honest-quit cooldown
+
+| 退出类型 | 旧 watchdog | 新 watchdog (`scripts/watchdog_common.sh`) |
+|---|---|---|
+| claude crash (`subtype=error`) | 立即重启 | 立即重启（fast-fail streak 限制：5 次 5min 内死 → 放弃） |
+| claude `subtype=success` honest quit | **立即重启 → 同一上下文又立即 quit → 死循环烧钱** | **30 分钟 cooldown**（`HONEST_QUIT_COOLDOWN_S`），让 rate-limit 窗口过去 |
+| TERMINAL.\*.iter\*.md 文件出现 | rename 当 SUCCESS | **退出 watchdog**（clean exit） |
+| bare SUCCESS/STUCK/REFUTED | 退出（有时） | **rename 到 MILESTONE，不退出** |
+
+实测：v3.4 下 A 线一周 honest-quit 50+ 次 → 估算 $100+ 浪费；v3.5 这部分被 cooldown 吸收。
+
+---
+
+## v3.5 关键设计 (3) — 反 reward-hacking ingest 层
+
+`gd ingest` / `gd run-cycle` 在写回 plan 前，读 `task_results/<action_id>.evidence.json` 评估 artifact "新颖度"：
+
+| 新颖度 | 触发条件 | verdict=verified 时 prior cap |
+|---|---|---|
+| **high** | `formal_artifact` 文件存在 | backend 自然 cap (lean_lake=0.99 / sandbox_python=0.85) |
+| **medium** | summary/premise 文本含 `.lean`/`.py` 路径，或 ≥3 条 `source=experiment/derivation/lean/sandbox` premise | backend 自然 cap |
+| **low / absent** | 仅 summary 无文件引用，或 evidence.json 缺失 | **软降到 `heuristic 0.70`** + `synthetic_warning="artifact_missing"` 写入 verify_history |
+
+**capability-preserving**：不阻断 verdict、不缩 action 类型、不改 USER_HINTS。agent 想刷 verify 也行，但回报率自然下降；真改代码就拿满 cap。可用 `GD_REWARD_NOVELTY_CHECK=0` 整体关闭。
+
+---
+
+## v3.5 关键设计 (4) — DS API thinking mode
+
+`ds_anthropic_proxy.py`（FastAPI 反代 `:8788` → `https://api.deepseek.com/anthropic`）每个 `/v1/messages` 请求自动注入：
+
+```json
+"thinking": {"type": "enabled", "budget_tokens": 16000},
+"reasoning_effort": "high"
+```
+
+两种字段同时注入（Anthropic-native + OpenAI/DS-native），DS 端取它认识的那个。**用户传入的值优先**（仅当字段缺失时注入），可通过 `DS_PROXY_REASONING_MODE=off` 整体关闭。
+
+实测：DS-v4-pro 响应里现在含 `type: "thinking"` block + `type: "text"` block 两段（CoT + 最终答案）。
+
+环境变量：
+
+| Env | 默认 | 说明 |
+|---|---|---|
+| `DS_PROXY_REASONING_MODE` | `high` | `off` / `low` / `medium` / `high` |
+| `DS_PROXY_THINKING_BUDGET` | `16000` | Anthropic-style budget tokens |
 
 ---
 
@@ -301,6 +422,27 @@ Dashboard 是只读视图，**不会**改动任何项目数据。
 | EARS 行为捕获 | `ears/ears-trace`（`PostToolUse` hook） | Write/Edit/Bash 后自动写轨迹 |
 
 主 agent 可在 procedure 任意点 `Task` 调这些角色（红蓝对抗、PI review、archivist 归档），或 `/skill-name` 触发 skill。
+
+---
+
+## 13 个 sub-agent 角色 (.claude/agents/)
+
+仅 `gaia-action-runner` MANDATORY；其余 12 个按场景 heuristic trigger（不是 quota）：
+
+| 角色 | 何时派 |
+|---|---|
+| **gaia-action-runner** | 每个 BP claim（MANDATORY）|
+| `red-team` | 新 claim verified 后；新增 axiom；strong claim 未经反例测试 |
+| `auditor` | 新增 axiom / sorry；大批量改动后；publish 前 |
+| `oracle` | claim verdict 反复抖动；下一步派哪个 vector 不确定 |
+| `pi-reviewer` | claim 链突然变长 (>5 deduction)；schema 越界怀疑 |
+| `deep-researcher` | TERMINAL.stuck 前最后挽救；statement 怀疑写错 |
+| `rubric-anticipator` | hidden-rubric 评测（如 fs60）；PPT² 等开放问题不用 |
+| `scribe` | publish / 跨轮归档 |
+| `surveyor` | 文献搜索；LKM 不可用时通过 WebSearch fallback |
+| `archivist` / `orchestrator` / `quality-gate` / `sentinel` / `lab-notebook` | publish / DAG / 一致性 / schema / 长 session 记录 |
+
+详见 `AGENTS.md §5`。
 
 ---
 

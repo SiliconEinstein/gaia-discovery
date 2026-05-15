@@ -31,9 +31,10 @@ dev = [
 
 [project.scripts]
 gd = "gd.cli:main"
+gaia-lkm-mcp = "gd_mcp_lkm.server:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/gd"]
+packages = ["src/gd", "src/gd_mcp_lkm"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "skills" = "gd/skills"
