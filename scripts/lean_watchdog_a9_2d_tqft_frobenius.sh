@@ -8,4 +8,6 @@ export LAUNCHER="$REPO/scripts/launch_lean_a9_2d_tqft_frobenius.sh"
 export LOG="/personal/lean_swarm/logs/a9_2d_tqft_frobenius.watchdog.log"
 export STDOUT_LOG="/personal/lean_swarm/logs/a9_2d_tqft_frobenius.stdout.log"
 
+export LEAN_VERIFY_BUILD="PhysicsLean.A92dTqftFrobenius.Theorem"
+export LEAN_VERIFY_ROOT="/personal/lean_swarm/lean"
 exec bash "$REPO/scripts/watchdog_common.sh"

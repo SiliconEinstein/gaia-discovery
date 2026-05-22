@@ -8,4 +8,6 @@ export LAUNCHER="$REPO/scripts/launch_lean_b7_naimark_dilation.sh"
 export LOG="/personal/lean_swarm/logs/b7_naimark_dilation.watchdog.log"
 export STDOUT_LOG="/personal/lean_swarm/logs/b7_naimark_dilation.stdout.log"
 
+export LEAN_VERIFY_BUILD="PhysicsLean.B7NaimarkDilation.Theorem"
+export LEAN_VERIFY_ROOT="/personal/lean_swarm/lean"
 exec bash "$REPO/scripts/watchdog_common.sh"

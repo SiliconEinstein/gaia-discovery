@@ -8,4 +8,6 @@ export LAUNCHER="$REPO/scripts/launch_lean_a6_lieb_concavity.sh"
 export LOG="/personal/lean_swarm/logs/a6_lieb_concavity.watchdog.log"
 export STDOUT_LOG="/personal/lean_swarm/logs/a6_lieb_concavity.stdout.log"
 
+export LEAN_VERIFY_BUILD="PhysicsLean.A6LiebConcavity.Theorem"
+export LEAN_VERIFY_ROOT="/personal/lean_swarm/lean"
 exec bash "$REPO/scripts/watchdog_common.sh"

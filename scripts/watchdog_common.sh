@@ -85,14 +85,49 @@ rename_bare_marker() {
 terminal_marker_present_since_start() {
   # Return 0 iff at least one TERMINAL.<verdict>.iter<N>.md exists with mtime
   # >= $start_ts. Strict pattern match — files must literally start with TERMINAL.
+  #
+  # For TERMINAL.success.* on Lean projects (env LEAN_VERIFY_BUILD=<module>):
+  # additionally run `lake build <module>` in $LEAN_VERIFY_ROOT (default /personal/lean_swarm/lean).
+  # If build fails, auto-rename the marker to TERMINAL.fake_success_<ts>_lake_rc<N>.md
+  # and DO NOT exit. This prevents agents from declaring success on uncompilable code.
   shopt -s nullglob
   local f
   for f in "$PROJ"/TERMINAL.*.iter*.md; do
-    # Skip false positives: TERMINAL.iter_AUTO_*, weird shell expansion etc.
     [ -f "$f" ] || continue
     local mtime
     mtime=$(stat -c %Y "$f" 2>/dev/null) || continue
     if [ "$mtime" -ge "$start_ts" ]; then
+      # Lean success verification gate
+      local bn=$(basename "$f")
+      case "$bn" in
+        TERMINAL.success.*|TERMINAL.SUCCESS.*)
+          if [ -n "${LEAN_VERIFY_BUILD:-}" ]; then
+            local lean_root="${LEAN_VERIFY_ROOT:-/personal/lean_swarm/lean}"
+            log_event "verifying lake build $LEAN_VERIFY_BUILD before accepting $bn..."
+            local build_log=/tmp/lake_verify_${PROJECT_LABEL:-watchdog}_$$.log
+            ( cd "$lean_root" && timeout 1500 lake build "$LEAN_VERIFY_BUILD" > "$build_log" 2>&1 )
+            local rc=$?
+            if [ "$rc" -ne 0 ]; then
+              local new_name="$PROJ/TERMINAL.fake_success_$(date +%Y%m%dT%H%M%S)_lake_rc${rc}.md"
+              mv "$f" "$new_name"
+              # append build log tail for forensics
+              {
+                echo ""
+                echo "---"
+                echo "## Auto-downgraded by watchdog: lake build rc=$rc"
+                echo "## Build command: lake build $LEAN_VERIFY_BUILD (cwd=$lean_root)"
+                echo "## Build log tail (last 80 lines):"
+                tail -80 "$build_log"
+              } >> "$new_name"
+              log_event "REJECTED $bn (lake rc=$rc); renamed to $(basename "$new_name"). Watchdog continues."
+              rm -f "$build_log"
+              continue  # don't exit; look for other markers (there shouldn't be any matching)
+            fi
+            log_event "lake build $LEAN_VERIFY_BUILD rc=0; honoring $bn"
+            rm -f "$build_log"
+          fi
+          ;;
+      esac
       shopt -u nullglob
       echo "$f"
       return 0

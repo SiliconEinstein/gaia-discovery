@@ -8,4 +8,6 @@ export LAUNCHER="$REPO/scripts/launch_lean_b4_peierls_ising.sh"
 export LOG="/personal/lean_swarm/logs/b4_peierls_ising.watchdog.log"
 export STDOUT_LOG="/personal/lean_swarm/logs/b4_peierls_ising.stdout.log"
 
+export LEAN_VERIFY_BUILD="PhysicsLean.B4PeierlsIsing.Theorem"
+export LEAN_VERIFY_ROOT="/personal/lean_swarm/lean"
 exec bash "$REPO/scripts/watchdog_common.sh"

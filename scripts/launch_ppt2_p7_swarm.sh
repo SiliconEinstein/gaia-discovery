@@ -31,7 +31,43 @@ Read order:
 
 P7 is a 14-year open conjecture. STUCK / inconclusive outputs are EXPECTED and OK — document dead-ends precisely. Success probability: <2% full / ~15% partial / ~50% helper-lemma-promote. Use multiple attack vectors in parallel.
 
-Available MCP tools for sub-agents: lean-lsp (Mathlib search + Lean state) and gaia-lkm (literature lookup, key for finding existing partial results). Red-team / oracle / deep-researcher roles are particularly valuable here.
+## MCP Search Protocol (mandatory — see AGENTS.md §6)
+
+P7 is a hard problem; literature search + Mathlib search are the highest-leverage tools. Sub-agents MUST search via MCP first:
+- `lkm_match("PPT² conjecture d=3 entanglement breaking")` + `lkm_evidence(<id>)` — find existing partial results / counterexamples in the Bohrium claim graph
+- `lean_local_search(query)` / `lean_leansearch(description)` — Mathlib lemma search
+- `lean_loogle(type_pattern)` / `lean_state_search(goal_text)` — type-based / goal-based search
+- `lean_multi_attempt(file, line, [tactics])` — try tactics without writing
+- `WebSearch` — Zulip / arXiv / community PRs for non-Mathlib literature
+
+
+## Mathlib gap-builder mindset (core mode for this project — see AGENTS.md §6.5)
+
+When you (or a sub-agent) discovers Mathlib doesn't have a needed lemma:
+
+* DEFAULT action = **prove it as a real helper lemma** (5-200 LOC) in a `<Project>/Mathlib/<Topic>.lean` file. This is the work, not the obstacle.
+* `axiom` is ONLY for genuine open-conjecture statements (must live in `<Project>/Conjectures/`).
+* `sorry` is ONLY for `gap_kind: mathlib_missing` with documented Mathlib PR plan + paper ref + LOC estimate; evidence.json MUST include all three.
+* Forbidden reward-hacking patterns:
+    - `axiom helper_lemma : P` then `exact helper_lemma` to skip proof = AUTO red-team downgrade
+    - Target-statement axiomatization (`axiom <main_target> : P`) = AUTO fake_success
+    - Non-standard TERMINAL kinds (e.g. `TERMINAL.complete_modulo_X`) = AUTO downgrade
+    - "Lake OOM so LSP type-check is enough" = NO, the watchdog runs lake build
+
+Goal: each session should leave behind either (a) lake-rc=0 0-axiom 0-sorry main target, OR (b) a new `<Topic>.lean` helper file that closes a gap and itself is lake-rc=0.
+
+
+## Mandatory advisory sub-agent triggers (see AGENTS.md §5 Step 5b)
+
+Heuristic ≠ optional. Single-session agents tend to skip self-audit because spending tokens on red-team / auditor doesn't close a BP claim — but missing self-audit is why reward hacking (axiom shortcuts, target weakening, B10's 18 axiom-defs, B9's existential quantifier weakening) survives undetected. Therefore:
+
+* `red-team` MUST be dispatched at iter ∈ {3, 8, 15, 25, 40, 60, ...} OR when this session introduced any new `axiom` OR when the main target's belief jumped from <0.5 to >0.9 in one iter.
+* `auditor` MUST be dispatched before writing ANY `TERMINAL.success.*` marker — auditor checks docstring compliance + axiom audit + reproducibility triple (gap_kind/paper_ref/loc_est).
+* `mathlib-gap-builder` MUST be dispatched when a sub-agent reports `gap_kind: mathlib_missing` — this is your "build the helper file" sub-agent.
+* `deep-researcher` MUST be dispatched as the last move before writing `TERMINAL.stuck.*` — one last counterexample / alternative-vector hunt.
+
+Skipping these = red-team's job to retroactively downgrade your TERMINAL marker.
+Forbidden: `Bash` grep over mathlib, guessing lemma names, writing axioms before exhausting `lkm_match` + `lean_leansearch` + `WebSearch`. Red-team / oracle / deep-researcher roles are particularly valuable here.
 
 Execute AGENTS.md Procedure. Act, do not narrate.
 PROMPT_EOF

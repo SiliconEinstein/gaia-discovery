@@ -1,29 +1,29 @@
 #!/usr/bin/env bash
-# launch_lean_b4_peierls_ising.sh — Lean swarm agent for Peierls argument for 2D Ising phase transition.
+# launch_lean_a4_squashed_monogamy.sh — Lean swarm agent for Monogamy of squashed entanglement.
 #
 # Delegates boilerplate to scripts/launcher_common.sh.
 #
-# Stop with: pkill -f 'lean_swarm/projects/b4_peierls_ising'
+# Stop with: pkill -f 'lean_swarm/projects/a4_squashed_monogamy'
 
 REPO=/root/gaia-discovery
 
-export PROJECT_LABEL="lean_b4_peierls_ising"
-export PROJ="/personal/lean_swarm/projects/b4_peierls_ising"
+export PROJECT_LABEL="lean_a4_squashed_monogamy"
+export PROJ="/personal/lean_swarm/projects/a4_squashed_monogamy"
 export LOGDIR="/personal/lean_swarm/logs"
-export STDOUT_LOG="$LOGDIR/b4_peierls_ising.stdout.log"
-export STDERR_LOG="$LOGDIR/b4_peierls_ising.stderr.log"
+export STDOUT_LOG="$LOGDIR/a4_squashed_monogamy.stdout.log"
+export STDERR_LOG="$LOGDIR/a4_squashed_monogamy.stderr.log"
 export ENV_FILE="$REPO/env-opus.sh"
 export MCP_CONFIG="$REPO/.mcp_gaia_lean.json"
 export ADD_DIRS="$REPO /root/Gaia /personal/lean_swarm"
 
 export PROMPT=$(cat <<'PROMPT_EOF'
-You are the gaia-discovery main agent for project `b4_peierls_ising` (Lean swarm, B-tier).
+You are the gaia-discovery main agent for project `a4_squashed_monogamy` (Lean swarm, A-tier).
 
-Target: Peierls argument for 2D Ising phase transition.
-LKM source claim: gcn_6ed6fe65bfc54c14.
-Estimated LOC: 1500-4000.
+Target: Monogamy of squashed entanglement.
+LKM source claim: gcn_4494c7d7f54c4bbc.
+Estimated LOC: 200-600.
 
-CWD = /personal/lean_swarm/projects/b4_peierls_ising. Lean lake project at /personal/lean_swarm/lean/. Output directory: PhysicsLean/B4PeierlsIsing/ (CamelCase). Module: PhysicsLean.B4PeierlsIsing.Theorem.
+CWD = /personal/lean_swarm/projects/a4_squashed_monogamy. Lean lake project at /personal/lean_swarm/lean/. Output directory: PhysicsLean/A4SquashedMonogamy/ (CamelCase). Module: PhysicsLean.A4SquashedMonogamy.Theorem.
 
 Read order:
 1. /root/gaia-discovery/AGENTS.md — procedure, termination contract, role ecosystem, context discipline, MCP tools.

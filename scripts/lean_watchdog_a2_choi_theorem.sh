@@ -8,4 +8,6 @@ export LAUNCHER="$REPO/scripts/launch_lean_a2_choi_theorem.sh"
 export LOG="/personal/lean_swarm/logs/a2_choi_theorem.watchdog.log"
 export STDOUT_LOG="/personal/lean_swarm/logs/a2_choi_theorem.stdout.log"
 
+export LEAN_VERIFY_BUILD="PhysicsLean.A2ChoiTheorem.Theorem"
+export LEAN_VERIFY_ROOT="/personal/lean_swarm/lean"
 exec bash "$REPO/scripts/watchdog_common.sh"
