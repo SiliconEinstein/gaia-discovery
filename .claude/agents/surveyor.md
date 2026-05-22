@@ -1,7 +1,7 @@
 ---
 name: surveyor
 description: Surveyor — Literature Search Dispatcher Agent
-tools: Read, Grep, Glob, Bash, WebSearch, WebFetch
+tools: Read, Grep, Glob, Bash, WebSearch, WebFetch, lean_leansearch, lean_local_search, lean_loogle, lean_diagnostic_messages, lean_goal, lkm_match, lkm_evidence, lkm_health
 model: sonnet
 ---
 

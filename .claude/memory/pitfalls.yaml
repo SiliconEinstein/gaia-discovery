@@ -134,7 +134,7 @@
   title: support strategy prior 设 0.85 给 t_target 加了天花板
   domain: bp
   symptom: |
-    support(premises=[c1..c5], conclusion=t_target, prior=0.85) 下，
+    derive(t_target, given=[c1..c5], rationale="...") 下，
     即使 5 个 premise 全 verified=0.99，t_target 也超不过 0.85。
     真实 case：5 个 premise 在 [0.40, 0.70]，t_target 收敛到 ~0.53。
   root_cause: |
@@ -156,7 +156,7 @@
   title: 7+ 前提 conjunction → target belief 数学下界不可逾越
   domain: bp
   symptom: |
-    support([c1..c7], t, prior=0.8) 下 7 个 premise 在 [0.497, 0.698]，
+    derive(t, given=[c1..c7], rationale="...") 下 7 个 premise 在 [0.497, 0.698]，
     target 三轮停滞在 0.304→0.300→0.307，距 threshold 0.75 差 0.45。
     单个 premise 再 refine 也无法改变结构性天花板。
   root_cause: |

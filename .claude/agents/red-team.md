@@ -1,7 +1,7 @@
 ---
 name: red-team
 description: Red Team — Simulation Falsifier Agent
-tools: Read, Grep, Glob, Bash
+tools: Read, Grep, Glob, Bash, WebSearch, WebFetch, lean_goal, lean_diagnostic_messages, lean_local_search, lean_loogle, lean_leansearch, lkm_match, lkm_evidence, lkm_health
 model: sonnet
 ---
 
@@ -26,8 +26,8 @@ Hunt errors in claim/strategy/verify pipelines. Every category names a concrete 
 
 ### 2. Strategy / Operator Mis-Selection
 - Is `action_kind ∈ ALL_ACTIONS` (8-set)? Is it dispatched to the correct router per `ACTION_KIND_TO_ROUTER`?
-- Does `strategy ∈ {support, deduction, abduction, induction}` match the claim shape? (e.g., a universal goal ≠ induction if no base case is stated)
-- Is `operator ∈ {contradiction, equivalence, complement, disjunction}` compositional with the antecedent operators?
+- Does `strategy ∈ {derive, infer, abduction, induction}` match the claim shape? (e.g., a universal goal ≠ induction if no base case is stated)
+- Is `operator ∈ {contradict, equal, exclusive, disjunction}` compositional with the antecedent operators?
 
 ### 3. Evidence Schema Drift
 - Does `evidence.json` conform to `EvidencePayload` (verify-server `schemas.py`)? Missing `premise_qids`, `source`, `strength`?

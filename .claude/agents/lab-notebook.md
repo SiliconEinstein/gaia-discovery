@@ -1,7 +1,7 @@
 ---
 name: lab-notebook
 description: Lab Notebook — Experiment Journal Agent
-tools: Read, Grep, Glob, Bash, Write
+tools: Read, Grep, Glob, Bash, Write, WebSearch, WebFetch, lean_leansearch, lean_local_search, lean_loogle, lean_diagnostic_messages, lean_goal, lkm_match, lkm_evidence, lkm_health
 model: sonnet
 ---
 

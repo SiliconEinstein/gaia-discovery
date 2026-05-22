@@ -1,0 +1,4 @@
+{
+  "_comment": "Empty MCP server config — disables all MCP plugins. Used for benchmark runs where MCP tool surface should be minimal to avoid agent confusion.",
+  "mcpServers": {}
+}

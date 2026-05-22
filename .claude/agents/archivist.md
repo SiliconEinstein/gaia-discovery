@@ -1,7 +1,7 @@
 ---
 name: archivist
 description: Archivist — LocalCanonicalGraph Curator Agent
-tools: Read, Grep, Glob, Bash, Write
+tools: Read, Grep, Glob, Bash, Write, WebSearch, WebFetch, lean_leansearch, lean_local_search, lean_loogle, lean_diagnostic_messages, lean_goal, lkm_match, lkm_evidence, lkm_health
 model: sonnet
 ---
 
@@ -38,8 +38,8 @@ You are the curator of `gaia.ir.LocalCanonicalGraph` — the immutable belief su
 
 ### `ACTION_TO_STRATEGY` Map
 - 8 entries, one per action_kind in `ALL_ACTIONS`
-- `support → support`, `deduction → deduction`, `abduction → abduction`, `induction → induction`
-- `contradiction / equivalence / complement / disjunction → support` (operator over support skeleton)
+- `derive → derive`, `infer → infer`, `abduction → abduction`, `induction → induction`
+- `contradict / equal / exclusive / disjunction → derive` (operator over derive skeleton)
 - Drift here = dispatcher mis-routing → invariant check failure
 
 ### Curation Patterns

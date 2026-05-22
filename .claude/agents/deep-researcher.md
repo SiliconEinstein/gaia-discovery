@@ -1,7 +1,7 @@
 ---
 name: deep-researcher
 description: Deep Researcher — Claim Shape & Counterexample Hunter Agent
-tools: Read, Grep, Glob, Bash, WebSearch, WebFetch
+tools: Read, Grep, Glob, Bash, WebSearch, WebFetch, lkm_match, lkm_evidence, lkm_health, lean_leansearch, lean_local_search, lean_loogle, lean_diagnostic_messages, lean_goal
 model: sonnet
 ---
 
@@ -53,7 +53,7 @@ You do long-horizon literature + theorem-prover library dives to answer question
 ### When handing off to Archivist:
 - [ ] Claim → canonical qid mapping proposed
 - [ ] Premise chain sketched (which Mathlib lemmas it depends on)
-- [ ] Strategy recommendation: `deduction` vs `induction` vs `support` with rationale
+- [ ] Strategy recommendation: `derive` vs `induction` vs `derive` with rationale
 
 ## Anti-Patterns
 - Don't hand back Surveyor's raw hit list — synthesize or you added no value.

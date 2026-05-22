@@ -1,7 +1,7 @@
 ---
 name: auditor
 description: Auditor — Reproducibility Compliance Officer Agent
-tools: Read, Grep, Glob, Bash
+tools: Read, Grep, Glob, Bash, lean_goal, lean_diagnostic_messages, lean_local_search, lean_loogle, WebSearch, WebFetch, lean_leansearch, lkm_match, lkm_evidence, lkm_health
 model: sonnet
 ---
 

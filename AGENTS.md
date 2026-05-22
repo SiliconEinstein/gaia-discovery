@@ -62,35 +62,112 @@ pending claim 拿到 evidence；让 BP 收敛到 target claim 的 belief ≥ thr
 
 ---
 
-## 3. DSL 速查
+## 3. DSL 速查（gaia v0.5 canonical）
 
-### strategy（4 种） —— kwargs 风格
+每一类动词对应一种 evidence / 推理 / 测量结构。**选错动词 ≠ 错误，只是损失表达力**——
+但选对的能让 BP 和 inquiry 抓到本来抓不到的语义。
 
-```python
-support  (premises=[k_a, k_b], conclusion=k_t)
-deduction(premises=[k_a, k_b], conclusion=k_t)
-abduction(premises=[k_observed], conclusion=k_hypothesis)
-induction(support_1=s1, support_2=s2, law=k_law)
-```
-
-### operator（4 种） —— positional 风格，**不接 premises/conclusion**
+### 3.1 Knowledge verbs（产 Claim 节点）
 
 ```python
-contradiction(k_a, k_b)
-equivalence  (k_a, k_b)
-complement   (k_a, k_b)
-disjunction  (k_a, k_b, k_c)   # ≥2 元
+claim("…statement…", prior=0.7, metadata={…})    # 命题（agent 默认动词）
+note("…background…")                              # 背景陈述，不进 BP
+question("…research question…")                   # 顶层目标
+observe(distribution_or_claim, value=v, error=σ,  # 经验测量事件
+        source_refs=["paper2024"], rationale="…")
+compute(expression_or_claim, …)                   # 确定性计算结果
 ```
 
-### reason / prior 必须成对
+**什么时候用 `observe` 而不是 `claim`**：当 sub-agent 拿到**真实数值带不确定度**
+（实验数据 / 文献查到的常数 / 测量结果）时用 `observe(dist, value=v, error=σ)`
+而不是 `claim("X ≈ v ± σ")` 字符串——前者 BP 上是 hard observation 节点，能正确
+传播到 posterior；后者只是文本，rubric 给分点也对不上。
+
+### 3.2 Strategy verbs（推理边；4 个 `action_kind`）
 
 ```python
-deduction(premises=[a, b], conclusion=t)                      # ✅ 都不给
-deduction(premises=[a, b], conclusion=t, reason="…", prior=0.9)  # ✅ 都给
-deduction(premises=[a, b], conclusion=t, reason="…")          # ❌ pairing 校验失败
+derive(k_t, given=[k_a, k_b], rationale="…")      # 确定性推导
+infer(premises=[…], conclusion=…)                  # 一般 CPT 推理（2^k 参数）
+abduction(support_h, support_alt, comparison)      # 假说选择（罕用，看 §3.5）
+induction(support_1, support_2, law=…)             # 归纳（罕用）
 ```
 
-权威 reference 在 `/gaia:gaia-lang` skill 与 `gaia/lang/dsl/{strategies,operators,knowledge}.py` 源码。
+`action_kind` ∈ `{derive, infer, abduction, induction}`——这是 sub-agent 派遣
++ verify-server 路由用的。写 plan 时用动词名本身。
+
+### 3.3 Operator verbs（关系节点；4 个 `action_kind`，positional 风格）
+
+```python
+contradict(k_a, k_b)            # 互斥
+equal(k_a, k_b)                 # 等价
+exclusive(k_a, k_b)             # 二选一
+disjunction(k_a, k_b, k_c)      # 析取（≥2 元）
+```
+
+### 3.4 Structural relation verbs（产 Formula / Decomposition；不需 action_kind）
+
+```python
+from gaia.engine.lang.formula import Land, Lor, Lnot
+
+# 同时声明 parts + 聚合 formula（formula 是必填 kwarg）
+decompose(target, parts=[sq1, sq2, sq3], formula=Land(sq1, sq2, sq3))
+
+# 二级 decompose 也可用 Lor / 表达式
+decompose(claim_x, parts=[p1, p2], formula=Lor(p1, p2))
+
+associate(claim_a, claim_b, rationale="probabilistic association")
+parameter(variable, value=v)                       # Variable→value 绑定
+register_prior(claim, prior=p, source_id="…")      # 显式声明 prior（替代 inline）
+```
+
+**什么时候用 `decompose`**：题干带 "Sub-question 1 / 2 / 3" 或 "proof has parts
+A, B, C" 时，把它拆成显式 `decompose(target, parts=[…], formula=land(*parts))`。
+之后 BP 让 `target.belief` 由 ∧ parts 决定，inquiry 漏答某 part 立刻红高亮——
+这是多 sub-Q research / 多 lemma proof 题最重要的表达力 unlock。
+
+### 3.5 Bayesian-modelling verbs（v0.5 新；需 `import gaia.engine.bayes as bayes`）
+
+```python
+# 每个 hypothesis 配一个 model（observable + distribution）
+m_dm  = bayes.model(h_dark_matter, observable=spectrum,
+                    distribution=Normal(mu=σ_dm, sigma=ε))
+m_sys = bayes.model(h_systematic,  observable=spectrum,
+                    distribution=Normal(mu=σ_sys, sigma=ε))
+
+# data 是 observation Claim 或其 list；models 是 list[Claim]（用 m_dm.hypothesis 等
+# 即 model() 返回的 Claim）；返回值是 posterior comparison Claim
+comparison = bayes.compare(data=observed_spectrum,
+                            models=[m_dm.hypothesis, m_sys.hypothesis])
+
+# 分布字面量: Binomial / Beta / Normal / LogNormal / Poisson /
+#              Cauchy / Gamma / StudentT / ChiSquared / Exponential
+```
+
+**什么时候用 `bayes.compare`**：题里出现**≥2 个竞争解释 / 模型**（"is the signal
+dark-matter or systematic noise?"、"is this lemma A or A'?"）时显式构造模型并
+`bayes.compare(data, models=[…])`。BP 自动算 posterior ratio——比写 6 个 `derive`
+互相比强很多。**这是 v3 `abduction` 的正确替代**（abduction API 太硬不友好，所以
+207 个老 plan 里只用过 1 次）。
+
+### 3.6 rationale / prior 规则
+
+```python
+derive(t, given=[a, b])                          # ✅ 都不给
+derive(t, given=[a, b], rationale="…")           # ✅ rationale 单给
+derive(t, given=[a, b], prior=0.7)               # ❌ derive 不接 prior（它是确定性 strategy）
+```
+
+证据强度（confidence / judge_factor）走 sub-agent 的 evidence.json，不在 DSL 层；
+需要概率证据链时切换到 `infer(...)` 或 `bayes.compare(...)`。
+
+### 权威 reference
+
+- `/gaia:gaia-lang` skill — DSL 全套
+- `gaia/engine/lang/dsl/{knowledge,support,strategies,operators,decompose,
+  associate_verb,infer_verb,register_prior}.py` — 源码
+- `gaia/engine/bayes/dsl/` — Bayesian 动词与分布
+- `gaia author <verb> --help` — 单动词 CLI（agent 也可以直接调，例如
+  `gaia author observe --target . --value 0.5 --error 0.1`）
 
 ---
 
@@ -143,6 +220,22 @@ gd inquiry .
 - `ranked_focus` 顶部 5 个 claim 都是 `gap_kind ∈ {mathlib_missing, open_conjecture, external_dep_blocked}` 且**这些已经标注好下一步 PR/外部依赖** → 短探索循环触顶
 - target.json 的自定义终止条件成立
 
+### Step 2.6 — TERMINAL.success 的硬性硬件门槛（Lean 项目专用）
+
+**Lean 形式化项目写 `TERMINAL.success.iter<N>.md` 必须同时满足以下 3 条**，任一条不过 = TERMINAL.success 无效，必须改写为 `TERMINAL.partial.iter<N>.md` 或 `TERMINAL.stuck.iter<N>.md`：
+
+1. `lake build <module>` 返回 `rc=0`（你必须在 TERMINAL marker 里贴出 `lake build` 命令 + `rc=0` 输出片段）
+2. **目标定理** `#print axioms <target>` 只包含 `{propext, Classical.choice, Quot.sound}`——禁止自创 axiom 撑场。**自创 axiom = 自动 partial 不是 success**
+3. 目标定理体内没有 `sorry`，且依赖链上无 sorry（用 `lake env lean <file> 2>&1 | grep -c 'declaration uses .sorry.'` 验证）
+
+**反模式 zoo（不要做）**：
+- ❌ 看到自己的 file 里没 `sorry` 文本就写 SUCCESS——可能依赖了别人的 sorry，或者用了不存在的 Mathlib 常量但 Lean 还没编译验证
+- ❌ 把目标定理用一系列 `axiom foo : P` 撑起来，然后说"已证"——axiom 化目标 = reward hacking
+- ❌ 写 `TERMINAL.success.iter<N>.md`  里附 "modulo build infrastructure" / "axiomatized standard results" / "等价于 SUCCESS 加 axioms" 等托辞——**这些情形都属于 partial，不属于 success**
+- ❌ 自创新的 TERMINAL kind（如 `TERMINAL.COMPLETE_MODULO_BUILD`）——只允许 `TERMINAL.success` / `TERMINAL.partial` / `TERMINAL.stuck` / `TERMINAL.refuted` 四种
+
+`TERMINAL.partial.iter<N>.md` 用法：mathematics 完成（filled all sorries in your target proof tree）但 build 不过 / 引入了非标准 axiom / 缺基础设施。**这仍然是有价值的进展，watchdog 会干净退出，等用户决定。** 不要因为"看起来不如 SUCCESS 好"就硬贴 SUCCESS。
+
 **raw `target_belief` 是审计指标，给人类看，不给 agent 当 reward**。你的真正 reward 是：
 artifact 输出（evidence.json + 真 Lean 文件 + 真 sorry/axiom 数下降）。
 
@@ -181,7 +274,29 @@ Task(
 sub-agent 会写 `task_results/<aid>.evidence.json`（必）+ 可选 `.lean` / `.py`。
 **等所有 Task 返回**再进 Step 6。
 
-> 其他 13 个 advisory 角色见 §5。它们不是 quota，是 heuristic trigger——按需启用。
+> 其他 14 个 advisory 角色见 §5。它们不是 quota，是 heuristic trigger——按需启用。
+> **但下列 4 个角色有 mandatory iter trigger（即使你觉得"没必要"也必须派）**：
+
+### Step 5b — Mandatory advisory triggers（**违反 = 红队事后翻账**）
+
+主 agent 必须按以下时间表派 advisory sub-agent。这些是 Archon 风格的强制 pipeline 步骤，
+不是 quota，而是因为长 horizon 工作里 agent 自己**永远不会觉得现在该自审**——
+经验上 single-session 模式下 agent 倾向把 token 花在"再多推一个 BP claim"而跳过自查，
+结果 reward hacking 不被抓。
+
+| 角色 | 触发条件 | 输入 | 期望产出 |
+|---|---|---|---|
+| **`red-team`** | **iter ∈ {3, 8, 15, 25, 40, 60, ...}**（log₂-ish 递增），**OR** 当前 session 新增过 `axiom`（任何形式）；**OR** 主目标 belief 从 < 0.5 跳到 > 0.9 单 iter | 当前 plan.gaia.py + 最新 evidence.json + USER_HINTS.md | falsification report：候选反例 / target-weakening 检测 / axiom-shortcut 检测；如检出 hack 直接 rename TERMINAL.success → TERMINAL.fake_success_<reason> |
+| **`auditor`** | 当前 session 新增过 `axiom` / `sorry`；**OR** 计划写 `TERMINAL.success.*` 之前；**OR** iter ∈ {10, 25, 50, ...} | 最近 N 个文件改动 + 候选 TERMINAL marker draft | docstring 合规 + reproducibility triple（gap_kind / paper_ref / loc_est）完整性；**主 agent 收到 auditor 报告后才能写 TERMINAL.success** |
+| **`mathlib-gap-builder`** | 任一 sub-agent 报 `gap_kind: mathlib_missing` | 缺失 lemma 描述 | helper file `<Project>/Mathlib_<Topic>.lean` 真证出来；fallback 写完整 paper_ref + loc_est + subtask list |
+| **`deep-researcher`** | 计划写 `TERMINAL.stuck.*` 之前**最后一轮**；**OR** ranked_focus 顶部 5 项连续 3 轮无变化 | 当前所有 STUCK 候选 + ranked_focus 历史 | counterexample / statement 修正建议 / alternative attack vector |
+
+**自检方式**：每次 Step 7 决定下一步前，问自己 "我这个 iter 跨过 mandatory trigger 表上哪些行了？
+都派了吗？" 没派的现在补派。
+
+其他 10 个 advisory 角色（oracle / pi-reviewer / rubric-anticipator / scribe / surveyor /
+archivist / orchestrator / quality-gate / sentinel / lab-notebook）保持 heuristic——
+按场景触发，不强制。
 
 ### Step 6 — run cycle（闸 A，原子化跑完 verify+ingest+bp+inquiry）
 
@@ -244,6 +359,7 @@ gd run-cycle .
 | `quality-gate` | DSL ↔ graph 一致性怀疑 | 结构检查 |
 | `sentinel` | schema 边界条件怀疑 | contract 检查 |
 | `lab-notebook` | 长 session 跨日记录 | 实验日志 |
+| **`mathlib-gap-builder`** | sub-agent 报 `gap_kind: mathlib_missing` 时 (Lean 项目专用) | **新建 `<Project>/Mathlib/<Topic>.lean` 把 textbook 引理证出来**；evidence.json 含分类（trivial/helper/infra）+ Mathlib PR-候选标记；**禁止再用 `axiom` 跳过** |
 
 派发统一语法：
 
@@ -256,24 +372,203 @@ Task(subagent_type="<name>", description="...", prompt="<context>")
 
 ---
 
-## 6. Sub-agent 快查工具（MCP）
+## 6. Sub-agent 快查工具（MCP）—— Search Protocol（硬性流程）
 
-为了让 sub-agent 在写 evidence 的过程中**随时**做查询（不等下一轮主 agent BP 收口），
-项目会通过 `--mcp-config` 给 sub-agent 挂上：
+sub-agent 不允许"凭记忆猜 Mathlib 引理名"——发现遗漏一次 = 任务失败。
+所有 sub-agent（gaia-action-runner / red-team / contradiction-builder / 等）在以下三种触发时
+**必须**先走 MCP 搜索，再写 Lean 或 evidence：
 
-- **`lean-lsp`**（Archon 的 [lean-lsp-mcp](https://github.com/oOo0oOo/lean-lsp-mcp) — 上游 v0.25+）—— 仅在 Lean 项目挂
-  - `lean_goal` / `lean_diagnostic_messages` / `lean_hover_info` — Lean 状态查询
-  - `lean_leansearch` / `lean_loogle` / `lean_leanfinder` / `lean_state_search` / `lean_hammer_premise` — Mathlib 搜索（rate-limited 3/30s）
-  - `lean_multi_attempt` — 试 tactic 不落盘
-  - `lean_local_search` / `lean_completions` / `lean_file_outline` — 本地辅助
+| 触发 | 必走步骤 |
+|---|---|
+| 要用一个 Mathlib lemma 但不能背出确切名字 | `lean_local_search(query)` → 若 0 命中，`lean_leansearch(<自然语言描述>)` → 若仍未命中，`lean_loogle(<类型 pattern>)` |
+| 写 `sorry` 之前 | `lean_goal(file, line)` 查 goals_after；`lean_state_search(<goal 文本>)` 找候选 tactic |
+| 拿不准定理是否存在 / 是否已被某 paper 证过 | `lkm_match("自然语言描述", top_k=5)` → 命中后 `lkm_evidence(<claim_id>)` 看 evidence chain |
+| 编译报错且不是显然的类型不匹配 | `lean_diagnostic_messages(file)` → 必要时 `lean_hover_info(file, line, col)` 查那个符号 |
+| 想试一个 tactic 但不想污染文件 | `lean_multi_attempt(file, line, [tactics])` — 多个 tactic 并行试，**不落盘** |
+
+**禁止行为**（一次违反就回炉）：
+- ❌ 用 `Bash` 的 `grep "Matrix.PosSemidef" mathlib4/` 找 Mathlib 引理 —— Mathlib 不在工作区，会全 miss
+- ❌ 用 `lake build` 验证一个 lemma 是否存在 —— 那是几十秒 vs `lean_leansearch` 几秒
+- ❌ 凭语料里见过的引理名直接写 `exact Matrix.PosSemidef.foo` —— 命名约定每个 Mathlib 版本都变
+- ❌ 在 evidence.json 里写 `premises: ["Matrix.PosSemidef.eigenvalues_nonneg"]` 而没有先 `lean_local_search` / `lean_hover_info` 验证过它真存在
+
+**Anti-give-up clause**（参考 Archon prover prompt §3.2）：
+当 `lean_leansearch` / `lkm_match` 都返回 0 命中时，**不许**直接落 `sorry` + `gap_kind: mathlib_missing` 就走。
+必须先做以下至少一项：
+1. `lean_loogle("<弱化的类型 pattern>")` —— 命名换不同近似词
+2. WebSearch `"<theorem name> Lean 4 Mathlib"` —— 查 Zulip / community PR
+3. 用 `lean_multi_attempt` 试 5 个不同 tactic
+4. 自己写一个 helper lemma（5-30 LOC）替代缺失基础设施
+
+写完 evidence.json 时，`premises[]` 里必须包含**至少一次 MCP 调用的工具名 + query**，例如：
+```json
+{
+  "lemma": "Matrix.PosSemidef.eigenvalues_nonneg",
+  "found_via": "mcp__lean-lsp__lean_local_search('PosSemidef eigenvalues')",
+  "verified": "mcp__lean-lsp__lean_hover_info"
+}
+```
+
+### 工具清单
+
+- **`lean-lsp`**（Archon 的 [lean-lsp-mcp](https://github.com/oOo0oOo/lean-lsp-mcp) — 上游 v0.25+）—— Lean 项目自动挂
+  - 本地无限调用：`lean_local_search` / `lean_goal` / `lean_diagnostic_messages` / `lean_hover_info` / `lean_multi_attempt` / `lean_file_outline` / `lean_run_code`
+  - 远端 rate-limited：`lean_leansearch` / `lean_loogle` / `lean_leanfinder` / `lean_state_search` / `lean_hammer_premise`（每个工具独立 pool，3/30s）
 - **`gaia-lkm`** — Bohrium LKM 文献检索（`src/gd_mcp_lkm/`）
   - `lkm_match(text, top_k)` — 自然语言 → claim 候选
   - `lkm_evidence(claim_id)` — claim → evidence chains
   - `lkm_health()` — 服务可达 + access-key 状态
-- **`WebSearch`** — Claude Code 内建。`gaia-lkm` 不可用时的 fallback
+- **`WebSearch`** — Claude Code 内建。`gaia-lkm` 不可用 / 想看 paper / 想看 Zulip 时用
 
-**sub-agent 不强制用**——它们是 opt-in 工具。但写 Lean 代码时**强烈建议**先
-`lean_leansearch("matrix kronecker positive")` 而不是凭记忆猜 Mathlib 引理名。
+### Sub-agent 工具授权矩阵（2026-05-21 起，仿 Archon 模式）
+
+`Task(subagent_type=...)` 派遣的子 agent **只能用**它自己 `.md` 头部 `tools:` 行声明的工具——
+即使主 agent 加载了完整 MCP 配置，子 agent 没列也调不到。
+
+**所有 15 个 sub-agent 都拥有"随时查"基线（10 工具）**：
+
+```
+WebSearch, WebFetch                                  # 互联网检索 / 取文献
+lean_leansearch, lean_local_search, lean_loogle,     # Mathlib 引理查询
+  lean_diagnostic_messages, lean_goal                # Lean 语法 / 类型 / proof state
+lkm_match, lkm_evidence, lkm_health                  # Bohrium LKM 文献图
+```
+
+这意味着 **任何 sub-agent 在任何时候**都可以：
+
+- 想看一个 lemma 的真实类型 → `lean_local_search("PosSemidef eigenvalues")`
+- 想知道当前 proof state 的 goal → `lean_goal(file, line)`
+- 想搜文献 → `WebSearch("...")` / `lkm_match("...")`
+- 想查 Lean 编译错误 → `lean_diagnostic_messages(file)`
+
+不再需要"先 Read 整个 478 行的 Lean 文件再瞎猜"。
+
+**额外的角色专属工具**（在基线上叠加）：
+
+| Role | 额外工具 | 干什么 |
+|---|---|---|
+| `mathlib-gap-builder` / `gaia-action-runner` | Edit, Write, Bash, lean_run_code, lean_multi_attempt, lean_hammer_premise, lean_leanfinder, lean_completions | 实际写 / 编译 / 运行 Lean |
+| `auditor` / `red-team` / `pi-reviewer` / `quality-gate` | Bash | 跑 lake build 复核（read-only audit）|
+| `archivist` / `scribe` / `lab-notebook` | Bash, Write | 记录日志 |
+| `orchestrator` | Bash, Write, Edit | 协调（少用）|
+| `oracle` / `sentinel` / `surveyor` | Bash | 排序 / 监控 |
+| `rubric-anticipator` | （仅基线）| 纯 inquiry 任务 |
+| `deep-researcher` | Bash | 文献深挖 |
+
+**派遣常见错误（agent 偶尔会犯）**：
+
+- `Task(subagent_type="lean-sorry-filler")` ← 这个不存在；用 `mathlib-gap-builder`
+- `Task(subagent_type="lean-prover")` ← 同上，proof 工作用 `gaia-action-runner`（action_kind=derive）
+- `Task(subagent_type="gaia-auditor")` ← 拼错了，是 `auditor`
+- `Task(subagent_type="general-purpose")` ← Claude Code 内置 fallback，**不要**用——它没有 gaia 上下文，不知道 evidence.json schema，几乎一定给你 inconclusive
+
+  **规则**：Task 必须 `subagent_type ∈ 15 个已注册角色`（见 `.claude/agents/`），否则任务失败。
+
+**派遣常见错误（agent 偶尔会犯）**：
+
+- `Task(subagent_type="lean-sorry-filler")` ← 这个不存在；用 `mathlib-gap-builder`
+- `Task(subagent_type="lean-prover")` ← 同上，proof 工作用 `gaia-action-runner`（action_kind=derive）
+- `Task(subagent_type="general-purpose")` ← Claude Code 内置 fallback，**不要**用——它没有 gaia 上下文，不知道 evidence.json schema，几乎一定给你 inconclusive
+  
+  **规则**：Task 必须 `subagent_type ∈ 14 个已注册角色`（见 `.claude/agents/`），否则任务失败。
+
+## 6.5 Mathlib-gap-builder mindset（这是核心研究模式）
+
+**核心原则**：当 Lean 项目卡在 Mathlib 没有的引理时，**那个 gap 就是你这一轮要做的工作**——
+不是绕过去（写 axiom），也不是放弃（写 sorry 就走）。
+
+90% 的 "Mathlib gap" 其实是 **textbook 已证、Mathlib 尚未形式化** 的中型基础设施。
+这正是 LLM agent 该做的事——把已知的数学搬进 Lean。
+
+### Gap 三分类（先分类再选策略）
+
+每次发现 Mathlib 缺东西时，先判断是哪一种：
+
+| 类型 | 特征 | 正确动作 |
+|---|---|---|
+| **trivial-gap** | 5-30 LOC，纯计算 / 简单 simp 链 | **直接补在当前文件**，don't even mention it as "gap" |
+| **helper-gap** | 30-200 LOC，textbook 引理，1-3 个 sub-lemma | **写一个独立的 `<Topic>_helper.lean` 文件**，本目标证完后留在原项目；不要写 axiom |
+| **infra-gap** | 200+ LOC，需要新概念 / 新 typeclass（如 `IsHaarMeasure`, `KAKDecomposition`） | **写 `<Project>/Mathlib/<Concept>.lean`** 作为新 Mathlib 子库；多个 session 才能完成是 OK 的 |
+| **mathlib_missing (genuine)** | textbook 没有现成证明 / 跨多个未形式化领域 | 允许 `sorry` + `gap_kind: mathlib_missing`，但 **evidence.json 必须列出**：(a) Mathlib PR 编号 if exists / (b) 论文 reference / (c) 估算 LOC + 主要 sub-lemma 拆分 |
+| **open_conjecture** | 数学上未知答案 | 允许 `axiom` + `gap_kind: open_conjecture`；但**只能在 `<Project>/Conjectures/<Name>.lean` 单独文件里**，不能藏在 helper / infra 文件中 |
+
+### 反 reward-hacking 硬规则
+
+❌ **不允许的反模式**（违反一次 = 红队自动降级 success → fake_success）：
+
+1. **`axiom` 当跳板**：当一个 textbook 已证的引理在 Mathlib 没有时，写 `axiom foo : P` 然后 `exact foo` 跳过——这等于自己授权自己用任何想要的"已证事实"，**这是最危险的 reward hacking 形式**。正确做法：写 `helper_foo : P := by ...` 真的证它。
+2. **目标 axiom 化**：把要证的主定理 statement 写成 `axiom main_target : P` 然后 evidence 里说"已 formalize"。**target 的 statement 是输入，proof 才是工作**。
+3. **non-standard TERMINAL kind**：`TERMINAL.COMPLETE_MODULO_BUILD`、`TERMINAL.proof_complete_modulo_axioms` 等自创终态 ≡ 不诚实 success。只允许 4 种：`success / partial / stuck / refuted`。
+4. **"build OOM 所以 LSP 算"**：Lake build 超时/OOM ≠ build pass。LSP type-check 是必要条件不是充分条件。watchdog 会用 `lake build` 验，骗不过去。
+5. **定义 axiom 化（NEW）**：把应该用 `def` / `instance` / `structure` 定义的**对象**写成 `axiom`。例：`axiom thermalExpectation : ... → ℂ`、`axiom kmbInnerProduct : ... → ℂ` —— 这相当于自己授权这些对象存在却不构造它们。**正确做法**：用 `def thermalExpectation : ... → ℂ := <构造>` 或 `noncomputable def ... := <分类>`。**判别条件**：如果你的 `axiom foo` 的类型签名是"数据型" (`A → B` 这种 function 或 constant of type `T`)，几乎一定是反模式；正确的 `axiom` 只声明"命题型" (`Prop`-valued 且陈述未知命题)。
+6. **目标弱化（NEW，target weakening via quantifiers）**：把要证的具体定理改写成"存在量词 + 自选常数"的弱化版本，使得 trivial 选择就能满足。
+    - **典型例**：Solovay-Kitaev 应证 "ℓ(w) ≤ C · log^c(1/ε) 其中 **c ≈ 3.97**"。Agent 把 statement 改成 `∃ C c ε₀, 0 < C ∧ 0 < c ∧ ∀ ε..., ℓ ≤ C·log^c(1/ε)` 然后选 c=1、w=单元素——这就是 density of S 自身，不是 SK。
+    - **判别条件**：如果 LKM/paper 的 statement 是 "for c ≈ 具体值 X, ...", 你**不允许**改成 `∃ c > 0, ...`；那不是同一个定理。同理"具体 C 多项式增长"不能改成"∃ C"，"polynomial-time"不能改成"finite-time"。
+    - **正确做法**：忠实形式化原 statement 的 quantifier 结构；如果常数难给 explicit，标 `gap_kind: mathlib_missing` + 引用 paper 的具体 C/c 值。
+
+watchdog gate 现在只能拦类型 1-4；类型 5-6 需要红队 sub-agent 审查 evidence/USER_HINTS，发现后手动降级 SUCCESS → fake_success_target_weakened。
+
+### Gap-builder workflow（推荐流程）
+
+发现 sub-agent 报告 `mathlib_missing` 时，主 agent 应该做：
+
+```python
+# Step A: 分类（用 lkm_match + WebSearch + lean_loogle 几个角度交叉验证）
+gap_classification = classify(  # trivial / helper / infra / genuine / open
+    missing_lemma="trace of CFC log is well-defined for posdef",
+    weak_pattern_search="lean_loogle('Matrix log trace')",
+    web_search="WebSearch('Lean 4 Mathlib trace log matrix functional calculus')",
+    lkm_search="lkm_match('trace log positive definite matrix')",
+)
+
+# Step B: 按分类派 sub-agent
+if gap_classification == "trivial":
+    # gaia-action-runner with explicit "no sorry no axiom allowed, write the 10-line proof"
+    dispatch_gaia_action_runner(
+        target="prove the missing lemma inline",
+        prompt_addendum="ABSOLUTELY NO sorry/axiom. If you can't close it in 30 LOC, "
+                        "report stance=inconclusive + classify=helper-gap-not-trivial.",
+    )
+elif gap_classification == "helper":
+    # explicit helper-file workflow
+    dispatch_mathlib_gap_builder(
+        target_file=f"{project}/Mathlib/{topic}_helper.lean",
+        budget_loc="30-200",
+        deliverables=["lemma signature", "proof", "use-site in main file imports new helper"],
+    )
+elif gap_classification == "infra":
+    # multi-session infra build; commit to it explicitly in plan.gaia.py
+    add_claim(label=f"build_{topic}_infrastructure",
+              metadata={"action": "infrastructure_build", "estimated_loc": "200-1000",
+                        "subtasks": [...]})
+    # spawn 3-5 dispatchable sub-claims for each major sub-lemma
+elif gap_classification in ("genuine", "open"):
+    # only here is sorry/axiom allowed
+    document_in_evidence(gap_kind=gap_classification,
+                        mathlib_pr_link=...,
+                        paper_ref=...,
+                        estimated_loc_to_fix=...)
+```
+
+### 实例：PPT² A-line iter-83 的 `IsHaarMeasure (SU 2)`
+
+这就是一个**真实 infra-gap 被正确处理**的案例（已在 `PPT2/Mathlib/HaarSU2.lean` 落盘）：
+
+- iter-83 sub-agent 发现 `Mathlib.MeasureTheory.Measure.Haar.OfBasis` 有 `IsHaarMeasure` 但**没有 SU(2) 实例**
+- 主 agent 没有写 `axiom haarSU2 : Measure SU2`
+- 而是创建 `PPT2/Mathlib/HaarSU2.lean`（249 LOC），通过 SU(2) ≅ S³（单位四元数）+ pushforward 真证出来
+- 现在 `HaarSU2.lean` 0 sorry 0 axiom，lake build rc=0，**可以作为 Mathlib PR candidate**
+
+这是 v3.5 想要的标准产出：**identifying a Mathlib gap → building it → contributing back**。
+
+### Sibling-project read-only access
+
+Lean swarm 各项目的 `.lean` 输出在 `/personal/lean_swarm/lean/PhysicsLean/<Slug>/`。
+**允许 read** 兄弟项目的 `.lean` 文件（找已证明的 lemma 复用）；
+**禁止 write** 兄弟项目目录。需要复用一个 lemma 时：
+1. 用 `lean_local_search` 在 sibling dir 里找
+2. 找到后 `import PhysicsLean.<SiblingSlug>.<File>` —— Lean 编译器会处理依赖
+3. 如果 sibling 还没完成（带 sorry），不要 import；自己重写 statement
 
 ---
 

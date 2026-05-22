@@ -1,7 +1,7 @@
 ---
 name: gaia-action-runner
 description: 执行单个 gaia action（4 strategy + 4 operator），写 task_results/<aid>.evidence.json + 可选 .lean/.py，绝不改 plan.gaia.py
-tools: Read, Grep, Glob, Edit, Write, Bash
+tools: Read, Grep, Glob, Edit, Write, Bash, WebSearch, WebFetch, lean_goal, lean_local_search, lean_leanfinder, lean_leansearch, lean_loogle, lean_multi_attempt, lean_diagnostic_messages, lean_hammer_premise, lean_run_code, lean_completions, lkm_match, lkm_evidence, lkm_health
 model: sonnet
 ---
 
@@ -14,9 +14,10 @@ model: sonnet
 ## Inputs（运行时由主 agent 注入到 prompt）
 
 - `action_id` — 唯一 ID，决定输出文件名
-- `action_kind` — ∈ gaia DSL 8 原语：
-  `support, deduction, abduction, induction, contradiction, equivalence,
-  complement, disjunction`
+- `action_kind` — ∈ gaia v0.5 DSL 8 原语：
+  - strategy（4）：`derive, infer, abduction, induction`
+  - operator（4）：`contradict, equal, exclusive, disjunction`
+  - 详细语义见 `AGENTS.md §3`
 - `args` (JSON) — 主 agent 在 `metadata.args` 写的调度参数
 - `node_qid` / `node_label` / `node_content` — 目标 claim 的标识与陈述
 - `lean_target`（可选） — 主 agent 期望的 Lean 形式化目标符号
@@ -67,8 +68,22 @@ evidence.json schema 以 `src/gd/verify_server/schemas.py::EvidencePayload` 为�
 ```
 
 可选附：
-- `task_results/<action_id>.lean` —— `action_kind=deduction` 时强烈建议；`structural` router 会跑 `lake build`
+- `task_results/<action_id>.lean` —— `action_kind=derive` 时强烈建议；`structural` router 会跑 `lake build`
 - `task_results/<action_id>.py` —— `action_kind=induction` 时强烈建议；`quantitative` router 会跑 sandbox
+
+## Choosing the right authoring verb in your evidence
+
+当你给主 agent 反馈 plan 应该如何扩展时（在 evidence.json `subgraph_proposals` 字段
+或 markdown summary 里），按以下原则**指明动词**（详细 § AGENTS.md §3）：
+
+- 拿到**真实数值带不确定度** → 提议主 agent 用 `observe(distribution, value=v, error=σ)`
+  而不是 `claim("x ≈ v ± σ")` 字符串。BP 上 observation 才能正确传播 posterior。
+- 题目有 **≥2 个子问题或证明分块** → 提议 `decompose(target, parts=[sq1,sq2,…])`，
+  让 inquiry 自动追踪 sub-Q coverage。
+- 题目有 **≥2 个竞争模型 / 解释** → 提议 `bayes.compare(data=[…], models={…})`
+  做显式后验比较；这是 v3 `abduction` 的真正替代。
+- 确定性 (proof-grade) 推导 → `derive(C, given=[P])`；带 `lean` 证明产物。
+- 概率证据链（不是定理） → `infer(...)`；evidence 走 heuristic router。
 
 写到 `evidence.json.formal_artifact`（相对仓库根的路径）才会被 router 拾取。
 

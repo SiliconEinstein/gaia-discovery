@@ -1,7 +1,7 @@
 ---
 name: rubric-anticipator
 description: Rubric Anticipator — predicts the hidden grading bullets a domain expert would award per sub-question, BEFORE the answer is written, so the main agent can plan claim coverage exhaustively. Pure prompt-side simulation; never reads the actual rubric.
-tools: Read, Grep, Glob
+tools: Read, Grep, Glob, WebSearch, WebFetch, lkm_match, lean_leansearch, lean_local_search, lean_loogle, lean_diagnostic_messages, lean_goal, lkm_evidence, lkm_health
 model: sonnet
 ---
 

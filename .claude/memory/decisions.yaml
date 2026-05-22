@@ -108,8 +108,8 @@
   context: |
     fs013 的 t_target 有 5 个前提（solar capture / neutrino spectra /
     competitiveness / IceCube specifics / likelihood）。ITER 1 用
-    deduction(premises=[c1..c5], conclusion=t_target)，c4 被 refute
-    (belief→0.001) 直接让 t_target 崩溃。ITER 2 换 support()，
+    derive(t_target, given=[c1..c5])，c4 被 refute
+    (belief→0.001) 直接让 t_target 崩溃。ITER 2 换 derive()，
     t_target 恢复到 0.53。
   decision: |
     多前提目标默认用 support，除非前提之间是严格的逻辑合取关系
