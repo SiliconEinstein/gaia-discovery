@@ -122,7 +122,7 @@ def _write_json(path: Path, data: dict) -> Path:
 
 def test_missing_verdict_file(tmp_path: Path, cleanup_modules) -> None:
     name = "ing_no_verdict"
-    body = "from gaia.lang import claim\nK = claim('x', action='induction')\n"
+    body = "from gaia.engine.lang import claim\nK = claim('x', action='induction')\n"
     pkg = _make_pkg(tmp_path, name, body)
     code, _ = ingest.run(pkg, "act_x", tmp_path / "missing.json")
     assert code == ingest.EXIT_USER
@@ -130,7 +130,7 @@ def test_missing_verdict_file(tmp_path: Path, cleanup_modules) -> None:
 
 def test_bad_verdict_schema(tmp_path: Path, cleanup_modules) -> None:
     name = "ing_bad_verdict"
-    body = "from gaia.lang import claim\nK = claim('x', action='induction')\n"
+    body = "from gaia.engine.lang import claim\nK = claim('x', action='induction')\n"
     pkg = _make_pkg(tmp_path, name, body)
     bad = _write_json(tmp_path / "v.json", {"verdict": "what"})
     code, _ = ingest.run(pkg, "act_x", bad)
@@ -139,7 +139,7 @@ def test_bad_verdict_schema(tmp_path: Path, cleanup_modules) -> None:
 
 def test_action_id_mismatch(tmp_path: Path, cleanup_modules) -> None:
     name = "ing_aid_mismatch"
-    body = "from gaia.lang import claim\nK = claim('x', action='induction')\n"
+    body = "from gaia.engine.lang import claim\nK = claim('x', action='induction')\n"
     pkg = _make_pkg(tmp_path, name, body)
     v = _write_json(tmp_path / "v.json", _make_verdict("act_in_file"))
     code, _ = ingest.run(pkg, "act_different", v)
@@ -148,7 +148,7 @@ def test_action_id_mismatch(tmp_path: Path, cleanup_modules) -> None:
 
 def test_bad_evidence_schema(tmp_path: Path, cleanup_modules) -> None:
     name = "ing_bad_ev"
-    body = "from gaia.lang import claim\nK = claim('x', action='induction')\n"
+    body = "from gaia.engine.lang import claim\nK = claim('x', action='induction')\n"
     pkg = _make_pkg(tmp_path, name, body)
     # 先 dispatch 拿合法 aid
     code0, env = dispatch.run(pkg)
@@ -164,7 +164,7 @@ def test_bad_evidence_schema(tmp_path: Path, cleanup_modules) -> None:
 def test_ingest_forces_bp_writes_snapshot(tmp_path: Path, cleanup_modules) -> None:
     name = "ing_bp_forced"
     body = textwrap.dedent("""
-        from gaia.lang import claim
+        from gaia.engine.lang import claim
         K = claim("need induction", action="induction", args={"n_max": 100})
     """).lstrip()
     pkg = _make_pkg(tmp_path, name, body)
@@ -200,7 +200,7 @@ def test_ingest_does_not_modify_cycle_state(tmp_path: Path, cleanup_modules) -> 
     """plan 设计：ingest 是 escape hatch，不动 cycle_state.json。"""
     name = "ing_no_cs"
     body = textwrap.dedent("""
-        from gaia.lang import claim
+        from gaia.engine.lang import claim
         K = claim("need", action="induction")
     """).lstrip()
     pkg = _make_pkg(tmp_path, name, body)
@@ -224,7 +224,7 @@ def test_ingest_does_not_modify_cycle_state(tmp_path: Path, cleanup_modules) -> 
 def test_ingest_with_evidence_appends_subgraph(tmp_path: Path, cleanup_modules) -> None:
     name = "ing_with_ev"
     body = textwrap.dedent("""
-        from gaia.lang import claim
+        from gaia.engine.lang import claim
         K = claim("test claim", action="induction")
     """).lstrip()
     pkg = _make_pkg(tmp_path, name, body)
@@ -259,7 +259,7 @@ def test_ingest_with_evidence_appends_subgraph(tmp_path: Path, cleanup_modules) 
 
 def test_main_user_exit_on_missing_verdict(tmp_path: Path, cleanup_modules, capsys) -> None:
     name = "ing_main"
-    body = "from gaia.lang import claim\nK = claim('x', action='induction')\n"
+    body = "from gaia.engine.lang import claim\nK = claim('x', action='induction')\n"
     pkg = _make_pkg(tmp_path, name, body)
     code = ingest.main([str(pkg), "act_x", "--verdict", str(tmp_path / "missing.json")])
     assert code == ingest.EXIT_USER

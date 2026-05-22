@@ -17,22 +17,40 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 # ---------------------------------------------------------------------------
-# 8 action_kinds（与 dispatcher.ALLOWED_ACTIONS 必须保持一致）
-#   strategy（4，kwargs 风格 premises=[...], conclusion=...）：
-#     support / deduction / abduction / induction
-#   operator（4，positional 风格 op(k_a, k_b)）：
-#     contradiction / equivalence / complement / disjunction
+# action_kinds — aligned with gaia v0.5 canonical DSL surface (2026-05-21).
+#
+# v0.5 canonical verbs only. v3 names (support / deduction / contradiction /
+# equivalence / complement) are no longer accepted by verify-server: new
+# action_kind values must use the v0.5 forms (derive / contradict / equal /
+# exclusive). `V3_TO_V05_ALIASES` is retained as a read-only translation
+# table for *parsing legacy artifacts* (old evidence.json / TERMINAL markers
+# under historical project dirs) — `gd.action_allowlist.canonicalize_action()`
+# uses it to display a single canonical label.
+#
+#   strategy (4, kwargs style):  derive / infer / abduction / induction
+#   operator (4, positional):    contradict / equal / exclusive / disjunction
 # ---------------------------------------------------------------------------
 
 STRATEGY_ACTIONS: frozenset[str] = frozenset({
-    "support", "deduction", "abduction", "induction",
+    "derive", "infer", "abduction", "induction",
 })
 
 OPERATOR_ACTIONS: frozenset[str] = frozenset({
-    "contradiction", "equivalence", "complement", "disjunction",
+    "contradict", "equal", "exclusive", "disjunction",
 })
 
 ALL_ACTIONS: frozenset[str] = STRATEGY_ACTIONS | OPERATOR_ACTIONS
+
+# Legacy translation table — used by `canonicalize_action()` when DISPLAYING
+# action_kind from historical artifacts (read-only). NOT routed by
+# ACTION_KIND_TO_ROUTER; verify-server REJECTS requests with these names.
+V3_TO_V05_ALIASES: dict[str, str] = {
+    "support":       "derive",
+    "deduction":     "derive",
+    "contradiction": "contradict",
+    "equivalence":   "equal",
+    "complement":    "exclusive",
+}
 
 
 class RouterKind(str, Enum):
@@ -43,23 +61,25 @@ class RouterKind(str, Enum):
     HEURISTIC = "heuristic"        # 把 sub-agent 产出的 Gaia DSL 片段 compile + run_review
 
 
-# 8 个 action 的 router 归属（与 plan §"verify_server 三 router 按 action_kind 路由"完全对齐）
+# action_kind → router routing (v0.5 canonical names only).
 ACTION_KIND_TO_ROUTER: dict[str, RouterKind] = {
-    # quantitative：归纳类 claim 必须靠数值/采样验证
-    "induction": RouterKind.QUANTITATIVE,
-    # structural：deduction 走 Lean 形式化
-    "deduction": RouterKind.STRUCTURAL,
-    # heuristic：support / abduction + 4 operator
-    "support": RouterKind.HEURISTIC,
-    "abduction": RouterKind.HEURISTIC,
-    "contradiction": RouterKind.HEURISTIC,
-    "equivalence": RouterKind.HEURISTIC,
-    "complement": RouterKind.HEURISTIC,
+    # quantitative: induction must be validated by numeric / sampling evidence
+    "induction":   RouterKind.QUANTITATIVE,
+    # structural: deterministic derivation goes to Lean lake build
+    "derive":      RouterKind.STRUCTURAL,
+    # heuristic: probabilistic strategies + all relate operators
+    "infer":       RouterKind.HEURISTIC,
+    "abduction":   RouterKind.HEURISTIC,
+    "contradict":  RouterKind.HEURISTIC,
+    "equal":       RouterKind.HEURISTIC,
+    "exclusive":   RouterKind.HEURISTIC,
     "disjunction": RouterKind.HEURISTIC,
 }
 
 assert set(ACTION_KIND_TO_ROUTER.keys()) == set(ALL_ACTIONS), (
-    "ACTION_KIND_TO_ROUTER 必须严格覆盖 8 个 action_kind"
+    f"ACTION_KIND_TO_ROUTER ({len(ACTION_KIND_TO_ROUTER)}) must strictly cover "
+    f"ALL_ACTIONS ({len(ALL_ACTIONS)}): missing="
+    f"{set(ALL_ACTIONS) - set(ACTION_KIND_TO_ROUTER.keys())}"
 )
 
 
@@ -204,6 +224,14 @@ class VerifyResponse(BaseModel):
     confidence: float = Field(..., ge=0.0, le=1.0)
     evidence: str = Field(..., description="人类可读的判定依据，必填")
     raw: dict[str, Any] = Field(default_factory=dict, description="原始执行结果（stdout、diagnostics 等）")
+    diagnostics: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="machine-readable audit diagnostics; non-empty entries may require advisory review",
+    )
+    required_advisory: list[str] = Field(
+        default_factory=list,
+        description="sub-agent roles that must run before this evidence can support terminal success",
+    )
     elapsed_s: float = Field(..., ge=0.0)
     error: str | None = Field(None, description="若执行链路出错（非 refute），写在这里；不影响 verdict='inconclusive'")
 

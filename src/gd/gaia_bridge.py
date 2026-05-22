@@ -39,24 +39,21 @@ class CompileError(RuntimeError):
 
 
 def load_and_compile(pkg_path):
-    """复用 gaia.cli._packages 的标准 load → priors → compile 流水线。
+    """复用 gaia.engine.packaging 的标准 load → priors → compile 流水线。
 
     返回 (loaded_package, compiled_artifact)。任何步骤失败 → CompileError。
     """
     try:
-        from gaia.cli._packages import (
-            apply_package_priors,
-            compile_loaded_package_artifact,
-            ensure_package_env,
+        from gaia.engine.packaging import (
             load_gaia_package,
+            compile_loaded_package_artifact,
         )
     except ImportError as exc:
         raise CompileError(f"gaia 不可用: {exc}") from exc
 
     try:
-        ensure_package_env(pkg_path)
+        # Note: gaia.engine.packaging.load_gaia_package handles env setup and priors internally
         loaded = load_gaia_package(str(pkg_path))
-        apply_package_priors(loaded)
         compiled = compile_loaded_package_artifact(loaded)
     except Exception as exc:
         logger.exception("compile failed for %s", pkg_path)
@@ -118,9 +115,9 @@ def compile_and_infer(
         return snapshot
 
     try:
-        from gaia.bp import lower_local_graph
-        from gaia.bp.engine import InferenceEngine
-        from gaia.cli._packages import collect_foreign_node_priors
+        from gaia.engine.bp import lower_local_graph
+        from gaia.engine.bp.engine import InferenceEngine
+        from gaia.engine.packaging import collect_foreign_node_priors
     except ImportError as exc:
         snapshot.compile_status = "error"
         snapshot.error = f"gaia.bp 不可用: {exc}"
@@ -141,7 +138,7 @@ def compile_and_infer(
 
     # IR 级校验：记录违规到 ir_warnings，不阻断 BP（校验即报告）
     try:
-        from gaia.ir.validator import validate_local_graph
+        from gaia.engine.ir.validator import validate_local_graph
         ir_vr = validate_local_graph(graph)
         all_issues = list(ir_vr.errors or []) + list(ir_vr.warnings or [])
         if all_issues:
@@ -166,7 +163,7 @@ def compile_and_infer(
         snapshot.error = f"infer: {exc!r}"
         return snapshot
 
-    snapshot.beliefs = dict(result.bp_result.beliefs)
+    snapshot.beliefs = dict(result.beliefs)
     snapshot.method_used = result.method_used
     snapshot.treewidth = result.treewidth
     snapshot.elapsed_ms = result.elapsed_ms

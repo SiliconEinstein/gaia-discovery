@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import time
 from pathlib import Path
@@ -52,9 +53,25 @@ def set_judge_hook(fn) -> None:
 
 # gaia 原生支持的 strategy 类型（formalize_named_strategy 已实现的 9 种）
 # 见 /root/Gaia/gaia/ir/formalize.py:562-570 _BUILDERS 表
+# Strategy kinds whose IR-side formalization goes through
+# gaia.engine.ir.formalize.formalize_named_strategy. v0.5 canonical action_kind
+# names at the verify-server boundary; we translate down to the IR-level
+# `StrategyType` enum (still v3-named in gaia.engine.ir.strategy) right before
+# calling formalize_named_strategy.
 _GAIA_NATIVE_STRATEGY_TYPES = frozenset({
-    "support", "deduction", "abduction",
+    "derive",     # v0.5 canonical deterministic-derivation strategy
+    "abduction",  # named-strategy (kept under v3 name in DSL + IR)
 })
+
+# v0.5 DSL action_kind → v3 IR StrategyType enum value. The DSL was renamed
+# in alpha 0 but gaia.engine.ir.strategy.StrategyType still uses v3 names
+# internally; this dict translates the boundary.
+_DSL_TO_IR_STRATEGY_TYPE: dict[str, str] = {
+    "derive":    "deduction",
+    "abduction": "abduction",
+    "induction": "induction",
+    "infer":     "infer",
+}
 
 
 def _gaia_structural_check(
@@ -69,7 +86,7 @@ def _gaia_structural_check(
     仅对 action_kind in _GAIA_NATIVE_STRATEGY_TYPES 调用。
     """
     try:
-        from gaia.ir.formalize import formalize_named_strategy
+        from gaia.engine.ir.formalize import formalize_named_strategy
     except ImportError as exc:
         return True, None  # gaia 不可用就不预检，直接放行到 LLM
     raw_premises = evidence.get("premises") or []
@@ -86,10 +103,12 @@ def _gaia_structural_check(
         return False, f"premises 不足 2 条（实际 {len(premises_text)}）"
     namespace = "discovery"
     package_name = project_dir.name or "pkg"
+    # Translate v0.5 DSL action_kind to the v3 IR StrategyType enum value.
+    ir_strategy_type = _DSL_TO_IR_STRATEGY_TYPE.get(action_kind, action_kind)
     try:
         formalize_named_strategy(
             scope="local",
-            type_=action_kind,
+            type_=ir_strategy_type,
             premises=premises_text,
             conclusion=(claim_text or "(unspecified conclusion)")[:500],
             namespace=namespace,
@@ -109,9 +128,20 @@ def _resolve_within(base: Path, candidate: str) -> Path:
         p = base / p
     p = p.resolve()
     base_resolved = base.resolve()
-    if base_resolved not in p.parents and p != base_resolved:
-        raise ValueError(f"path {p} escapes project_dir {base_resolved}")
-    return p
+    if base_resolved in p.parents or p == base_resolved:
+        return p
+    extra = os.environ.get("GAIA_VERIFY_EXTRA_ROOTS", "").strip()
+    if extra:
+        for r in extra.split(":"):
+            if not r:
+                continue
+            try:
+                rp = Path(r).resolve()
+            except OSError:
+                continue
+            if rp in p.parents or p == rp:
+                return p
+    raise ValueError(f"path {p} escapes project_dir {base_resolved}")
 
 
 def _make_response(

@@ -92,7 +92,7 @@ def test_missing_project_dir(tmp_path: Path) -> None:
 
 def test_missing_evidence_file(tmp_path: Path, cleanup_modules) -> None:
     name = "ver_no_ev"
-    body = "from gaia.lang import claim\nK = claim('x', action='induction')\n"
+    body = "from gaia.engine.lang import claim\nK = claim('x', action='induction')\n"
     pkg = _make_pkg(tmp_path, name, body)
     code, _ = verify.run(pkg, "act_xxxx", pkg / "missing.json")
     assert code == verify.EXIT_USER
@@ -100,7 +100,7 @@ def test_missing_evidence_file(tmp_path: Path, cleanup_modules) -> None:
 
 def test_bad_evidence_schema(tmp_path: Path, cleanup_modules) -> None:
     name = "ver_bad_ev"
-    body = "from gaia.lang import claim\nK = claim('x', action='induction')\n"
+    body = "from gaia.engine.lang import claim\nK = claim('x', action='induction')\n"
     pkg = _make_pkg(tmp_path, name, body)
     bad_ev = pkg / "bad.json"
     bad_ev.write_text(json.dumps({
@@ -114,7 +114,7 @@ def test_bad_evidence_schema(tmp_path: Path, cleanup_modules) -> None:
 
 def test_action_id_not_in_plan(tmp_path: Path, cleanup_modules) -> None:
     name = "ver_missing_aid"
-    body = "from gaia.lang import claim\nK = claim('x', action='induction')\n"
+    body = "from gaia.engine.lang import claim\nK = claim('x', action='induction')\n"
     pkg = _make_pkg(tmp_path, name, body)
     ev = _write_evidence(pkg, "act_doesnotexist")
     code, _ = verify.run(pkg, "act_doesnotexist", ev)
@@ -123,7 +123,7 @@ def test_action_id_not_in_plan(tmp_path: Path, cleanup_modules) -> None:
 
 def test_plan_compile_error(tmp_path: Path, cleanup_modules) -> None:
     name = "ver_bad_plan"
-    body = "from gaia.lang import claim\nK = claim(\n"
+    body = "from gaia.engine.lang import claim\nK = claim(\n"
     pkg = _make_pkg(tmp_path, name, body)
     ev = _write_evidence(pkg, "act_anything")
     code, _ = verify.run(pkg, "act_anything", ev)
@@ -140,7 +140,7 @@ def test_verify_end_to_end(tmp_path: Path, cleanup_modules, server_client) -> No
     """
     name = "ver_e2e"
     body = textwrap.dedent("""
-        from gaia.lang import claim
+        from gaia.engine.lang import claim
         K = claim("foo", action="induction", args={"n_max": 10})
     """).lstrip()
     pkg = _make_pkg(tmp_path, name, body)
@@ -165,7 +165,7 @@ def test_verify_end_to_end(tmp_path: Path, cleanup_modules, server_client) -> No
 
 def test_main_user_exit_on_missing_evidence(tmp_path: Path, cleanup_modules, capsys) -> None:
     name = "ver_main"
-    body = "from gaia.lang import claim\nK = claim('x', action='induction')\n"
+    body = "from gaia.engine.lang import claim\nK = claim('x', action='induction')\n"
     pkg = _make_pkg(tmp_path, name, body)
     code = verify.main([str(pkg), "act_xxx", "--evidence", str(pkg / "missing.json")])
     assert code == verify.EXIT_USER

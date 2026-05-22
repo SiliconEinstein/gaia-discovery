@@ -1,30 +1,95 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gaia-discovery-v3/schemas/verdict.schema.json",
-  "title": "VerifyResponse (verify-server 给出的独立 verdict)",
-  "description": "与 gd.verify_server.schemas.VerifyResponse pydantic 模型一一对应。",
+  "title": "VerifyResponse (verify-server \u7ed9\u51fa\u7684\u72ec\u7acb verdict)",
+  "description": "\u4e0e gd.verify_server.schemas.VerifyResponse pydantic \u6a21\u578b\u4e00\u4e00\u5bf9\u5e94\u3002",
   "type": "object",
   "additionalProperties": false,
-  "required": ["action_id", "action_kind", "router", "verdict", "backend",
-               "confidence", "evidence", "raw", "elapsed_s"],
+  "required": [
+    "action_id",
+    "action_kind",
+    "router",
+    "verdict",
+    "backend",
+    "confidence",
+    "evidence",
+    "raw",
+    "elapsed_s"
+  ],
   "properties": {
-    "action_id": {"type": "string"},
+    "action_id": {
+      "type": "string"
+    },
     "action_kind": {
       "type": "string",
-      "enum": ["support", "deduction", "abduction", "induction",
-               "contradiction", "equivalence", "complement", "disjunction",
-               "associate", "compute", "contradict", "decompose", "derive",
-               "equal", "exclusive", "infer", "observe"]
+      "enum": [
+        "abduction",
+        "contradict",
+        "derive",
+        "disjunction",
+        "equal",
+        "exclusive",
+        "induction",
+        "infer"
+      ]
     },
-    "router": {"enum": ["quantitative", "structural", "heuristic"]},
-    "verdict": {"enum": ["verified", "refuted", "inconclusive"]},
+    "router": {
+      "enum": [
+        "quantitative",
+        "structural",
+        "heuristic"
+      ]
+    },
+    "verdict": {
+      "enum": [
+        "verified",
+        "refuted",
+        "inconclusive"
+      ]
+    },
     "backend": {
-      "enum": ["sandbox_python", "lean_lake", "inquiry_review", "unavailable"]
+      "enum": [
+        "sandbox_python",
+        "lean_lake",
+        "inquiry_review",
+        "unavailable"
+      ]
     },
-    "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
-    "evidence": {"type": "string", "minLength": 1},
-    "raw": {"type": "object"},
-    "elapsed_s": {"type": "number", "minimum": 0.0},
-    "error": {"type": ["string", "null"]}
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "evidence": {
+      "type": "string",
+      "minLength": 1
+    },
+    "raw": {
+      "type": "object"
+    },
+    "elapsed_s": {
+      "type": "number",
+      "minimum": 0.0
+    },
+    "error": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": []
+    },
+    "required_advisory": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    }
   }
 }

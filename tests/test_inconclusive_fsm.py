@@ -174,7 +174,7 @@ def _make_pkg(tmp_path: Path, claim_src: str) -> Path:
 
 
 _BASE_PLAN = '''"""test plan."""
-from gaia.lang.dsl import claim
+from gaia.engine.lang.dsl import claim
 
 c = claim(
     "Test claim.",
@@ -355,7 +355,7 @@ def _read_tactics(project: Path) -> list[dict]:
 
 
 def _load_inquiry_state(project: Path):
-    from gaia.inquiry.state import load_state
+    from gaia.engine.inquiry.state import load_state
     return load_state(project.resolve())
 
 

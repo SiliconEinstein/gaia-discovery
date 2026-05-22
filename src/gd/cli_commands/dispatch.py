@@ -88,19 +88,37 @@ def _node_qid(node: Any, node_kind: str) -> str | None:
 
 
 def _iter_ir_nodes(graph: Any) -> Iterator[tuple[str, Any]]:
-    for k in getattr(graph, "knowledges", []) or []:
-        yield "knowledge", k
-    for s in getattr(graph, "strategies", []) or []:
-        yield "strategy", s
-    for o in getattr(graph, "operators", []) or []:
-        yield "operator", o
+    # Handle both dict and object-style compiled artifacts
+    if isinstance(graph, dict):
+        for k in graph.get("knowledges", []) or []:
+            yield "knowledge", k
+        for s in graph.get("strategies", []) or []:
+            yield "strategy", s
+        for o in graph.get("operators", []) or []:
+            yield "operator", o
+    else:
+        for k in getattr(graph, "knowledges", []) or []:
+            yield "knowledge", k
+        for s in getattr(graph, "strategies", []) or []:
+            yield "strategy", s
+        for o in getattr(graph, "operators", []) or []:
+            yield "operator", o
 
 
 def _normalize_metadata(meta: Any) -> dict[str, Any] | None:
-    """gaia IR 上 metadata 字段可能是 dict 或被包了一层 {"metadata": {...}}。"""
+    """Normalize metadata, merging outer and inner 'metadata' dicts.
+
+    claim() kwargs go into outer dict, while explicit metadata={...} creates
+    nested structure. Merge both levels so action_status/action_id are visible.
+    """
     if isinstance(meta, dict):
         if "metadata" in meta and isinstance(meta["metadata"], dict):
-            return meta["metadata"]
+            # Merge: inner dict first, then outer keys (outer wins on conflict)
+            result = dict(meta["metadata"])
+            for k, v in meta.items():
+                if k != "metadata":  # Don't copy the nested dict itself
+                    result[k] = v
+            return result
         return meta
     return None
 

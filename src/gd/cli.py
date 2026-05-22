@@ -24,6 +24,7 @@ from pathlib import Path
 
 # 子命令模块（薄包装到 cli_commands.*）
 from gd.cli_commands import (
+    authoring as _authoring,
     bp as _bp,
     dispatch as _dispatch,
     ingest as _ingest,
@@ -57,9 +58,9 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         issues.append("Python 版本过低")
 
     try:
-        import gaia.lang.compiler.compile  # noqa: F401
-        import gaia.bp.engine  # noqa: F401
-        import gaia.inquiry  # noqa: F401
+        import gaia.engine.lang.compiler.compile  # noqa: F401
+        import gaia.engine.bp.engine  # noqa: F401
+        import gaia.engine.inquiry  # noqa: F401
         print(f"[doctor] gaia-lang   : OK  ({gaia.lang.compiler.compile.__file__})")
     except Exception as exc:
         print(f"[doctor] gaia-lang   : FAIL  ({exc!r})")
@@ -224,6 +225,25 @@ def _build_parser() -> argparse.ArgumentParser:
         return __import__("gd.dashboard", fromlist=["main"]).main(argv)
     sp.set_defaults(func=_dashboard_main)
 
+    # interactive-dashboard (standalone, does not modify existing dashboard module)
+    sp = sub.add_parser(
+        "interactive-dashboard",
+        help="启动独立交互式控制台（默认 :8094，严格复用 dashboard 发现/进程语义）",
+    )
+    sp.add_argument("--projects-root", action="append", default=None)
+    sp.add_argument("--host", default="127.0.0.1")
+    sp.add_argument("--port", type=int, default=8094)
+    sp.add_argument("--reload", action="store_true")
+    def _interactive_dashboard_main(a):  # noqa: E306
+        argv: list[str] = []
+        for r in (a.projects_root or []):
+            argv.extend(["--projects-root", r])
+        argv.extend(["--host", a.host, "--port", str(a.port)])
+        if a.reload:
+            argv.append("--reload")
+        return __import__("gd_interactive.app", fromlist=["main"]).main(argv)
+    sp.set_defaults(func=_interactive_dashboard_main)
+
     # lkm-review (external Bohrium LKM literature retrieval, read-only)
     # Cherry-picked from gaia-discovery-lkm-dev on 2026-05-13.
     sp = sub.add_parser(
@@ -265,6 +285,9 @@ def _build_parser() -> argparse.ArgumentParser:
         *(["--since", a.since] if a.since else []),
         *(["--strict"] if a.strict else []),
     ]))
+
+    # agent-safe authoring (experimental, lab-first)
+    _authoring.build_parser(sub)
 
     return p
 

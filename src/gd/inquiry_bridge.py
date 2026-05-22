@@ -32,7 +32,7 @@ def _rank_report_in_place(report: Any, mode: str) -> None:
     ranking 模块对未知 mode 抛 ValueError，这里 fallback 'auto'。
     """
     try:
-        from gaia.inquiry.ranking import (
+        from gaia.engine.inquiry.ranking import (
             rank_diagnostics,
             rank_next_edits,
             supported_modes,
@@ -57,7 +57,7 @@ def _rank_report_in_place(report: Any, mode: str) -> None:
             report.next_edits_structured = ranked
             # 同步刷新文本 next_edits（保持 lock-step）
             try:
-                from gaia.inquiry import format_diagnostics_as_next_edits
+                from gaia.engine.inquiry import format_diagnostics_as_next_edits
                 report.next_edits = list(
                     format_diagnostics_as_next_edits(report.diagnostics)
                 )
@@ -107,8 +107,8 @@ def run_review(
     """跑 gaia.inquiry.run_review，rank 后返回 to_json_dict(report) + status。"""
     pkg_path = Path(project_dir).resolve()
     try:
-        from gaia.inquiry import run_review as _run_review
-        from gaia.inquiry import to_json_dict
+        from gaia.engine.inquiry import run_review as _run_review
+        from gaia.engine.inquiry import to_json_dict
     except ImportError as exc:
         return {"status": "error", "error": f"gaia.inquiry 不可用: {exc}"}
 
@@ -171,8 +171,8 @@ def publish_blockers_for(
     no_infer: bool = False,
 ) -> list[str]:
     """publish 模式下取 gaia.inquiry.review.publish_blockers 原始 list[str]。"""
-    from gaia.inquiry import run_review as _run_review
-    from gaia.inquiry.review import publish_blockers as _publish_blockers
+    from gaia.engine.inquiry import run_review as _run_review
+    from gaia.engine.inquiry.review import publish_blockers as _publish_blockers
 
     pkg_path = Path(project_dir).resolve()
     report = _run_review(
@@ -193,7 +193,7 @@ def publish_blockers_for(
 
 def mint_review_id(ir_hash: str | None, mode: str) -> str:
     """转发 gaia.inquiry.snapshot.mint_review_id。"""
-    from gaia.inquiry.snapshot import mint_review_id as _m
+    from gaia.engine.inquiry.snapshot import mint_review_id as _m
     return _m(ir_hash, mode)
 
 
@@ -211,7 +211,7 @@ def save_review_snapshot(
     用法：每轮 BP+review 完成后调一次，写 .gaia/reviews/<review_id>/snapshot.json，
     下轮 run_review(..., since=<review_id>) 即可拿跨轮 semantic_diff。
     """
-    from gaia.inquiry.snapshot import save_snapshot
+    from gaia.engine.inquiry.snapshot import save_snapshot
 
     return save_snapshot(
         Path(project_dir).resolve(),
@@ -233,7 +233,7 @@ def resolve_baseline_id(
 
     返回最后一个可用 baseline review_id（或 None，表示没有历史 snapshot）。
     """
-    from gaia.inquiry.snapshot import resolve_baseline
+    from gaia.engine.inquiry.snapshot import resolve_baseline
 
     return resolve_baseline(
         Path(project_dir).resolve(),
@@ -253,7 +253,7 @@ def find_anchors_for(project_dir: str | Path) -> dict[str, dict[str, Any]]:
     SourceAnchor 含 path + start_line/end_line + col 信息；这里序列化为 dict
     便于 prompt 注入与 JSON 落盘。
     """
-    from gaia.inquiry.anchor import find_anchors
+    from gaia.engine.inquiry.anchor import find_anchors
 
     raw = find_anchors(Path(project_dir).resolve())
     out: dict[str, dict[str, Any]] = {}
@@ -276,12 +276,12 @@ def find_anchors_for(project_dir: str | Path) -> dict[str, dict[str, Any]]:
 
 
 def load_state(project_dir: str | Path) -> Any:
-    from gaia.inquiry.state import load_state as _load
+    from gaia.engine.inquiry.state import load_state as _load
     return _load(Path(project_dir).resolve())
 
 
 def save_state(project_dir: str | Path, state: Any) -> None:
-    from gaia.inquiry.state import save_state as _save
+    from gaia.engine.inquiry.state import save_state as _save
     _save(Path(project_dir).resolve(), state)
 
 
@@ -294,7 +294,7 @@ def push_obligation(
     anchor: dict[str, Any] | None = None,
 ) -> str:
     """追加 SyntheticObligation 到 InquiryState，返回新 qid。"""
-    from gaia.inquiry.state import (
+    from gaia.engine.inquiry.state import (
         SyntheticObligation,
         load_state as _load,
         mint_qid,
@@ -323,7 +323,7 @@ def push_hypothesis(
     content: str,
     scope_qid: str | None = None,
 ) -> str:
-    from gaia.inquiry.state import (
+    from gaia.engine.inquiry.state import (
         SyntheticHypothesis,
         load_state as _load,
         mint_qid,
@@ -346,7 +346,7 @@ def push_rejection(
     target_strategy: str,
     content: str,
 ) -> str:
-    from gaia.inquiry.state import (
+    from gaia.engine.inquiry.state import (
         SyntheticRejection,
         load_state as _load,
         mint_qid,
@@ -371,7 +371,7 @@ def append_tactic(
     event: str,
     payload: dict[str, Any] | None = None,
 ) -> None:
-    from gaia.inquiry.state import append_tactic_event
+    from gaia.engine.inquiry.state import append_tactic_event
     append_tactic_event(Path(project_dir).resolve(), event, payload=payload)
 
 

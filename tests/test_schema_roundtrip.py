@@ -77,11 +77,11 @@ def test_action_signal_valid() -> None:
         "actions": [
             {
                 "action_id": "act_abc123",
-                "action_kind": "deduction",
+                "action_kind": "derive",
                 "claim_qid": "Q.t",
                 "claim_text": "PPT ∧ dephasing → EB",
                 "args": {"premise_ids": ["d1", "m1"]},
-                "metadata": {"action": "deduction", "action_status": "pending"},
+                "metadata": {"action": "derive", "action_status": "pending"},
                 "lean_target": "PPT2.Examples.Dephasing.ppt_dephasing_is_EB",
             },
         ],
@@ -162,7 +162,7 @@ def test_evidence_pydantic_schema_compatible() -> None:
 
 def test_verdict_valid() -> None:
     _validator("verdict.schema.json").validate({
-        "action_id": "act_x", "action_kind": "deduction",
+        "action_id": "act_x", "action_kind": "derive",
         "router": "structural", "verdict": "verified",
         "backend": "lean_lake", "confidence": 0.9,
         "evidence": "lake build OK", "raw": {}, "elapsed_s": 10.5, "error": None,
@@ -170,7 +170,7 @@ def test_verdict_valid() -> None:
 
 
 def test_verdict_rejects_unknown_router() -> None:
-    bad = {"action_id": "x", "action_kind": "deduction", "router": "magic",
+    bad = {"action_id": "x", "action_kind": "derive", "router": "magic",
            "verdict": "verified", "backend": "lean_lake", "confidence": 0.9,
            "evidence": "ok", "raw": {}, "elapsed_s": 1.0}
     with pytest.raises(jsonschema.ValidationError):

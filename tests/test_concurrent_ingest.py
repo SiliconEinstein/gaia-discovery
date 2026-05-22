@@ -28,7 +28,7 @@ def scan_actions(pkg):
 
 _PLAN = textwrap.dedent('''\
     """concurrency test plan"""
-    from gaia.lang import claim, support, question
+    from gaia.engine.lang import claim, derive, question
 
     Q = question("conc test", qid="t1")
     A = claim("claim A", action="induction", args={"n": 1}, prior=0.5)
@@ -37,7 +37,7 @@ _PLAN = textwrap.dedent('''\
     D = claim("claim D", action="induction", args={"n": 4}, prior=0.5)
     E = claim("claim E", action="induction", args={"n": 5}, prior=0.5)
     T = claim("conclusion", prior=0.4)
-    support(premises=[A, B, C, D, E], conclusion=T)
+    derive(T, given=[A, B, C, D, E])
 ''')
 
 

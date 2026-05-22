@@ -16,12 +16,13 @@
 """
 from __future__ import annotations
 
-import gaia.lang as _gaia_lang
+import gaia.engine.lang as _gaia_lang
 
 from gd.verify_server.schemas import (
     ALL_ACTIONS as _SCHEMAS_ALL_ACTIONS,
     OPERATOR_ACTIONS as _SCHEMAS_OPERATOR_ACTIONS,
     STRATEGY_ACTIONS as _SCHEMAS_STRATEGY_ACTIONS,
+    V3_TO_V05_ALIASES as _SCHEMAS_V3_TO_V05_ALIASES,
 )
 
 STRATEGY_ACTIONS: frozenset[str] = _SCHEMAS_STRATEGY_ACTIONS
@@ -29,18 +30,29 @@ OPERATOR_ACTIONS: frozenset[str] = _SCHEMAS_OPERATOR_ACTIONS
 ALLOWED_ACTIONS: frozenset[str] = _SCHEMAS_ALL_ACTIONS
 
 
-# v0.5 alias layer (cherry-picked from gaia-discovery-lkm-dev, 2026-05-13).
-# We KEEP v3 names as canonical here (matches verify-server router), so this
-# is a no-op identity map. Callers that depend on `canonicalize_action`
-# (e.g. `belief_ranker`) still work without any behavior change.
-LEGACY_ACTION_ALIASES: dict[str, str] = {}
+# v3 → v0.5 alias layer (2026-05-21, post gaia v0.5 alignment).
+# gaia.engine.lang still exports the v3 names with DeprecationWarning, so
+# both legacy v3 and canonical v0.5 names are valid action_kinds. This map
+# is used by `canonicalize_action()` for downstream consumers
+# (belief_ranker, run-cycle review summary) that want a single canonical
+# label per logical action.
+LEGACY_ACTION_ALIASES: dict[str, str] = dict(_SCHEMAS_V3_TO_V05_ALIASES)
 
 
 def canonicalize_action(action: str) -> str:
-    """Return canonical action name. In main repo (v3 schema), this is the
-    identity — v3 names are already canonical. lkm-dev uses this to translate
-    v3 → v0.5 names; we accept the same function signature for API
-    compatibility without changing dispatch semantics."""
+    """Return the v0.5 canonical name for an action_kind.
+
+    For v3 legacy verbs (`support` / `deduction` / `contradiction` /
+    `equivalence` / `complement`) returns their v0.5 equivalent
+    (`derive` / `derive` / `contradict` / `equal` / `exclusive`).
+    All other names (including `derive`, `infer`, `abduction`, `induction`,
+    `disjunction`, etc.) are returned unchanged.
+
+    Used by:
+      * `belief_ranker.canonical_action_label()` — display canonical name in UI
+      * `run_cycle.review_session` — group actions by canonical label
+      * `is_strategy()` / `is_operator()` — defer to schema-level lookup
+    """
     return LEGACY_ACTION_ALIASES.get(action, action)
 
 

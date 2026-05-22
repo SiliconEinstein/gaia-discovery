@@ -47,7 +47,7 @@ def _write_minimal_pkg(pkg_dir: Path, name: str = "demo_pkg") -> Path:
     src_dir.mkdir(exist_ok=True)
     (src_dir / "__init__.py").write_text(textwrap.dedent("""
         \"\"\"Minimal Gaia knowledge package for tests.\"\"\"
-        from gaia.lang import claim, setting, support
+        from gaia.engine.lang import claim, setting, derive
 
         # background setting
         ctx = setting("Working in standard real analysis.")
@@ -57,7 +57,7 @@ def _write_minimal_pkg(pkg_dir: Path, name: str = "demo_pkg") -> Path:
         B = claim("If f is continuous on [0,1] and differentiable on (0,1), MVT holds.")
 
         # one strategy: A supports B (soft)
-        s_AB = support([A], B, reason="MVT requires continuity which is given.", prior=0.85)
+        s_AB = derive(B, given=[A], rationale="MVT requires continuity which is given.")
     """).lstrip(), encoding="utf-8")
 
     return pkg_dir

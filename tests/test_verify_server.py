@@ -201,7 +201,7 @@ def _make_struct_req(tmp_path: Path, *, lean_src: str | None) -> VerifyRequest:
         artifact = VerifyArtifact(path="task_results/missing.lean")
     return VerifyRequest(
         action_id="act_abc123def456",
-        action_kind="deduction",
+        action_kind="derive",
         project_dir=str(tmp_path),
         artifact=artifact,
         timeout_s=30.0,
@@ -238,7 +238,7 @@ def test_structural_path_escape(tmp_path):
     outside.write_text("theorem foo : True := trivial\n")
     req = VerifyRequest(
         action_id="act_abc123def456",
-        action_kind="deduction",
+        action_kind="derive",
         project_dir=str(inner),
         artifact=VerifyArtifact(path="../evil.lean"),
     )
@@ -252,22 +252,22 @@ def test_structural_path_escape(tmp_path):
 # ---------------------------------------------------------------------------
 
 _DSL_OK = '''\
-from gaia.lang import claim, support
+from gaia.engine.lang import claim, derive
 
 A = claim("hypothesis A holds", prior=0.6)
 B = claim("hypothesis B holds", prior=0.6)
 C = claim("conclusion C", prior=0.5)
-support(premises=[A, B], conclusion=C, prior=0.7)
+derive(C, given=[A, B])
 '''
 
 _DSL_SYNTAX_BROKEN = "this is (not valid python\n"
 
 _DSL_BINDING_BROKEN = '''\
-from gaia.lang import support, claim
+from gaia.engine.lang import derive, claim
 
 C = claim("conclusion only", prior=0.4)
 # 引用未定义变量，期望 NameError
-support(premises=[NOT_DEFINED], conclusion=C)
+derive(C, given=[NOT_DEFINED])
 '''
 
 
@@ -277,7 +277,7 @@ def _make_heur_req(tmp_path: Path, dsl: str) -> VerifyRequest:
     p.write_text(dsl, encoding="utf-8")
     return VerifyRequest(
         action_id="act_abc123def456",
-        action_kind="support",
+        action_kind="derive",
         project_dir=str(tmp_path),
         artifact=VerifyArtifact(
             path=str(p.relative_to(tmp_path)),
@@ -316,7 +316,7 @@ def test_heuristic_runs_review_pipeline(tmp_path):
 def test_heuristic_missing_dsl_artifact(tmp_path):
     req = VerifyRequest(
         action_id="act_abc123def456",
-        action_kind="support",
+        action_kind="derive",
         project_dir=str(tmp_path),
         artifact=VerifyArtifact(path="task_results/none.py"),
     )
@@ -438,14 +438,14 @@ def test_structural_fallback_to_heuristic_with_evidence(tmp_path, monkeypatch):
     import gd.verify_server.routers.structural as struct_mod
     monkeypatch.setattr(struct_mod, "_detect_toolchain", lambda: (None, None))
     aid = "act_sfallback00"
-    _make_evidence_for_fallback(tmp_path, aid, "deduction")
+    _make_evidence_for_fallback(tmp_path, aid, "derive")
     heur_mod.set_judge_hook(
         lambda c, e, m, k: {"verdict": "verified", "confidence": 0.92, "reasoning": "ok"}
     )
     try:
         req = VerifyRequest(
             action_id=aid,
-            action_kind="deduction",
+            action_kind="derive",
             project_dir=str(tmp_path),
             claim_text="x.",
             artifact=VerifyArtifact(path=f"task_results/{aid}.md"),

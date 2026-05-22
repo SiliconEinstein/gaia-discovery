@@ -121,7 +121,7 @@ def _seed_evidence(pkg: Path, action_id: str, *, stance: str = "support") -> Pat
 # ---------- 闸 B 拒绝 ----------
 
 def test_run_cycle_rejects_when_idle(tmp_path: Path, cleanup_modules) -> None:
-    pkg = _make_pkg(tmp_path, "rc_idle", "from gaia.lang import claim\nK = claim('x', prior=0.5)\n")
+    pkg = _make_pkg(tmp_path, "rc_idle", "from gaia.engine.lang import claim\nK = claim('x', prior=0.5)\n")
     code, _ = run_cycle.run(pkg)
     assert code == run_cycle.EXIT_USER
 
@@ -131,7 +131,7 @@ def test_run_cycle_rejects_when_idle(tmp_path: Path, cleanup_modules) -> None:
 def test_run_cycle_evidence_missing_keeps_state(tmp_path: Path, cleanup_modules, server_client) -> None:
     pkg = _make_pkg(
         tmp_path, "rc_missing",
-        "from gaia.lang import claim\nK = claim('x', action='induction', args={'n_max': 100})\n",
+        "from gaia.engine.lang import claim\nK = claim('x', action='induction', args={'n_max': 100})\n",
     )
     _, env = dispatch.run(pkg)
     aid = env["actions"][0]["action_id"]
@@ -160,7 +160,7 @@ def test_run_cycle_evidence_missing_keeps_state(tmp_path: Path, cleanup_modules,
 def test_run_cycle_full_path_resets_state(tmp_path: Path, cleanup_modules, server_client) -> None:
     pkg = _make_pkg(
         tmp_path, "rc_ok",
-        "from gaia.lang import claim\nK = claim('x', action='induction', args={'n_max': 100})\n",
+        "from gaia.engine.lang import claim\nK = claim('x', action='induction', args={'n_max': 100})\n",
     )
     _, env = dispatch.run(pkg)
     aid = env["actions"][0]["action_id"]
@@ -195,7 +195,7 @@ def test_run_cycle_full_path_resets_state(tmp_path: Path, cleanup_modules, serve
 def test_run_cycle_target_belief_extracted(tmp_path: Path, cleanup_modules, server_client) -> None:
     pkg = _make_pkg(
         tmp_path, "rc_target",
-        "from gaia.lang import claim\nK = claim('x', action='induction', args={'n_max': 100}, prior=0.5)\n",
+        "from gaia.engine.lang import claim\nK = claim('x', action='induction', args={'n_max': 100}, prior=0.5)\n",
     )
     # 写 target.json 让 target_qid 指向已存在的 claim x
     # claim x 编译后 qid 通常是 'discovery:rc_target::x' 之类（按 namespace+pkg）
@@ -221,7 +221,7 @@ def test_run_cycle_writes_verdict_per_action(tmp_path: Path, cleanup_modules, se
     pkg = _make_pkg(
         tmp_path, "rc_multi",
         textwrap.dedent("""
-            from gaia.lang import claim
+            from gaia.engine.lang import claim
             A = claim("first", action="induction", args={"n_max": 50})
             B = claim("second", action="induction", args={"n_max": 80})
         """).lstrip(),

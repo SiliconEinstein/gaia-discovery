@@ -114,7 +114,7 @@ def test_missing_project_dir(tmp_path: Path) -> None:
 
 
 def test_invalid_mode(tmp_path: Path, cleanup_modules) -> None:
-    pkg = _make_pkg(tmp_path, "inq_mode", "from gaia.lang import claim\nK = claim('x', prior=0.5)\n")
+    pkg = _make_pkg(tmp_path, "inq_mode", "from gaia.engine.lang import claim\nK = claim('x', prior=0.5)\n")
     code, _ = inquiry.run(pkg, mode="bogus")
     assert code == inquiry.EXIT_USER
 
@@ -122,7 +122,7 @@ def test_invalid_mode(tmp_path: Path, cleanup_modules) -> None:
 # ---------- 合法路径 ----------
 
 def test_inquiry_envelope_shape_and_schema(tmp_path: Path, cleanup_modules) -> None:
-    pkg = _make_pkg(tmp_path, "inq_ok", "from gaia.lang import claim\nK = claim('x', prior=0.5)\n")
+    pkg = _make_pkg(tmp_path, "inq_ok", "from gaia.engine.lang import claim\nK = claim('x', prior=0.5)\n")
     code, env = inquiry.run(pkg)
     assert code == inquiry.EXIT_OK
     assert env["schema_version"] == 1
@@ -141,14 +141,14 @@ def test_inquiry_compile_error(tmp_path: Path, cleanup_modules) -> None:
     code, env = inquiry.run(pkg)
     assert code == inquiry.EXIT_OK
     assert env["compile_status"] == "error"
-    # compile_error from gaia.inquiry compile block is opaque; only status is reliable
+    # compile_error from gaia.engine.inquiry compile block is opaque; only status is reliable
     _validate(env)
 
 
 # ---------- belief_summary ----------
 
 def test_inquiry_picks_latest_belief_summary(tmp_path: Path, cleanup_modules) -> None:
-    pkg = _make_pkg(tmp_path, "inq_belief", "from gaia.lang import claim\nK = claim('x', prior=0.5)\n")
+    pkg = _make_pkg(tmp_path, "inq_belief", "from gaia.engine.lang import claim\nK = claim('x', prior=0.5)\n")
     _seed_belief_snapshot(pkg, {"x": 0.42})
     # belief-hidden: explore mode redacts belief_summary; only terminal mode exposes it
     _, env = inquiry.run(pkg, mode="terminal")
@@ -158,13 +158,13 @@ def test_inquiry_picks_latest_belief_summary(tmp_path: Path, cleanup_modules) ->
 # ---------- belief_stale ----------
 
 def test_belief_stale_when_no_last_bp(tmp_path: Path, cleanup_modules) -> None:
-    pkg = _make_pkg(tmp_path, "inq_stale1", "from gaia.lang import claim\nK = claim('x', prior=0.5)\n")
+    pkg = _make_pkg(tmp_path, "inq_stale1", "from gaia.engine.lang import claim\nK = claim('x', prior=0.5)\n")
     _, env = inquiry.run(pkg)
     assert env["belief_stale"] is True
 
 
 def test_belief_fresh_when_last_bp_after_plan(tmp_path: Path, cleanup_modules) -> None:
-    pkg = _make_pkg(tmp_path, "inq_fresh", "from gaia.lang import claim\nK = claim('x', prior=0.5)\n")
+    pkg = _make_pkg(tmp_path, "inq_fresh", "from gaia.engine.lang import claim\nK = claim('x', prior=0.5)\n")
     # 让 last_bp_at 比 plan mtime 晚 1 小时
     future = datetime.now(timezone.utc) + timedelta(hours=1)
     state = cs.CycleState(phase="idle", last_bp_at=future.isoformat())
@@ -174,7 +174,7 @@ def test_belief_fresh_when_last_bp_after_plan(tmp_path: Path, cleanup_modules) -
 
 
 def test_belief_stale_when_plan_newer_than_last_bp(tmp_path: Path, cleanup_modules) -> None:
-    pkg = _make_pkg(tmp_path, "inq_stale2", "from gaia.lang import claim\nK = claim('x', prior=0.5)\n")
+    pkg = _make_pkg(tmp_path, "inq_stale2", "from gaia.engine.lang import claim\nK = claim('x', prior=0.5)\n")
     # last_bp_at = 1 小时前
     past = datetime.now(timezone.utc) - timedelta(hours=1)
     state = cs.CycleState(phase="idle", last_bp_at=past.isoformat())
@@ -188,7 +188,7 @@ def test_belief_stale_when_plan_newer_than_last_bp(tmp_path: Path, cleanup_modul
 # ---------- read-only ----------
 
 def test_inquiry_does_not_touch_cycle_state(tmp_path: Path, cleanup_modules) -> None:
-    pkg = _make_pkg(tmp_path, "inq_ro", "from gaia.lang import claim\nK = claim('x', prior=0.5)\n")
+    pkg = _make_pkg(tmp_path, "inq_ro", "from gaia.engine.lang import claim\nK = claim('x', prior=0.5)\n")
     state = cs.CycleState(phase="dispatched", pending_actions=["act_x"])
     cs.save(state, pkg)
     before = (pkg / ".gaia" / "cycle_state.json").read_bytes()
@@ -200,7 +200,7 @@ def test_inquiry_does_not_touch_cycle_state(tmp_path: Path, cleanup_modules) -> 
 # ---------- publish 模式 ----------
 
 def test_publish_mode_returns_blockers_list(tmp_path: Path, cleanup_modules) -> None:
-    pkg = _make_pkg(tmp_path, "inq_pub", "from gaia.lang import claim\nK = claim('x', prior=0.5)\n")
+    pkg = _make_pkg(tmp_path, "inq_pub", "from gaia.engine.lang import claim\nK = claim('x', prior=0.5)\n")
     code, env = inquiry.run(pkg, mode="publish")
     assert code == inquiry.EXIT_OK
     assert env["mode"] == "publish"

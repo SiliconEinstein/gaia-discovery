@@ -23,11 +23,14 @@ from gd.action_allowlist import (
 
 
 def test_eight_primitives_partition() -> None:
+    # v0.5 canonical action_kinds (2026-05-21 alignment):
+    # support/deduction → derive, contradiction → contradict,
+    # equivalence → equal, complement → exclusive.
     assert STRATEGY_ACTIONS == frozenset(
-        {"support", "deduction", "abduction", "induction"}
+        {"derive", "infer", "abduction", "induction"}
     )
     assert OPERATOR_ACTIONS == frozenset(
-        {"contradiction", "equivalence", "complement", "disjunction"}
+        {"contradict", "equal", "exclusive", "disjunction"}
     )
     assert ALLOWED_ACTIONS == STRATEGY_ACTIONS | OPERATOR_ACTIONS
     assert STRATEGY_ACTIONS.isdisjoint(OPERATOR_ACTIONS)
@@ -40,7 +43,7 @@ def test_assert_allowed_passes_for_each_primitive(action: str) -> None:
 
 @pytest.mark.parametrize(
     "action",
-    ["conjure", "magic", "unknown_kind", "Deduction", "support ", ""],
+    ["conjure", "magic", "unknown_kind", "Derive", "derive ", ""],
 )
 def test_assert_allowed_rejects_invented_actions(action: str) -> None:
     with pytest.raises(ValueError) as excinfo:
@@ -52,7 +55,7 @@ def test_assert_allowed_rejects_invented_actions(action: str) -> None:
         assert legal in msg
 
 
-@pytest.mark.parametrize("bad", [None, 0, 1.5, ["deduction"], ("deduction",)])
+@pytest.mark.parametrize("bad", [None, 0, 1.5, ["derive"], ("derive",)])
 def test_assert_allowed_rejects_non_str(bad: object) -> None:
     with pytest.raises(ValueError):
         assert_allowed(bad)  # type: ignore[arg-type]
@@ -82,7 +85,7 @@ def test_allowlist_matches_verify_server_schemas() -> None:
 
 def test_each_action_resolves_to_gaia_lang_callable() -> None:
     """模块 import 时已自检，这里再显式断言一次给后人留 trail。"""
-    import gaia.lang as L
+    import gaia.engine.lang as L
     for action in ALLOWED_ACTIONS:
         attr = getattr(L, action, None)
         assert attr is not None, f"gaia.lang 缺 {action}"

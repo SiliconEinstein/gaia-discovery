@@ -18,7 +18,7 @@ def _reset_hook():
 
 
 def _req(tmp_path: Path, *, action_id: str | None = None,
-         action_kind: str = "support",
+         action_kind: str = "derive",
          md_text: str | None = None,
          evidence: dict | None = None) -> VerifyRequest:
     action_id = action_id or f"act_{uuid.uuid4().hex[:12]}"

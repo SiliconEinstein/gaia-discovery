@@ -95,7 +95,7 @@ def test_missing_project_dir(tmp_path: Path) -> None:
 def test_bp_writes_snapshot_and_envelope(tmp_path: Path, cleanup_modules) -> None:
     name = "bp_ok"
     body = textwrap.dedent("""
-        from gaia.lang import claim
+        from gaia.engine.lang import claim
         K = claim("hello", prior=0.5)
     """).lstrip()
     pkg = _make_pkg(tmp_path, name, body)
@@ -112,7 +112,7 @@ def test_bp_writes_snapshot_and_envelope(tmp_path: Path, cleanup_modules) -> Non
 
 def test_bp_does_not_touch_cycle_state(tmp_path: Path, cleanup_modules) -> None:
     name = "bp_no_state"
-    body = "from gaia.lang import claim\nK = claim('x', prior=0.5)\n"
+    body = "from gaia.engine.lang import claim\nK = claim('x', prior=0.5)\n"
     pkg = _make_pkg(tmp_path, name, body)
 
     # 预设 cycle_state.json 为 dispatched

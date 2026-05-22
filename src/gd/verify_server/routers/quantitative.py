@@ -68,9 +68,20 @@ def _resolve_within(base: Path, candidate: str) -> Path:
         p = base / p
     p = p.resolve()
     base_resolved = base.resolve()
-    if base_resolved not in p.parents and p != base_resolved:
-        raise ValueError(f"path {p} escapes project_dir {base_resolved}")
-    return p
+    if base_resolved in p.parents or p == base_resolved:
+        return p
+    extra = os.environ.get("GAIA_VERIFY_EXTRA_ROOTS", "").strip()
+    if extra:
+        for r in extra.split(":"):
+            if not r:
+                continue
+            try:
+                rp = Path(r).resolve()
+            except OSError:
+                continue
+            if rp in p.parents or p == rp:
+                return p
+    raise ValueError(f"path {p} escapes project_dir {base_resolved}")
 
 
 def _make_response(

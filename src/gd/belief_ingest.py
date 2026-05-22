@@ -90,7 +90,7 @@ PRIOR_CAP_HEURISTIC: float = 0.70
 # Use Cromwell floor (≈0) as the "refuted" prior — semantically identical to v0.4's prior=0.0
 # (which v0.4 silently Cromwell-clamped to 1e-3 inside BP anyway).
 try:  # pragma: no cover - simple constant lookup
-    from gaia.ir.parameterization import CROMWELL_EPS as _CROMWELL_EPS
+    from gaia.engine.ir.parameterization import CROMWELL_EPS as _CROMWELL_EPS
 except Exception:  # pragma: no cover
     _CROMWELL_EPS = 1e-3
 PRIOR_FLOOR_REFUTED: float = float(_CROMWELL_EPS)
@@ -1280,7 +1280,7 @@ def append_evidence_subgraph(
 
 
 def _ensure_imports(src: str, needed: list[str]) -> str:
-    """确保 plan.gaia.py 顶部 from gaia.lang import ... 包含 needed 全部符号。"""
+    """确保 plan.gaia.py 顶部 from gaia.engine.lang import ... 包含 needed 全部符号。"""
     missing = []
     for sym in needed:
         if not _re.search(rf"from\s+gaia\.lang\s+import[\s\S]*?\b{sym}\b", src):
@@ -1298,7 +1298,7 @@ def _ensure_imports(src: str, needed: list[str]) -> str:
         line = m2.group(0)
         new_line = line.rstrip() + ", " + ", ".join(missing)
         return src.replace(line, new_line, 1)
-    return "from gaia.lang import " + ", ".join(missing) + "\n" + src
+    return "from gaia.engine.lang import " + ", ".join(missing) + "\n" + src
 
 def _append_evidence_locked(
     *,
@@ -1314,7 +1314,8 @@ def _append_evidence_locked(
     judge_reasoning: str,
 ) -> IngestResult:
     src_before = plan_path.read_text(encoding="utf-8")
-    needed = ["claim", "support"] if stance == "support" else ["claim", "contradiction"]
+    # v0.5: support→derive, contradiction→contradict
+    needed = ["claim", "derive"] if stance == "support" else ["claim", "contradict"]
     src_before_ensured = _ensure_imports(src_before, needed)
     if src_before_ensured != src_before:
         plan_path.write_text(src_before_ensured, encoding="utf-8")
@@ -1401,12 +1402,17 @@ def _append_evidence_locked(
             f"sub-agent evidence via {backend}; judge_confidence={judge_confidence:.2f}"
             + (f"; reasoning={judge_reasoning[:120]}" if judge_reasoning else "")
         )
+        # v0.5 alignment (2026-05-21): emit `derive(C, given=[P], rationale=...)`
+        # instead of the deprecated v3 `support(premises=[P], conclusion=C, prior=...)`.
+        # `derive` is the v0.5 canonical deterministic-strategy verb. The v3
+        # `prior` keyword has no direct v0.5 counterpart (derive is deterministic);
+        # the judge factor is now recorded in metadata via `rationale`.
+        rationale_with_prior = f"{reason} [judge_factor={judge_factor:.3f}]"
         blocks.append(
-            f"support(\n"
-            f"    premises=[{', '.join(new_var_names)}],\n"
-            f"    conclusion={parent_label},\n"
-            f"    reason={_py_repr_str(reason)},\n"
-            f"    prior={judge_factor:.3f},\n"
+            f"derive(\n"
+            f"    {parent_label},\n"
+            f"    given=[{', '.join(new_var_names)}],\n"
+            f"    rationale={_py_repr_str(rationale_with_prior)},\n"
             f")"
         )
         added_edges += 1
@@ -1439,8 +1445,9 @@ def _append_evidence_locked(
                 f"sub-agent refute via {backend}; judge_confidence={judge_confidence:.2f}"
                 + (f"; reasoning={judge_reasoning[:120]}" if judge_reasoning else "")
             )
+            # v0.5 alignment: contradiction → contradict (operator rename)
             blocks.append(
-                f"contradiction(\n"
+                f"contradict(\n"
                 f"    {parent_label},\n"
                 f"    {var},\n"
                 f"    reason={_py_repr_str(reason)},\n"

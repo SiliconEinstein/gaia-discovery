@@ -79,9 +79,19 @@ def write_public_redacted_snapshot(snapshot: BeliefSnapshot, out_dir: str | Path
 
 
 def _normalize_metadata(meta: Any) -> dict[str, Any]:
+    """Normalize metadata, merging outer and inner 'metadata' dicts.
+
+    claim() kwargs go into outer dict, while explicit metadata={...} creates
+    nested structure. Merge both levels so action_status/action_id are visible.
+    """
     if isinstance(meta, dict):
         if isinstance(meta.get("metadata"), dict):
-            return dict(meta["metadata"])
+            # Merge: inner dict first, then outer keys (outer wins on conflict)
+            result = dict(meta["metadata"])
+            for k, v in meta.items():
+                if k != "metadata":  # Don't copy the nested dict itself
+                    result[k] = v
+            return result
         return dict(meta)
     return {}
 

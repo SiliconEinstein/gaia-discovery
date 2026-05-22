@@ -6,10 +6,17 @@
     (b) 你的探索路径 (git diff 即可读)
 * USER hint: 用户可在任意位置插入 `# USER: ...` 注释，主 agent 必须读并响应。
 """
-from gaia.lang import (
-    claim, setting, question,
-    support, deduction, abduction, induction,
-    contradiction, equivalence, complement, disjunction,
+from gaia.engine.lang import (
+    claim,
+    setting,
+    question,
+    derive,
+    abduction,
+    induction,
+    contradict,
+    equal,
+    exclusive,
+    disjunction
 )
 
 # ---------------------------------------------------------------------- 问题
@@ -40,19 +47,18 @@ q_main = question(
 #
 # 然后用 strategy 连接（kwargs 风格，4 种）：
 #
-# deduction(premises=[lemma_a, lemma_b], conclusion=t)
+# derive(t, given=[lemma_a, lemma_b])
 #
 # 或用 operator 标记关系（positional 风格，4 种；**不接 premises/conclusion**）：
 #
-# contradiction(assume_p, derive_not_p)
-# equivalence(claim_a, claim_b)
-# complement(branch_a, branch_b)
+# contradict(assume_p, derive_not_p)
+# equal(claim_a, claim_b)
+# exclusive(branch_a, branch_b)
 # disjunction(case_1, case_2, case_3)
 #
 # 注意：
 # 1) operator 是 positional 二元/变元 Knowledge 参数；写成
-#    `contradiction(premises=[...], conclusion=...)` 会直接 IR compile 422。
+#    `contradict(premises=[...], conclusion=...)` 会直接 IR compile 422。
 # 2) `reason` 与 `prior` 必须成对给（全给或全不给）；只给一个会触发
 #    ValueError（_validate_reason_prior 校验）。例：
-#       deduction(premises=[a, b], conclusion=t,
-#                 reason="两个 lemma 推出 t", prior=0.9)
+#       derive(t, given=[a, b], #                 rationale="两个 lemma 推出 t")

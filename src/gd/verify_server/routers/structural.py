@@ -27,6 +27,7 @@ from gd.verify_server.schemas import (
 )
 from gd.verify_server.audit.error_taxonomy import InconclusiveReason, make_taxonomy
 from gd.verify_server.audit.lean_audit import audit_axioms, parse_errors, scan_sorries
+from gd.verify_server.audit.reward_hacking import audit_lean_source
 
 
 _LAKE = shutil.which("lake")
@@ -39,9 +40,20 @@ def _resolve_within(base: Path, candidate: str) -> Path:
         p = base / p
     p = p.resolve()
     base_resolved = base.resolve()
-    if base_resolved not in p.parents and p != base_resolved:
-        raise ValueError(f"path {p} escapes project_dir {base_resolved}")
-    return p
+    if base_resolved in p.parents or p == base_resolved:
+        return p
+    extra = os.environ.get("GAIA_VERIFY_EXTRA_ROOTS", "").strip()
+    if extra:
+        for r in extra.split(":"):
+            if not r:
+                continue
+            try:
+                rp = Path(r).resolve()
+            except OSError:
+                continue
+            if rp in p.parents or p == rp:
+                return p
+    raise ValueError(f"path {p} escapes project_dir {base_resolved}")
 
 
 def _make_response(
@@ -52,6 +64,8 @@ def _make_response(
     confidence: float,
     evidence: str,
     raw: dict[str, Any],
+    diagnostics: list[dict[str, Any]] | None = None,
+    required_advisory: list[str] | None = None,
     started: float,
     error: str | None,
 ) -> VerifyResponse:
@@ -64,9 +78,17 @@ def _make_response(
         confidence=confidence,
         evidence=evidence,
         raw=raw,
+        diagnostics=diagnostics or [],
+        required_advisory=required_advisory or [],
         elapsed_s=time.monotonic() - started,
         error=error,
     )
+
+
+def _merge_source_audit(raw: dict[str, Any], lean_path: Path, req: VerifyRequest) -> tuple[list[dict[str, Any]], list[str]]:
+    audit = audit_lean_source(lean_path, claim_text=req.claim_text)
+    raw["reward_audit"] = audit
+    return list(audit.get("diagnostics") or []), list(audit.get("required_advisory") or [])
 
 
 def _detect_toolchain() -> tuple[str | None, str | None]:
@@ -183,6 +205,7 @@ def verify_structural(req: VerifyRequest) -> VerifyResponse:
             "returncode": proc.returncode,
             "stdout_tail": stdout, "stderr_tail": stderr,
         }
+        reward_diags, reward_advisory = _merge_source_audit(raw, lean_path, req)
         # 单文件 `lake env lean` 编译成功：stdout/stderr 里不会有 "error:" 且 rc=0
         has_error = ("error:" in stdout) or ("error:" in stderr)
         sorry_warn = ("declaration uses `sorry`" in stdout) or                      ("declaration uses `sorry`" in stderr)
@@ -263,10 +286,18 @@ def verify_structural(req: VerifyRequest) -> VerifyResponse:
                 )
 
             # 三阶 gate 全过：高置信 verified
+            if reward_diags:
+                return _make_response(
+                    req, verdict="inconclusive", backend="lean_lake", confidence=0.3,
+                    evidence="lake env lean 成功但 reward-hacking source audit 发现结构性问题",
+                    raw=raw, diagnostics=reward_diags, required_advisory=reward_advisory,
+                    started=started, error="reward_hacking_diagnostics",
+                )
             return _make_response(
                 req, verdict="verified", backend="lean_lake", confidence=0.99,
                 evidence="lake env lean 成功，无 sorry，仅依赖白名单标准 axiom",
-                raw=raw, started=started, error=None,
+                raw=raw, diagnostics=reward_diags, required_advisory=reward_advisory,
+                started=started, error=None,
             )
 
         # 编译失败：抓结构化错误
@@ -286,7 +317,8 @@ def verify_structural(req: VerifyRequest) -> VerifyResponse:
         return _make_response(
             req, verdict="inconclusive", backend="lean_lake", confidence=0.3,
             evidence=f"lake env lean 失败（rc={proc.returncode}），proof 未完成",
-            raw=raw, started=started,
+            raw=raw, diagnostics=reward_diags, required_advisory=reward_advisory,
+            started=started,
             error=f"lean inplace failed: rc={proc.returncode}",
         )
 
@@ -366,6 +398,7 @@ def verify_structural(req: VerifyRequest) -> VerifyResponse:
     stderr = (proc.stderr or "")[-4000:]
     raw: dict[str, Any] = {"mode": "isolated", "returncode": proc.returncode,
                             "stdout_tail": stdout, "stderr_tail": stderr}
+    reward_diags, reward_advisory = _merge_source_audit(raw, lean_path, req)
 
     if proc.returncode == 0:
         # Gate 1: sorry 扫描
@@ -381,7 +414,8 @@ def verify_structural(req: VerifyRequest) -> VerifyResponse:
             return _make_response(
                 req, verdict="inconclusive", backend="lean_lake", confidence=0.2,
                 evidence="lake build 成功但词法层 sorry 扫描发现字面 sorry",
-                raw=raw, started=started, error=tax["reason"],
+            raw=raw, diagnostics=reward_diags, required_advisory=reward_advisory,
+            started=started, error=tax["reason"],
             )
         # Gate 2: axiom 闭包审计（隔离模式 work 目录已被 cleanup，跳过——降级标记）
         # 注：tempfile.TemporaryDirectory 在 with 退出时已删除 work；此模式下没有可用 lake_proj
@@ -393,10 +427,18 @@ def verify_structural(req: VerifyRequest) -> VerifyResponse:
         )
         raw["error_taxonomy"] = tax
         raw["audit_skipped"] = "isolated_workspace_closed"
+        if reward_diags:
+            return _make_response(
+                req, verdict="inconclusive", backend="lean_lake", confidence=0.3,
+                evidence="lake build 成功但 reward-hacking source audit 发现结构性问题",
+                raw=raw, diagnostics=reward_diags, required_advisory=reward_advisory,
+                started=started, error="reward_hacking_diagnostics",
+            )
         return _make_response(
             req, verdict="verified", backend="lean_lake", confidence=0.85,
             evidence="lake build 成功（隔离模式无 axiom audit，仅 sorry 扫描）",
-            raw=raw, started=started, error=None,
+            raw=raw, diagnostics=reward_diags, required_advisory=reward_advisory,
+            started=started, error=None,
         )
 
     # 编译失败 ≠ refuted；抓结构化错误后 inconclusive
@@ -414,7 +456,8 @@ def verify_structural(req: VerifyRequest) -> VerifyResponse:
     return _make_response(
         req, verdict="inconclusive", backend="lean_lake", confidence=0.4,
         evidence=f"lake build 失败（returncode={proc.returncode}），证明未完成",
-        raw=raw, started=started, error=f"lean build failed: rc={proc.returncode}",
+        raw=raw, diagnostics=reward_diags, required_advisory=reward_advisory,
+        started=started, error=f"lean build failed: rc={proc.returncode}",
     )
 
 

@@ -100,7 +100,7 @@ def test_missing_project_dir(tmp_path: Path) -> None:
 
 def test_compile_error_returns_user_exit(tmp_path: Path, cleanup_modules) -> None:
     name = "disp_bad_compile"
-    body = "from gaia.lang import claim\nK = claim(\n"  # syntax broken
+    body = "from gaia.engine.lang import claim\nK = claim(\n"  # syntax broken
     pkg = _make_pkg(tmp_path, name, body)
     code, env = dispatch.run(pkg)
     assert code == dispatch.EXIT_USER
@@ -112,7 +112,7 @@ def test_compile_error_returns_user_exit(tmp_path: Path, cleanup_modules) -> Non
 def test_no_pending_action(tmp_path: Path, cleanup_modules) -> None:
     name = "disp_no_action"
     body = textwrap.dedent("""
-        from gaia.lang import claim, setting
+        from gaia.engine.lang import claim, setting
         ctx = setting("ctx")
         K = claim("just a claim, no action")
     """).lstrip()
@@ -131,7 +131,7 @@ def test_no_pending_action(tmp_path: Path, cleanup_modules) -> None:
 def test_single_legal_action(tmp_path: Path, cleanup_modules) -> None:
     name = "disp_one_action"
     body = textwrap.dedent("""
-        from gaia.lang import claim
+        from gaia.engine.lang import claim
         K = claim("need induction", action="induction", args={"n_max": 100})
     """).lstrip()
     pkg = _make_pkg(tmp_path, name, body)
@@ -156,7 +156,7 @@ def test_single_legal_action(tmp_path: Path, cleanup_modules) -> None:
 def test_unknown_action_goes_to_rejected(tmp_path: Path, cleanup_modules) -> None:
     name = "disp_unknown"
     body = textwrap.dedent("""
-        from gaia.lang import claim
+        from gaia.engine.lang import claim
         K = claim("magic", action="conjure")
     """).lstrip()
     pkg = _make_pkg(tmp_path, name, body)
@@ -174,7 +174,7 @@ def test_unknown_action_goes_to_rejected(tmp_path: Path, cleanup_modules) -> Non
 def test_bad_args_type_goes_to_rejected(tmp_path: Path, cleanup_modules) -> None:
     name = "disp_bad_args"
     body = textwrap.dedent("""
-        from gaia.lang import claim
+        from gaia.engine.lang import claim
         K = claim("x", action="induction", args=[1, 2, 3])
     """).lstrip()
     pkg = _make_pkg(tmp_path, name, body)
@@ -190,10 +190,10 @@ def test_bad_args_type_goes_to_rejected(tmp_path: Path, cleanup_modules) -> None
 def test_mixed_legal_and_rejected(tmp_path: Path, cleanup_modules) -> None:
     name = "disp_mixed"
     body = textwrap.dedent("""
-        from gaia.lang import claim
-        K1 = claim("good", action="deduction")
+        from gaia.engine.lang import claim
+        K1 = claim("good", action="derive")
         K2 = claim("bad", action="conjure")
-        K3 = claim("good2", action="support")
+        K3 = claim("good2", action="abduction")
     """).lstrip()
     pkg = _make_pkg(tmp_path, name, body)
 
@@ -201,7 +201,7 @@ def test_mixed_legal_and_rejected(tmp_path: Path, cleanup_modules) -> None:
     assert code == dispatch.EXIT_OK
     assert len(env["actions"]) == 2
     kinds = sorted(a["action_kind"] for a in env["actions"])
-    assert kinds == ["deduction", "support"]
+    assert kinds == ["abduction", "derive"]
     assert len(env["rejected"]) == 1
     assert env["cycle_state"]["phase"] == "dispatched"
     assert len(env["cycle_state"]["pending_actions"]) == 2
@@ -213,7 +213,7 @@ def test_mixed_legal_and_rejected(tmp_path: Path, cleanup_modules) -> None:
 def test_dispatch_rejected_when_pending_nonempty(tmp_path: Path, cleanup_modules) -> None:
     name = "disp_gate_b"
     body = textwrap.dedent("""
-        from gaia.lang import claim
+        from gaia.engine.lang import claim
         K = claim("x", action="induction")
     """).lstrip()
     pkg = _make_pkg(tmp_path, name, body)
@@ -233,7 +233,7 @@ def test_dispatch_after_completion_works(tmp_path: Path, cleanup_modules) -> Non
     """run-cycle 完成后 cycle_state 回 idle，再 dispatch 应该 ok。"""
     name = "disp_after_complete"
     body = textwrap.dedent("""
-        from gaia.lang import claim
+        from gaia.engine.lang import claim
         K = claim("x", action="induction")
     """).lstrip()
     pkg = _make_pkg(tmp_path, name, body)
@@ -257,7 +257,7 @@ def test_dispatch_after_completion_works(tmp_path: Path, cleanup_modules) -> Non
 def test_action_id_stable_across_calls(tmp_path: Path, cleanup_modules) -> None:
     name = "disp_stable"
     body = textwrap.dedent("""
-        from gaia.lang import claim
+        from gaia.engine.lang import claim
         K = claim("xyz", action="induction")
     """).lstrip()
     pkg = _make_pkg(tmp_path, name, body)
@@ -278,7 +278,7 @@ def test_action_id_stable_across_calls(tmp_path: Path, cleanup_modules) -> None:
 
 def test_main_exit_code_no_action(tmp_path: Path, cleanup_modules, capsys) -> None:
     name = "disp_main_ok"
-    body = "from gaia.lang import claim\nK = claim('x')\n"
+    body = "from gaia.engine.lang import claim\nK = claim('x')\n"
     pkg = _make_pkg(tmp_path, name, body)
     code = dispatch.main([str(pkg)])
     assert code == dispatch.EXIT_OK
@@ -289,7 +289,7 @@ def test_main_exit_code_no_action(tmp_path: Path, cleanup_modules, capsys) -> No
 
 def test_main_exit_code_compile_error(tmp_path: Path, cleanup_modules, capsys) -> None:
     name = "disp_main_bad"
-    body = "from gaia.lang import claim\nK = claim(\n"
+    body = "from gaia.engine.lang import claim\nK = claim(\n"
     pkg = _make_pkg(tmp_path, name, body)
     code = dispatch.main([str(pkg)])
     assert code == dispatch.EXIT_USER

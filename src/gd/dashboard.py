@@ -552,7 +552,7 @@ def compile_plan(project_dir: Path) -> dict[str, Any]:
         cache_key = None
     out: dict[str, Any] = {"plan_path": str(pkg), "claims": [], "compile_status": None}
     try:
-        from gaia.cli._packages import (
+        from gaia.engine.packaging import (
             compile_loaded_package,
             ensure_package_env,
             load_gaia_package,
