@@ -22,7 +22,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 REPO_ROOT = Path("/root/gaia-discovery")
-DATASET = Path("/root/datasets/frontierscience/research/test.jsonl")
+DATASET = Path(os.environ.get("FS_DATASET", "/root/datasets/frontierscience/research/test.jsonl"))
 
 
 def slugify(task_id: str, idx: int) -> str:
