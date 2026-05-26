@@ -75,7 +75,7 @@ gd doctor
 
 ## 4. 启动 verify server（必须）
 
-verify server 负责 heuristic / structural / quantitative 三路验证，必须在 `gd explore` 之前启动：
+verify server 负责 heuristic / structural / quantitative 三路验证，必须在主 agent 跑 `gd run-cycle` 之前启动：
 
 ```bash
 nohup gd verify-server --port 8092 > /tmp/verify.log 2>&1 &
@@ -99,24 +99,33 @@ gd init my_problem \
 
 cd projects/my_problem
 
-# 跑探索（主 agent 写 plan.gaia.py → 派子 agent → verify → BP → review，循环）
-gd explore . --max-iter 8 --max-time 1h --target-belief 0.7
+# 在 Claude Code 里启动主 agent 会话（让它读 AGENTS.md §4 Procedure 走探索循环）
+# 或者用 slash 命令 /gaia:explore .
+#
+# 主 agent 每一轮执行：
+#   gd inquiry .            (explore 模式 → ranked_focus，belief 隐藏)
+#   编辑 discovery_<slug>/__init__.py 加 pending claim
+#   gd dispatch .           → actions[]
+#   Task(subagent_type="gaia-action-runner", ...) per action
+#   gd run-cycle .          (atomic verify+ingest+BP+inquiry)
+#   按 §5b review gates 决定写 TERMINAL.* 或继续
 ```
 
 **产物落点**：
 
 | 路径 | 内容 |
 |------|------|
-| `plan.gaia.py` | 主 agent 写的 Gaia DSL（git diff 看演化） |
-| `runs/iter_NN/review.json` | diagnostics + next_edits + semantic_diff |
-| `runs/iter_NN/belief_snapshot.json` | 全图 belief 值 |
-| `task_results/<id>.md` | 子 agent 交付物（markdown） |
-| `task_results/<id>.py` | 子 agent 附属 Python（experiment 类 action） |
-| `task_results/<id>.lean` | 子 agent 附属 Lean（deduction 类 action） |
-| `blueprint_verified.md` | 若达到 target-belief，最终蓝图 |
-| `.gaia/inquiry/snapshots/` | review snapshot（semantic_diff 依赖） |
+| `discovery_<slug>/__init__.py` | plan.gaia.py — 主 agent 写的 Gaia DSL（git diff 看演化） |
+| `runs/iter_<TS>/verify/<aid>.json` | 每个 action 的 verify-server verdict |
+| `runs/iter_<TS>/belief_snapshot.json` | 全图 belief 值（BP 输出） |
+| `runs/iter_<TS>/review.json` | diagnostics + next_edits + semantic_diff |
+| `task_results/<aid>.evidence.json` | 子 agent 的 EvidencePayload（必）|
+| `task_results/<aid>.<ext>` | 子 agent 附属工件（.lean / .py） |
+| `task_results/<gate_id>.review.json` | red-team / auditor / pi-reviewer 等结构化输出 |
+| `TERMINAL.<verdict>.iter<N>.md` | 会话终止 marker（success / partial / stuck / refuted） |
+| `.gaia/cycle_state.json` | 状态机 |
 
-**验证它工作了**：`iter_01` 目录出现，`review.json` 非空，`plan.gaia.py` 有内容。
+**验证它工作了**：`runs/iter_<TS>/` 目录出现，`belief_snapshot.json` + `review.json` 非空，plan.gaia.py 有内容。
 
 ---
 

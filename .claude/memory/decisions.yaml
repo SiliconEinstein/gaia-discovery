@@ -12,9 +12,9 @@
     只有 3 路 router（quantitative/structural/heuristic），多对一映射混乱、
     sub-agent 路径选择困难、router 派发歧义。
   decision: |
-    塌缩到 8-kind：4 strategy（support/deduction/abduction/induction）
-    + 4 operator（contradiction/equivalence/complement/disjunction）。
-    单一映射 ACTION_KIND_TO_ROUTER：induction→quant, deduction→struct,
+    塌缩到 8-kind：4 strategy（abduction/derive/induction/infer）
+    + 4 operator（contradict/disjunction/equal/exclusive）。
+    单一映射 ACTION_KIND_TO_ROUTER：induction→quant, derive→struct,
     其余 6 个 → heuristic。
   rationale:
     - 8-kind 与 strategy/operator 概念正交，命名直觉

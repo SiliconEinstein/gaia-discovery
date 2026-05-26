@@ -1,8 +1,8 @@
-.PHONY: install-all test lint run-verify run-explore clean fmt
+.PHONY: install-all test test-unit test-e2e lint fmt run-verify doctor clean
 
 PY := python3
 PIP := pip
-ROOT := /root/personal/gaia-discovery-v3
+ROOT := /root/gaia-discovery
 
 install-all:
 	$(PIP) install -e /root/Gaia
@@ -27,11 +27,13 @@ fmt:
 run-verify:
 	cd $(ROOT) && $(PY) -m gd.cli verify-server --port 8092
 
-run-explore:
-	@echo "用法: cd projects/<problem_id> && gd explore --max-iter 8"
-
 doctor:
 	cd $(ROOT) && $(PY) -m gd.cli doctor
+
+# Note: there is no `gd explore` CLI command. The main agent runs the
+# §4 Procedure in AGENTS.md by walking gd inquiry / dispatch / run-cycle
+# itself. To trigger a session interactively, use the /gaia:explore slash
+# command (see commands/gaia-explore.md).
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

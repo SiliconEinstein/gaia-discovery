@@ -260,7 +260,7 @@ User: "Review all radiation models in pyASURF"
 
 /orchestrate recall
 → worker-1: outcome=success
-   Found: verified=true, evidence premise_qids=[nat.prime.defn, euclid.lemma]
+   Found: verified=true, evidence premises=[nat.prime.defn (0.95), euclid.lemma (0.98)]
    Artifacts: [trace.md updated]
 → worker-2: outcome=success
    Found: inconclusive(insufficient_evidence), single judge + 1 premise
@@ -304,9 +304,9 @@ provenance:
 current_task: "Dispatch A1 structural on sqrt2.irr.c01"
 decisions:
   - type: design_choice
-    summary: "verdict=verified; premise_qids closed under graph"
+    summary: "verdict=verified; premise sources resolve in canonical graph"
 artifacts:
-  - path: projects/sqrt2_irrational/iter_03/plan.gaia.py
+  - path: projects/sqrt2_irrational/discovery_sqrt2_irrational/__init__.py
     role: input
   - path: trace.md
     role: output
@@ -316,8 +316,8 @@ result:
   summary: "Verified 1 claim: sqrt2.irr.c01"
   findings:
     verdicts_emitted: 1
-    strength: 0.86
-    files_affected: ["runs/r0301/verification.json"]
+    mean_premise_confidence: 0.96
+    files_affected: ["runs/iter_20260503T091236/verify/act_a3f2.json"]
 ```
 
 **Worker state (failed)**: `.claude/state/archive/worker-yyy.yaml`

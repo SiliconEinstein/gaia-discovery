@@ -24,17 +24,27 @@ User mentions: launching `gd explore`, attempting a conjecture, running a fresh 
 
 Main agent emits the iter's claim/strategy/operator/action list:
 - Each claim has unique `claim_qid` and explicit `claim_text`
-- `strategy ∈ {support, deduction, abduction, induction}` matches claim shape
-- `operator ∈ {contradiction, equivalence, complement, disjunction}` composes when present
-- `action_kind ∈ ALL_ACTIONS` (8-set); dispatcher will route via `ACTION_KIND_TO_ROUTER`
-- Free predicates either in `LocalCanonicalGraph` or flagged `SyntheticHypothesis` with `detect_*` anchor
+- `strategy ∈ {derive, infer, abduction, induction}` (v0.5 canonical) matches
+  claim shape
+- `operator ∈ {contradict, equal, exclusive, disjunction}` composes when present
+- `action_kind ∈ ALL_ACTIONS` (8-set); dispatcher routes via
+  `ACTION_KIND_TO_ROUTER` (see `src/gd/verify_server/schemas.py`)
+- Free predicates either in `LocalCanonicalGraph` or flagged
+  `SyntheticHypothesis` with `detect_*` anchor
+
+Use these 8 v0.5 names directly.
 
 ### Phase 2 — Dispatch
 
-Dispatcher fans out one sub-agent per `action_id` via `backends.py` (`claude` or `gpugeek`):
-- ProcessPoolExecutor parallel; per-task `timeout_s` (default 900s)
-- Each sub-agent must emit `evidence.json` matching `EvidencePayload`
-- Verify-server 3-way router: `induction → quantitative`, `deduction → structural`, others → `heuristic`
+Main agent loops over `gd dispatch .` output and spawns one Claude Code
+`Task(subagent_type="gaia-action-runner", ...)` per `action_id`. Multiple
+Task calls may be made in parallel by the main agent (Claude Code
+schedules them concurrently).
+
+- Each sub-agent must emit `task_results/<aid>.evidence.json` matching
+  `EvidencePayload`
+- Verify-server 3-way router (applied during `gd run-cycle`):
+  `induction → quantitative`, `derive → structural`, others → `heuristic`
 
 ### Phase 3 — Verify
 
@@ -57,21 +67,30 @@ For each `verified` claim:
 
 ### Phase 5 — BP & Snapshot
 
-- `run_review` runs belief propagation across the updated graph
-- `runs/<run_id>/{verification.json, evidence.json, agent.log}` retained
-- `iter_N/{plan.gaia.py, last_iter.json, report.md, belief_snapshot.json, review.json}` written
-- `last_iter.json` carries `git_commit`, `started_at`, `finished_at`, `belief_diff`, `verdicts`
+- `gd run-cycle` atomically runs verify → ingest → BP → inquiry review
+- `runs/iter_<TS>/verify/<aid>.json` (one per action) retained — this is
+  the verify-server's verdict file
+- `runs/iter_<TS>/belief_snapshot.json` written by `compile_and_infer`
+- `runs/iter_<TS>/review.json` written by `run_review`
+- `task_results/<aid>.evidence.json` retained as the paired sub-agent output
+- `.gaia/cycle_state.json` tracks `last_bp_at`, `plan_mtime_at_last_bp`, etc.
 
 ### Phase 6 — Next Iter Decision
 
-- All top-level `claim_qid` verified → mark project `verified`, update `projects/INDEX.md`
-- Budget exhausted with open claims → mark `failed` or `paused` with `inconclusive_reason` summary
-- Otherwise → branch `iter_{N+1}` reading injected belief state
+- All top-level `claim_qid` verified + target.json criteria met → write
+  `TERMINAL.success.iter<N>.md`
+- Budget exhausted with open claims → `TERMINAL.partial.iter<N>.md` or
+  `TERMINAL.stuck.iter<N>.md`
+- Otherwise → next iter (run-cycle increments the iter timestamp;
+  AGENTS.md §4 Step 7 decides)
 
 ## Principles
 
-- **Stable problem wording.** `PROBLEM.md` and `target.json` frozen after iter_01.
+- **Stable problem wording.** `PROBLEM.md` and `target.json` frozen after first iter.
 - **Schema-first.** Every payload validated against Pydantic + JSON Schema before crossing the dispatcher boundary.
-- **Premise closure.** No verdict without `premise_qids` reachable in `LocalCanonicalGraph`.
-- **Reproducibility triple.** `git commit + iter_N + run_id` retained; verdict unauditable without all three.
-- **Append-only history.** `iter_N/` and `runs/<run_id>/` immutable once closed.
+- **Premise closure.** No verdict without every `premises[].source` resolving
+  to an ancestor `claim_qid` OR an explicit external citation.
+- **Reproducibility triple.** git commit + plan source + `runs/iter_<TS>/`
+  trail retained; verdict unauditable without all three.
+- **Append-only history.** `runs/iter_<TS>/` immutable once the run-cycle
+  completes (`cycle_state.phase` back to `idle`).

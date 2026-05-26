@@ -41,7 +41,7 @@ from referencing.jsonschema import DRAFT202012
 
 from gd import cycle_state as cs
 from gd.belief_ingest import (
-    IngestError, append_evidence_subgraph, apply_verdict,
+    IngestError, append_evidence_subgraph, apply_verdict, locate_plan_source,
 )
 from gd.belief_ranker import (
     redact_belief_snapshot,
@@ -482,7 +482,16 @@ def run(
     write_review(review_envelope, out_dir)
 
     # ---- 阶段 6: cycle_state 重置 ----
-    cs.mark_completed(state)
+    # Record plan.gaia.py mtime so cycle_state.plan_mtime_at_last_bp accurately
+    # reflects which plan revision BP was last computed against (dashboard +
+    # envelope diagnostics; `_is_belief_stale` uses last_bp_at directly but
+    # this field is still surfaced to consumers).
+    plan_mtime: float | None = None
+    try:
+        plan_mtime = locate_plan_source(pkg).stat().st_mtime
+    except (IngestError, OSError):
+        plan_mtime = None
+    cs.mark_completed(state, plan_mtime=plan_mtime)
     cs.save(state, pkg)
 
     target_belief: float | None = None

@@ -30,9 +30,12 @@ Hunt errors in claim/strategy/verify pipelines. Every category names a concrete 
 - Is `operator ∈ {contradict, equal, exclusive, disjunction}` compositional with the antecedent operators?
 
 ### 3. Evidence Schema Drift
-- Does `evidence.json` conform to `EvidencePayload` (verify-server `schemas.py`)? Missing `premise_qids`, `source`, `strength`?
-- Are `premise_qids` actually closed under `LocalCanonicalGraph` reachability?
-- Does the sub-agent cite hypotheses it never established? (ghost-premise attack)
+- Does `evidence.json` conform to `EvidencePayload` (verify-server `schemas.py`)?
+  Required fields: `stance`, `summary`, `premises[]` (list of
+  `{text, confidence, source}` objects), optional `counter_evidence[]`,
+  optional `formal_artifact_path`.
+- Are the cited `premises[].text` items actually grounded in the project's
+  existing claims / data? If not, that's a ghost-premise attack.
 
 ### 4. Verify-Server Artifacts
 - **quantitative**: Did the sandbox actually run the code, or did it time out silently? Does the scalar tolerance match claim precision?
@@ -75,14 +78,41 @@ For each review, produce:
 
 3. **Cheapest discriminating test**: The single most informative test that would either confirm or refute the top failure mode.
 
-## Context Requirements
+## Context Requirements (v3.5 artifact paths)
 
-Before reviewing, demand:
-- `plan.gaia.py` excerpt showing the claim + strategy/operator chain
-- `evidence.json` from the sub-agent (raw, not summarized)
-- verify-server `verification.json` + `agent.log` for the run
-- For structural: the `.lean` file + `lake` output
-- For quantitative: the sandbox `stdout/stderr` + resource usage
-- `runs/<iter>/{belief_snapshot, review}.json` if post-BP
+Before reviewing, demand from the dispatcher prompt (or read these files):
 
-If any of these are missing, flag it as the first failure mode.
+- `discovery_<slug>/__init__.py` (plan.gaia.py) — claim + strategy/operator chain
+- `task_results/<aid>.evidence.json` — the sub-agent's raw evidence
+- `runs/<RUN_ID>/verify/<aid>.json` — verify-server verdict for this action
+- For `structural` verdicts: the candidate `.lean` file + `lake env lean` output
+  embedded in the verdict's `raw` field
+- For `quantitative` verdicts: the sandbox `stdout/stderr` excerpt in `raw`
+- For `heuristic` verdicts: the LLM judge's full `raw.judge` block
+- `runs/<RUN_ID>/{belief_snapshot.json, review.json}` if post-BP
+
+If any required artifact is missing, flag it as the first failure mode.
+
+## Output Contract (v3.5+)
+
+Red-team is **advisory** for BP (it does not write a verify-server verdict
+itself), but its findings MUST be machine-readable so the main agent can act
+on them automatically. Write your review to
+`task_results/<gate_id>.review.json` with this schema:
+
+```json
+{
+  "agent": "red-team",
+  "gate": "G1",
+  "target": "<claim_qid or candidate_solution_id>",
+  "verdict": "pass | critical | warn",
+  "critical": [{"qid": "...", "issue": "...", "test": "..."}],
+  "warnings": [{"qid": "...", "issue": "...", "test": "..."}],
+  "cheapest_discriminating_test": "...",
+  "ranked_failure_modes": [{"rank": 1, "category": "...", "description": "...", "test": "..."}]
+}
+```
+
+The main agent reads this JSON to decide whether to proceed to G2 / write
+TERMINAL.* (see AGENTS.md §5b). Prose summary may follow the JSON, but the
+JSON block is the canonical output.

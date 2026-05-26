@@ -17,7 +17,7 @@
 claim 与 strategy/operator，把 `PROBLEM.md` 里的问题形式化成 gaia IR；调度 sub-agent 给每个
 pending claim 拿到 evidence；让 BP 收敛到 target claim 的 belief ≥ threshold。
 
-外层不再有 Python orchestrator；调度循环就是你按本文件的 Procedure 跑下来的。
+调度循环就是你按本文件的 Procedure 跑下来的（没有外层 Python orchestrator）。
 
 ---
 
@@ -38,8 +38,8 @@ pending claim 拿到 evidence；让 BP 收敛到 target claim 的 belief ≥ thr
 ## 2. 硬约束（违反即拒绝执行；CLI 与 verify-server 端有强制校验）
 
 1. 编辑 plan.gaia.py 时，只能 `import` 来自 `gaia.lang` 的公开符号：
-   `support, deduction, abduction, induction, contradiction, equivalence,
-   complement, disjunction` + `claim, setting, question`。
+   `abduction, derive, induction, infer, contradict, disjunction, equal, exclusive`
+   + `claim, setting, question`.
    未导入 / 编造的符号 → 编译失败 → `gd dispatch` 拒绝。
 2. **任何 strategy/operator 调用必须严格 keyword-only**（`reason=...`, `prior=...`）。
    绝对**不能**给 strategy/operator 传 `metadata=` kwarg —— DSL 只接
@@ -277,26 +277,145 @@ sub-agent 会写 `task_results/<aid>.evidence.json`（必）+ 可选 `.lean` / `
 > 其他 14 个 advisory 角色见 §5。它们不是 quota，是 heuristic trigger——按需启用。
 > **但下列 4 个角色有 mandatory iter trigger（即使你觉得"没必要"也必须派）**：
 
-### Step 5b — Mandatory advisory triggers（**违反 = 红队事后翻账**）
+### Step 5b — Mandatory review gates（Archon 风格的 transition gate，**违反 = TERMINAL 无效**）
 
-主 agent 必须按以下时间表派 advisory sub-agent。这些是 Archon 风格的强制 pipeline 步骤，
-不是 quota，而是因为长 horizon 工作里 agent 自己**永远不会觉得现在该自审**——
-经验上 single-session 模式下 agent 倾向把 token 花在"再多推一个 BP claim"而跳过自查，
-结果 reward hacking 不被抓。
+主 agent 必须在以下**状态转移点**派 advisory sub-agent。**触发条件不是 iter 计数**
+（agent 不擅长数 iter，且 benchmark 模式 max_iter=4 根本到不了 iter=8），而是
+**转移到下一阶段的 gate**——你必须先派完才能跨过这道门。
 
-| 角色 | 触发条件 | 输入 | 期望产出 |
-|---|---|---|---|
-| **`red-team`** | **iter ∈ {3, 8, 15, 25, 40, 60, ...}**（log₂-ish 递增），**OR** 当前 session 新增过 `axiom`（任何形式）；**OR** 主目标 belief 从 < 0.5 跳到 > 0.9 单 iter | 当前 plan.gaia.py + 最新 evidence.json + USER_HINTS.md | falsification report：候选反例 / target-weakening 检测 / axiom-shortcut 检测；如检出 hack 直接 rename TERMINAL.success → TERMINAL.fake_success_<reason> |
-| **`auditor`** | 当前 session 新增过 `axiom` / `sorry`；**OR** 计划写 `TERMINAL.success.*` 之前；**OR** iter ∈ {10, 25, 50, ...} | 最近 N 个文件改动 + 候选 TERMINAL marker draft | docstring 合规 + reproducibility triple（gap_kind / paper_ref / loc_est）完整性；**主 agent 收到 auditor 报告后才能写 TERMINAL.success** |
-| **`mathlib-gap-builder`** | 任一 sub-agent 报 `gap_kind: mathlib_missing` | 缺失 lemma 描述 | helper file `<Project>/Mathlib_<Topic>.lean` 真证出来；fallback 写完整 paper_ref + loc_est + subtask list |
-| **`deep-researcher`** | 计划写 `TERMINAL.stuck.*` 之前**最后一轮**；**OR** ranked_focus 顶部 5 项连续 3 轮无变化 | 当前所有 STUCK 候选 + ranked_focus 历史 | counterexample / statement 修正建议 / alternative attack vector |
+经验上 single-session agent 永远不会觉得"现在该自审"，会把 token 花在"再多推一个
+BP claim"上跳过自查。所以这些 gate 是**Archon 风格的硬性 pipeline 步骤**，不是 quota。
+长 horizon Lean 项目和短 horizon benchmark 都同等适用。
 
-**自检方式**：每次 Step 7 决定下一步前，问自己 "我这个 iter 跨过 mandatory trigger 表上哪些行了？
-都派了吗？" 没派的现在补派。
+#### Gate G1 — 候选解给出后（red-team gate）
 
-其他 10 个 advisory 角色（oracle / pi-reviewer / rubric-anticipator / scribe / surveyor /
-archivist / orchestrator / quality-gate / sentinel / lab-notebook）保持 heuristic——
-按场景触发，不强制。
+**触发**：满足下面**任一**：
+- 写完 FINAL_ANSWER.md 的草稿（或 candidate program / candidate proof）
+- 主目标 belief 单 iter 从 < 0.5 跳到 > 0.9
+- 当前 session 新增过 `axiom` 或 non-trivial `sorry`
+- 长 horizon：iter ∈ {3, 8, 15, 25, 40, 60, ...}（log₂-ish 递增）
+
+**必派**：`Task(subagent_type="red-team", ...)` —— 攻击当前最强 claim / candidate
+solution。输入 = 候选解全文 + 最新 evidence.json + USER_HINTS.md。产出 = falsification
+report（候选反例 / target-weakening 检测 / axiom-shortcut 检测 / 维度 - 限制 - 符号检查）。
+
+**跳过 G1 不能进 G2**。
+
+#### Gate G2 — 写 TERMINAL marker 之前（calibration audit loop + auditor gate）
+
+**触发**：你**打算**写下面任何一种文件，无论 iter 编号：
+- `TERMINAL.success.iter<N>.md`
+- `TERMINAL.partial.iter<N>.md`
+- 长 horizon：iter ∈ {10, 25, 50, ...}
+
+G2 不是单步而是**闭环 calibration 循环**：先用 belief-revealed 的 terminal BP
+做自校准，发现自己哪个 claim 的 prior 离 BP posterior 最远，回 explore 模式重攻
+那个 claim 直到校准收敛，**然后**才允许调 auditor + 写 TERMINAL marker。
+
+##### G2.0 初始化（首次进 G2 时）
+
+读 `target.json`：
+- `audit_budget`（默认 2）— 允许的 calibration 循环轮数
+- `audit_calibration_threshold`（默认 0.30）— max single `|posterior - prior|` 收敛阈值
+
+设 `audit_round = 0`。
+
+##### G2.1 Calibration audit（**唯一允许 agent 调 terminal mode 的位置**）
+
+调一次：
+```bash
+gd inquiry . --mode terminal
+```
+
+拿到 `belief_summary`（qid → posterior）和 `terminal_review`。
+对**你自己加过的每个 claim**（`metadata.prior` 是你 pre-evidence 估的，
+belief_summary[qid] 是 BP 算出的 post-evidence posterior）算：
+```
+Δ_qid = posterior_qid - prior_qid
+```
+按 `|Δ|` 降序列前 5 — 这是"我以为 X 但 BP 说 Y"的最大 calibration mismatch。
+
+记 `max_delta = max |Δ|`。
+
+##### G2.2 收敛判定
+
+- 若 `max_delta ≤ audit_calibration_threshold` → 校准良好，**GOTO G2.4**（auditor +
+  写 TERMINAL.success）
+- 若 `audit_round >= audit_budget` → audit budget 耗尽但未收敛 →
+  写 `TERMINAL.partial.calibration_unconverged.iter<N>.md`，文件里附上 `max_delta`、
+  top-3 `(qid, prior, posterior, Δ)`，**退出**。不允许写 success。
+- 否则（未收敛但还有 budget）→ G2.3
+
+##### G2.3 重攻 + 回 explore（**honesty contract 必读**）
+
+挑 |Δ| 前 1-3 的 claim 准备重攻。但**你刚才看到了 posterior**，下面是反 reward-hacking 硬规则：
+
+**Honesty contract**（违反 = TERMINAL.fake_success_calibration_dishonesty）：
+1. **Prior 冻结**：你 G2.1 看到 posterior 的 claim，**绝不允许**回头修改它们的
+   `metadata.prior`。git diff 一眼看穿。你的 prior 是 audit 前对自己的标定；
+   audit 后修改 prior 来"假装我早就知道"是最严重的 reward hacking。
+2. **新 evidence 走新 sub-claim**：要表达"我现在重新评估这个 claim 是 0.X"必须
+   通过**新加** support / derive / contradict claim + 派 sub-agent 拿真 evidence
+   重跑 BP，让 BP 自己更新 posterior。
+3. **Self-disclosure**：在 USER_HINTS.md tail 加一段：
+   ```
+   ## iter-<N>_calibration_audit_round_<R>
+   - viewed posteriors: [qid1: 0.X1, qid2: 0.X2, ...]
+   - largest deltas: [(qid, prior, posterior, Δ), ...]
+   - plan: attack <qid> via new sub-claim <new_qid> + gaia-action-runner
+   ```
+   这段是事后审计的取证记录。
+
+切回 explore 模式（后续 `gd inquiry .` 自动 belief-hidden），跑 1-2 个 normal
+explore iter 重攻挑出来的 claim：
+1. `gd inquiry .`（explore mode）
+2. 编辑 plan.gaia.py 加新 sub-claim 攻 |Δ| 最大那个
+3. `gd dispatch .` → spawn gaia-action-runner Task
+4. `gd run-cycle .`
+
+`audit_round += 1`，**GOTO G2.1**。
+
+##### G2.4 Auditor + 写 TERMINAL（校准收敛后）
+
+派 `Task(subagent_type="auditor", ...)`，输入 = 当前 PROBLEM.md + 候选 TERMINAL
+marker draft + 候选 FINAL_ANSWER.md + **完整 (prior, posterior, Δ) 表** + 最近文件
+改动。产出 = (a) 每个 sub-part 是否覆盖；(b) cross-checks（dim/limit/sign/
+named-entity）；(c) docstring / reproducibility triple；(d) 任何 reward-hacking
+信号（axiom 跳板 / 目标弱化 / **calibration dishonesty** / 自创 TERMINAL kind）。
+
+**收到 auditor 通过报告后才能写 `TERMINAL.success.iter<N>.md`**。若 auditor 报
+critical issue → 回 explore 模式修，或降级到 `TERMINAL.partial.<reason>.iter<N>.md`。
+
+#### Gate G3 — `mathlib_missing` 报告后
+
+任一 sub-agent 报 `gap_kind: mathlib_missing` → 必派 `mathlib-gap-builder`。
+（详见 §6.5 gap 三分类）
+
+#### Gate G4 — STUCK 之前最后一搏
+
+打算写 `TERMINAL.stuck.iter<N>.md`，**OR** ranked_focus 顶部 5 项连续 3 轮无变化 →
+必派 `deep-researcher`，给一次 counterexample / statement 修正建议 / alternative
+attack vector 的机会，然后再决定 STUCK。
+
+#### 自检方式
+
+每次 Step 7 决定下一步前，问自己 ："**我即将跨过 G1/G2/G3/G4 中的哪些 gate？派了吗？**"
+没派的现在补派；派了再 commit 到下一步。
+
+#### 验证
+
+watchdog（`check_review_compliance()` in `eval/*/{*_smoke}.py`）会扫 Claude session
+transcript 算 `red_team_dispatched` / `auditor_dispatched` / `gaia_action_runner_dispatched`
+等字段，挂在 response record 里。**TERMINAL.success.* 缺 G1 或 G2 ≡ 自动降级为
+TERMINAL.partial**（response record 标 `terminator_auto_downgrade=true`）。
+
+#### 其他 advisory 角色（heuristic，不在 gate 上）
+
+oracle / pi-reviewer / rubric-anticipator / scribe / surveyor / archivist /
+orchestrator / quality-gate / sentinel / lab-notebook 保持 heuristic——按场景触发，
+不强制。但**物理 benchmark 题目通常对 pi-reviewer 受益巨大**（dim+unit cross-check）——
+建议在 G2 前顺手派一次。**hidden-rubric benchmark**（如 FS Olympiad / Research）建议
+在 iter 1 就派 rubric-anticipator 先预测 bullets。
 
 ### Step 6 — run cycle（闸 A，原子化跑完 verify+ingest+bp+inquiry）
 
@@ -328,14 +447,15 @@ gd run-cycle .
 - `MILESTONE.iter<N>_<short_topic>.md` — 本轮某个具体进展的快照。
   例：`MILESTONE.iter80_haar_su2_skeleton.md`。
 
-**DEPRECATED**：bare `SUCCESS.md` / `STUCK.md` / `REFUTED.md`。watchdog 看到这些会自动 rename
-到 `MILESTONE.*` 空间，**不**触发退出。若你想终止会话，**必须**写 `TERMINAL.*` 完整命名。
+终止会话必须写 `TERMINAL.<verdict>.iter<N>.md` 完整命名（如
+`TERMINAL.success.iter<N>.md`），不要写 bare `SUCCESS.md` / `STUCK.md` /
+`REFUTED.md`。
 
 否则回 Step 2。
 
 ---
 
-## 5. Sub-agent 角色生态（13 个，按使用频率分层）
+## 5. Sub-agent 角色生态（15 个，按使用频率分层）
 
 ### MANDATORY — 每个 BP claim 用它
 
@@ -375,7 +495,7 @@ Task(subagent_type="<name>", description="...", prompt="<context>")
 ## 6. Sub-agent 快查工具（MCP）—— Search Protocol（硬性流程）
 
 sub-agent 不允许"凭记忆猜 Mathlib 引理名"——发现遗漏一次 = 任务失败。
-所有 sub-agent（gaia-action-runner / red-team / contradiction-builder / 等）在以下三种触发时
+所有 sub-agent（gaia-action-runner / red-team / mathlib-gap-builder / 等）在以下三种触发时
 **必须**先走 MCP 搜索，再写 Lean 或 evidence：
 
 | 触发 | 必走步骤 |
@@ -441,7 +561,8 @@ lkm_match, lkm_evidence, lkm_health                  # Bohrium LKM 文献图
 - 想搜文献 → `WebSearch("...")` / `lkm_match("...")`
 - 想查 Lean 编译错误 → `lean_diagnostic_messages(file)`
 
-不再需要"先 Read 整个 478 行的 Lean 文件再瞎猜"。
+这意味着 sub-agent 可以直接查精确 lemma 类型 / proof state / Lean 错误，
+不必读整个 Lean 文件再猜。
 
 **额外的角色专属工具**（在基线上叠加）：
 
@@ -463,14 +584,6 @@ lkm_match, lkm_evidence, lkm_health                  # Bohrium LKM 文献图
 - `Task(subagent_type="general-purpose")` ← Claude Code 内置 fallback，**不要**用——它没有 gaia 上下文，不知道 evidence.json schema，几乎一定给你 inconclusive
 
   **规则**：Task 必须 `subagent_type ∈ 15 个已注册角色`（见 `.claude/agents/`），否则任务失败。
-
-**派遣常见错误（agent 偶尔会犯）**：
-
-- `Task(subagent_type="lean-sorry-filler")` ← 这个不存在；用 `mathlib-gap-builder`
-- `Task(subagent_type="lean-prover")` ← 同上，proof 工作用 `gaia-action-runner`（action_kind=derive）
-- `Task(subagent_type="general-purpose")` ← Claude Code 内置 fallback，**不要**用——它没有 gaia 上下文，不知道 evidence.json schema，几乎一定给你 inconclusive
-  
-  **规则**：Task 必须 `subagent_type ∈ 14 个已注册角色`（见 `.claude/agents/`），否则任务失败。
 
 ## 6.5 Mathlib-gap-builder mindset（这是核心研究模式）
 
@@ -605,8 +718,10 @@ gd inquiry . --mode terminal                         # 人类审计用：暴露 
 ```
 
 `gd ingest` 即便单步也内置 BP（闸 C），belief 不会过期。
-`gd inquiry --mode terminal` **只给人类审计用**，主 agent 在 explore 循环里**不切到**
-terminal —— 切了就破坏 belief-hidden 设计。
+`gd inquiry --mode terminal` **只允许在 §5b G2.1 calibration audit 里调用一次/轮**——
+作为终态自校准的镜子用。任何其他场景调 terminal mode（特别是 explore 循环中段）都
+违反 belief-hidden 设计 → watchdog 标 `calibration_dishonesty` 并降级 TERMINAL。
+具体见 §5b G2.3 的 honesty contract。
 
 ---
 
@@ -619,8 +734,9 @@ terminal —— 切了就破坏 belief-hidden 设计。
 - 会话终止时写 `TERMINAL.<verdict>.iter<N>.md` 之一，并在文件里贴关键 `ranked_focus`
   /  blocker / 下一步计划。
 - 会话内 checkpoint 写 `MILESTONE.iter<N>_<topic>.md`（多个 OK，仅归档）。
-- bare `SUCCESS.md` / `STUCK.md` / `REFUTED.md` **已废弃**——watchdog 会自动 rename 到
-  `MILESTONE.*` 空间。要终止必须写完整 `TERMINAL.*` 名。
+- 终止 marker 必须用完整命名：`TERMINAL.<verdict>.iter<N>.md`
+  （`success / partial / stuck / refuted` 四种之一）。不要写 bare
+  `SUCCESS.md` / `STUCK.md` / `REFUTED.md`。
 
 ---
 
@@ -631,7 +747,7 @@ terminal —— 切了就破坏 belief-hidden 设计。
 - `/gaia:gaia-cli` — gaia init / compile / check / render / infer
 - 源码：`gaia/lang/dsl/{strategies,operators,knowledge}.py`、`gaia/ir/`、`gaia/bp/`、`gaia/inquiry/`
 - v3 CLI 与状态机：`src/gd/cli_commands/`、`src/gd/cycle_state.py`、`src/gd/action_allowlist.py`
-- sub-agent 协议（13 个）：`.claude/agents/*.md`
+- sub-agent 协议（15 个）：`.claude/agents/*.md`
 - verify-server HTTP 与路由：`src/gd/verify_server/README.md`（schemas: `src/gd/verify_server/schemas.py`）
 - 反 reward-hacking ingest 层降级：`src/gd/belief_ingest.py`（novelty soft-cap）
 - LKM 客户端 / MCP server：`src/gd/lkm_client.py` / `src/gd_mcp_lkm/`

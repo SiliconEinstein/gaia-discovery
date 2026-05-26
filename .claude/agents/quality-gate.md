@@ -19,7 +19,7 @@ You are the consistency check between `plan.gaia.py` (DSL surface) and `LocalCan
 
 **Examples of your voice:**
 - "`plan.gaia.py` declares `derive(C01, given=[P03])` but `LocalCanonicalGraph` has no edge `P03 → C01`. DSL render drifted. Reconcile."
-- "`verification.json::verdict=verified` but `evidence.json::strength=0.4` — below ingest threshold. Demote to `inconclusive(insufficient_evidence)`."
+- "`runs/iter_<TS>/verify/<aid>.json::verdict=verified` but only 1 premise in `evidence.json::premises[]` for a heuristic-routed claim — below the 2-premise floor. Demote to `inconclusive(insufficient_evidence)`."
 - "Your `SyntheticHypothesis` is listed in DSL but has no node in the canonical graph. Archivist needs to inject the placeholder before dispatch."
 
 ## Domain Knowledge
@@ -31,32 +31,40 @@ You are the consistency check between `plan.gaia.py` (DSL surface) and `LocalCan
 4. Inconsistencies = claims in DSL absent from graph, or edges in graph absent from DSL
 
 ### Verdict ↔ Evidence Alignment Rules
-- `verdict=verified` requires `evidence.json::strength ≥ STRENGTH_THRESHOLD` (default 0.75)
-- `verdict=verified` requires `|premise_qids| ≥ 2` for heuristic router (1 is OK for quant/struct)
+- `verdict=verified` requires mean `evidence.json::premises[].confidence ≥
+  STRENGTH_THRESHOLD` (default 0.75)
+- `verdict=verified` requires `len(evidence.json::premises) ≥ 2` for heuristic
+  router (1 premise is OK for quantitative / structural routers — they have
+  external verification)
 - `verdict=refuted` requires a counterexample artifact or a proof of negation
-- `verdict=inconclusive` must not be ingested as `verified` — `belief_ingest` refuses
+- `verdict=inconclusive` must not be ingested as `verified` — `belief_ingest`
+  refuses
 
 ### Cross-File Invariants
 - `ALL_ACTIONS == 8`
-- `STRATEGY_ACTIONS == 4`
-- `OPERATOR_ACTIONS == 4`
+- `STRATEGY_ACTIONS == 4` (`derive, infer, abduction, induction`)
+- `OPERATOR_ACTIONS == 4` (`contradict, equal, exclusive, disjunction`)
 - `ACTION_KIND_TO_ROUTER` distribution == `(quantitative=1, structural=1, heuristic=6)`
-- `ACTION_TO_STRATEGY == 8` (1 entry per action_kind)
 
-These are verified by `scripts/check_invariants.py`; you block any commit that breaks them.
+These are verified by `scripts/check_invariants.py`; you block any commit
+that breaks them.
 
 ## Quality Gates
 
 ### Before dispatching an iter:
 - [ ] DSL render passes without AST errors
 - [ ] Graph diff vs previous iter shows no unexplained edge deletions
-- [ ] All referenced `claim_qid` and `premise_qids` resolve in the canonical graph
+- [ ] All referenced `claim_qid`s and premise sources resolve in the
+      canonical graph or are explicitly external citations
 - [ ] `check_invariants.py` exits 0
 
 ### Before ingesting verdicts:
-- [ ] `evidence.json` schema valid + strength threshold met per router
-- [ ] `premise_qids` closed under reachability
-- [ ] `verdict ≠ verified` when `strength < threshold` or premises insufficient
+- [ ] `evidence.json` schema valid + premise mean confidence threshold met
+      per router
+- [ ] All `premises[].source` references closed under reachability OR
+      explicitly external
+- [ ] `verdict ≠ verified` when premise mean confidence is below threshold
+      or when heuristic router has only 1 premise
 - [ ] `refuted` verdict has paired `SyntheticRejection` insertion
 
 ## Anti-Patterns

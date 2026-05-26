@@ -59,13 +59,11 @@
     },
     "mode": {
       "enum": [
-        "auto",
-        "formalize",
         "explore",
-        "verify",
         "publish",
         "terminal"
-      ]
+      ],
+      "description": "Inquiry mode; canonical set matches gd CLI (src/gd/cli_commands/inquiry.py::VALID_MODES)"
     },
     "review_id": {
       "type": [

@@ -1,0 +1,695 @@
+\documentclass[aspectratio=169,10pt]{ctexbeamer}
+
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{tikz}
+\usepackage{xcolor}
+\usepackage{listings}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit,calc}
+
+% ---------------------------------------------------------------------------
+% Visual system
+% ---------------------------------------------------------------------------
+\definecolor{GaiaNavy}{HTML}{162B4D}
+\definecolor{GaiaBlue}{HTML}{276FBF}
+\definecolor{GaiaCyan}{HTML}{3DD6D0}
+\definecolor{GaiaGreen}{HTML}{2BA84A}
+\definecolor{GaiaAmber}{HTML}{F2A541}
+\definecolor{GaiaRed}{HTML}{D64550}
+\definecolor{GaiaInk}{HTML}{1F2937}
+\definecolor{GaiaMuted}{HTML}{65758B}
+\definecolor{GaiaBg}{HTML}{F7FAFC}
+\definecolor{GaiaPanel}{HTML}{EEF6FF}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamercolor{normal text}{fg=GaiaInk,bg=white}
+\setbeamercolor{frametitle}{fg=white,bg=GaiaNavy}
+\setbeamerfont{frametitle}{series=\bfseries,size=\large}
+\setbeamercolor{title}{fg=white}
+\setbeamercolor{subtitle}{fg=GaiaCyan}
+\setbeamercolor{author}{fg=white}
+\setbeamercolor{date}{fg=white}
+\setbeamercolor{block title}{fg=white,bg=GaiaBlue}
+\setbeamercolor{block body}{fg=GaiaInk,bg=GaiaPanel}
+\setbeamercolor{alerted text}{fg=GaiaRed}
+
+\setbeamertemplate{footline}{
+  \leavevmode%
+  \hbox{%
+    \begin{beamercolorbox}[wd=.72\paperwidth,ht=2.6ex,dp=1.2ex,leftskip=1.5em]{author in head/foot}%
+      \scriptsize gaia-discovery v3/v3.5 设计解析
+    \end{beamercolorbox}%
+    \begin{beamercolorbox}[wd=.28\paperwidth,ht=2.6ex,dp=1.2ex,rightskip=1.5em plus1fil]{date in head/foot}%
+      \hfill\scriptsize \insertframenumber{} / \inserttotalframenumber
+    \end{beamercolorbox}}%
+  \vskip0pt%
+}
+
+\setbeamercolor{author in head/foot}{fg=white,bg=GaiaNavy}
+\setbeamercolor{date in head/foot}{fg=white,bg=GaiaBlue}
+
+\newcommand{\chip}[2]{\tikz[baseline=(x.base)]\node[rounded corners=1.8mm,fill=#1!12,draw=#1!60,inner xsep=4pt,inner ysep=1.8pt](x){\scriptsize\bfseries #2};}
+\newcommand{\code}[1]{\texttt{\small #1}}
+\newcommand{\smallcode}[1]{\texttt{\scriptsize #1}}
+\newcommand{\source}[1]{\vspace{0.4em}{\tiny\color{GaiaMuted}依据：#1}}
+
+\tikzset{
+  box/.style={rounded corners=2mm, draw=GaiaBlue!80, fill=GaiaPanel, very thick, align=center, minimum height=8mm},
+  darkbox/.style={rounded corners=2mm, draw=GaiaNavy, fill=GaiaNavy!92, text=white, very thick, align=center, minimum height=8mm},
+  greenbox/.style={rounded corners=2mm, draw=GaiaGreen!80, fill=GaiaGreen!10, very thick, align=center, minimum height=8mm},
+  amberbox/.style={rounded corners=2mm, draw=GaiaAmber!80, fill=GaiaAmber!12, very thick, align=center, minimum height=8mm},
+  redbox/.style={rounded corners=2mm, draw=GaiaRed!80, fill=GaiaRed!10, very thick, align=center, minimum height=8mm},
+  arrow/.style={-Latex, thick, draw=GaiaNavy},
+  faintarrow/.style={-Latex, thick, draw=GaiaMuted!70},
+}
+
+\lstset{
+  basicstyle=\ttfamily\scriptsize,
+  keywordstyle=\color{GaiaBlue}\bfseries,
+  stringstyle=\color{GaiaGreen!60!black},
+  commentstyle=\color{GaiaMuted},
+  showstringspaces=false,
+  breaklines=true,
+  columns=fullflexible,
+  frame=single,
+  rulecolor=\color{GaiaBlue!25},
+  backgroundcolor=\color{GaiaBg},
+}
+
+\title{gaia-discovery 设计解析}
+\subtitle{Claude Code 驱动的 Gaia DSL 科学探索闭环}
+\author{Architecture Review Slides}
+\date{\today}
+
+\begin{document}
+
+% ---------------------------------------------------------------------------
+\begin{frame}[plain]
+  \begin{tikzpicture}[remember picture,overlay]
+    \fill[GaiaNavy] (current page.south west) rectangle (current page.north east);
+    \fill[GaiaBlue!55] ($(current page.north east)+(-4.6,0)$) -- (current page.north east) -- (current page.south east) -- ($(current page.south east)+(-7.1,0)$) -- cycle;
+    \draw[GaiaCyan, line width=1.2pt] ($(current page.west)+(0,1.65)$) -- ($(current page.east)+(0,1.65)$);
+    \node[anchor=west, text=white] at ($(current page.west)+(0.9,0.9)$) {\Large\bfseries gaia-discovery};
+    \node[anchor=west, text=GaiaCyan] at ($(current page.west)+(0.9,0.45)$) {\small skill-driven Gaia DSL exploration system};
+  \end{tikzpicture}
+  \vspace{1.2cm}
+  \titlepage
+  \vspace{-0.8cm}
+  \begin{center}
+    \chip{GaiaCyan}{Agent-as-orchestrator}
+    \chip{GaiaGreen}{Belief propagation}
+    \chip{GaiaAmber}{Verify gates}
+    \chip{GaiaRed}{Anti reward-hacking}
+  \end{center}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{一句话定位}
+  \begin{block}{核心定义}
+    \textbf{gaia-discovery} 是一个面向数学/科学问题的探索系统：主 agent 在 Gaia DSL 知识包中逐步写入 claim 与 strategy/operator，sub-agent 负责局部取证，verify-server 独立裁决证据，随后通过 Gaia BP 与 inquiry 反馈下一轮探索方向。
+  \end{block}
+
+  \vspace{0.6em}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.33\textwidth}
+      \chip{GaiaBlue}{不是传统 orchestrator}\\[0.5em]
+      Python 不再承担外层长循环；主循环由 Claude Code 用户实例按 \code{AGENTS.md} 执行。
+    \end{column}
+    \begin{column}{0.33\textwidth}
+      \chip{GaiaGreen}{不是单次问答}\\[0.5em]
+      每轮都产生结构化 evidence、verdict、belief snapshot 与 review。
+    \end{column}
+    \begin{column}{0.33\textwidth}
+      \chip{GaiaAmber}{不是纯 prompt 约束}\\[0.5em]
+      关键约束落在 CLI、状态机、JSON schema、FastAPI router 与源码 AST patch 中。
+    \end{column}
+  \end{columns}
+
+  \source{\code{README.md}, \code{AGENTS.md}, \code{CLAUDE.md}}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{设计目标与非目标}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.52\textwidth}
+      \textbf{目标}
+      \begin{itemize}
+        \item 将科学探索表示为可编译的 Gaia 知识图，而不是聊天记录。
+        \item 让每个不确定 claim 经过独立 sub-agent 取证与 verify-server 裁决。
+        \item 每轮强制运行 BP 与 inquiry，让下一步由图结构和诊断共同驱动。
+        \item 把 reward hacking 的高收益路径压低：无真实 artifact 的 verified 只能拿较低 prior cap。
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.44\textwidth}
+      \textbf{非目标}
+      \begin{itemize}
+        \item 不自造 Gaia 编译器、BP engine 或 inquiry 系统。
+        \item 不让 sub-agent 直接改 plan、runs 或状态机。
+        \item 不允许 verify 失败后默认通过。
+        \item 不在 plan 外维护不可审计的影子状态。
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \source{\code{CLAUDE.md}, \code{src/gd/gaia\_bridge.py}, \code{src/gd/belief\_ingest.py}}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{仓库结构鸟瞰}
+  \renewcommand{\arraystretch}{1.18}
+  \begin{tabularx}{\textwidth}{>{\bfseries}p{0.28\textwidth} X}
+    \toprule
+    区域 & 责任 \\
+    \midrule
+    \code{commands/gaia-*.md} & Claude Code slash 入口，包装 dispatch/run-cycle/inquiry/verify/ingest/BP。 \\
+    \code{agents/gaia-action-runner.md} & 必用 sub-agent 协议：执行单个 action，写 \code{task\_results/<aid>.evidence.json}。 \\
+    \code{src/gd/cli.py} 与 \code{cli\_commands/} & \code{gd} 命令行入口，承载 init、dispatch、run-cycle、escape hatch、dashboard。 \\
+    \code{src/gd/verify\_server/} & FastAPI verify-server，按 action kind 路由到 structural/quantitative/heuristic。 \\
+    \code{src/gd/belief\_ingest.py} & 用 \code{libcst} 回写 plan，追加 evidence subgraph，维护 prior/state/history。 \\
+    \code{src/gd\_interactive/} & 交互式 dashboard、factor graph、intervention、terminal session。 \\
+    \code{eval/} 与 \code{tests/} & FrontierScience/DiscoveryBench/ScienceAgentBench 评测脚本与单元/集成测试。 \\
+    \bottomrule
+  \end{tabularx}
+  \source{\code{README.md}, \code{pyproject.toml}, \code{src/gd/cli.py}}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{系统架构总览}
+  \centering
+  \begin{tikzpicture}[node distance=9mm and 11mm, font=\scriptsize]
+    \node[darkbox, text width=28mm] (main) {主 agent\\Claude Code};
+    \node[box, right=of main, text width=32mm] (plan) {Gaia plan\\\code{discovery\_*/\_\_init\_\_.py}};
+    \node[amberbox, right=of plan, text width=26mm] (dispatch) {\code{gd dispatch}\\扫描 pending action};
+    \node[box, below=of dispatch, text width=31mm] (sub) {sub-agent pool\\\code{gaia-action-runner}};
+    \node[greenbox, left=of sub, text width=32mm] (evidence) {\code{task\_results}\\evidence + artifacts};
+    \node[amberbox, below=of evidence, text width=31mm] (cycle) {\code{gd run-cycle}\\verify + ingest + BP + inquiry};
+    \node[redbox, right=of cycle, text width=30mm] (verify) {verify-server\\FastAPI :8092};
+    \node[greenbox, below=of cycle, text width=36mm] (gaia) {Gaia core\\compile + IR + BP + inquiry};
+    \node[box, left=of cycle, text width=29mm] (runs) {\code{runs/iter\_*}\\review + redacted BP};
+    \node[box, below=of main, text width=30mm] (state) {\code{.gaia/}\\cycle + inquiry state};
+
+    \draw[arrow] (main) -- (plan);
+    \draw[arrow] (plan) -- (dispatch);
+    \draw[arrow] (dispatch) -- (sub);
+    \draw[arrow] (sub) -- (evidence);
+    \draw[arrow] (evidence) -- (cycle);
+    \draw[arrow] (cycle) -- (verify);
+    \draw[arrow] (verify) -- (cycle);
+    \draw[arrow] (cycle) -- (gaia);
+    \draw[arrow] (gaia) -- (runs);
+    \draw[arrow] (runs) -- (main);
+    \draw[faintarrow] (dispatch) -- (state);
+    \draw[faintarrow] (cycle) -- (state);
+  \end{tikzpicture}
+
+  \vspace{0.5em}
+  \small 所有宏观进展都被落盘：plan diff、evidence、verdict、belief snapshot、review、cycle state。
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{单个研究项目的数据模型}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.48\textwidth}
+      \begin{block}{输入与源代码}
+        \begin{itemize}
+          \item \code{PROBLEM.md}: 问题陈述
+          \item \code{target.json}: target claim 与阈值
+          \item \code{USER\_HINTS.md}: 人类策略提示
+          \item \code{discovery\_<name>/\_\_init\_\_.py}: Gaia DSL plan
+        \end{itemize}
+      \end{block}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{block}{运行产物}
+        \begin{itemize}
+          \item \code{task\_results/<aid>.evidence.json}: sub-agent 唯一可信结构化产物
+          \item \code{runs/iter\_*/verify/*.json}: verify verdict
+          \item \code{runs/iter\_*/review.json}: inquiry 诊断
+          \item \code{.gaia/cycle\_state.json}: dispatch/run-cycle 状态机
+          \item \code{.gaia/internal/belief\_snapshots/}: 完整 posterior 私有存储
+        \end{itemize}
+      \end{block}
+    \end{column}
+  \end{columns}
+  \source{\code{README.md}, \code{src/gd/belief\_ranker.py}, \code{src/gd/cycle\_state.py}}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{主探索循环}
+  \centering
+  \begin{tikzpicture}[node distance=7mm, font=\scriptsize]
+    \node[darkbox, text width=30mm] (s1) {1. 读上下文\\problem / target / plan / latest review};
+    \node[box, right=of s1, text width=28mm] (s2) {2. \code{gd inquiry}\\ranked focus / diagnostics};
+    \node[box, right=of s2, text width=30mm] (s3) {3. 编辑 plan\\新增 pending claim};
+    \node[amberbox, below=of s3, text width=30mm] (s4) {4. \code{gd dispatch}\\生成 action IDs};
+    \node[box, left=of s4, text width=30mm] (s5) {5. Task sub-agents\\产 evidence};
+    \node[greenbox, left=of s5, text width=30mm] (s6) {6. \code{gd run-cycle}\\verify + ingest + BP + review};
+    \node[redbox, below=of s6, text width=34mm] (s7) {7. 终止判定\\success / refuted / stuck / next iter};
+
+    \draw[arrow] (s1) -- (s2);
+    \draw[arrow] (s2) -- (s3);
+    \draw[arrow] (s3) -- (s4);
+    \draw[arrow] (s4) -- (s5);
+    \draw[arrow] (s5) -- (s6);
+    \draw[arrow] (s6) -- (s7);
+    \draw[arrow] (s7.west) .. controls +(-2,0.4) and +(-1,-1.0) .. (s1.south);
+  \end{tikzpicture}
+
+  \vspace{0.8em}
+  \small 设计关键：主 agent 负责策略与 plan 编辑；工具链负责状态、校验、概率更新与审计。
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{Gaia DSL 与 8 个 action 原语}
+  \renewcommand{\arraystretch}{1.18}
+  \begin{tabularx}{\textwidth}{p{0.18\textwidth} p{0.27\textwidth} X}
+    \toprule
+    类别 & canonical action kind & 语义 \\
+    \midrule
+    Strategy & \code{derive} & 确定性推导，默认走 structural/Lean 验证。 \\
+    Strategy & \code{infer} & 一般概率推断或弱结构推理，走 heuristic review。 \\
+    Strategy & \code{abduction} & 竞争假说/解释选择，走 heuristic review。 \\
+    Strategy & \code{induction} & 经验归纳或采样证据，走 quantitative/Python sandbox。 \\
+    Operator & \code{contradict} & 互斥或反例关系，走 heuristic review。 \\
+    Operator & \code{equal} & 等价关系，走 heuristic review。 \\
+    Operator & \code{exclusive} & 二选一/互补关系，走 heuristic review。 \\
+    Operator & \code{disjunction} & 析取关系，走 heuristic review。 \\
+    \bottomrule
+  \end{tabularx}
+
+  \vspace{0.5em}
+  \small 当前实现以 Gaia v0.5 canonical 名称为准；\code{support/deduction/contradiction/equivalence/complement} 作为 legacy alias 用于展示和历史 artifact 兼容。
+
+  \source{\code{src/gd/verify\_server/schemas.py}, \code{src/gd/action\_allowlist.py}, \code{AGENTS.md}}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{三层 action 合法性闸}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.32\textwidth}
+      \begin{block}{1. Gaia 编译}
+        plan 只能引用 Gaia DSL 公开 callable；编造符号或错误 kwarg 在编译期失败。
+      \end{block}
+    \end{column}
+    \begin{column}{0.32\textwidth}
+      \begin{block}{2. Dispatch 白名单}
+        \code{gd dispatch} 扫 IR；\code{metadata.action} 不在 8 原语集合则进入 \code{rejected[]}。
+      \end{block}
+    \end{column}
+    \begin{column}{0.32\textwidth}
+      \begin{block}{3. Verify schema}
+        \code{VerifyRequest} 校验 action kind、project path、artifact path；router 由服务器决定。
+      \end{block}
+    \end{column}
+  \end{columns}
+
+  \vspace{0.8em}
+  \begin{center}
+    \chip{GaiaBlue}{Prompt guidance} \(\rightarrow\)
+    \chip{GaiaAmber}{Compile-time contract} \(\rightarrow\)
+    \chip{GaiaGreen}{Runtime schema}
+  \end{center}
+  \source{\code{src/gd/cli\_commands/dispatch.py}, \code{src/gd/action\_allowlist.py}, \code{src/gd/verify\_server/schemas.py}}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{Cycle State：防止跳步与并发撕裂}
+  \centering
+  \begin{tikzpicture}[node distance=18mm, font=\scriptsize]
+    \node[greenbox, text width=24mm] (idle) {\Large idle\\\scriptsize 无 pending action};
+    \node[amberbox, right=of idle, text width=30mm] (dispatched) {\Large dispatched\\\scriptsize pending 非空，等待 evidence};
+    \node[redbox, right=of dispatched, text width=26mm] (running) {\Large running\\\scriptsize run-cycle 中};
+
+    \draw[arrow,bend left=16] (idle) to node[above]{\code{gd dispatch}} (dispatched);
+    \draw[arrow,bend left=16] (dispatched) to node[above]{\code{gd run-cycle}} (running);
+    \draw[arrow,bend left=16] (running) to node[below]{成功：清空 pending} (idle);
+    \draw[arrow,bend left=22,draw=GaiaRed] (running) to node[below]{失败：回滚到 dispatched} (dispatched);
+  \end{tikzpicture}
+
+  \vspace{1em}
+  \begin{itemize}
+    \item \code{phase=dispatched} 且 \code{pending\_actions} 非空时，再次 \code{gd dispatch} 会被拒绝。
+    \item \code{gd run-cycle} 必须从 dispatched 进入；缺 evidence 会整体失败并保留 pending。
+    \item \code{cycle\_state.json} 原子写入，避免异常中断造成半状态。
+  \end{itemize}
+  \source{\code{src/gd/cycle\_state.py}, \code{src/gd/cli\_commands/run\_cycle.py}, \code{tests/test\_cli\_run\_cycle.py}}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{Run-Cycle：主路径原子 bundle}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.52\textwidth}
+      \textbf{顺序强制}
+      \begin{enumerate}
+        \item 读取 \code{cycle\_state}，必须是 dispatched。
+        \item 校验所有 \code{task\_results/<aid>.evidence.json} 都存在且符合 schema。
+        \item 对每个 action POST \code{/verify} 并写 \code{runs/<iter>/verify/<aid>.json}。
+        \item \code{apply\_verdict} 回写 plan，必要时追加 evidence subgraph。
+        \item \code{compile\_and\_infer} 强制运行 BP。
+        \item \code{run\_review} 生成 inquiry 反馈。
+        \item 成功后 state 回到 idle。
+      \end{enumerate}
+    \end{column}
+    \begin{column}{0.42\textwidth}
+      \begin{block}{失败语义}
+        任一阶段失败都会保留 pending action，并在报告中写明 \code{failed\_at} 与 \code{failed\_reason}；主 agent 修复后重跑同一轮，而不是开启新轮。
+      \end{block}
+      \begin{block}{输出}
+        \code{run\_cycle\_report.schema.json}: success、ingest results、redacted BP、review、ranked focus、target belief。
+      \end{block}
+    \end{column}
+  \end{columns}
+  \source{\code{src/gd/cli\_commands/run\_cycle.py}}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{Verify-Server：独立裁决层}
+  \centering
+  \begin{tikzpicture}[node distance=8mm and 9mm, font=\scriptsize]
+    \node[darkbox, text width=28mm] (req) {\code{VerifyRequest}\\action + claim + artifact};
+    \node[box, right=of req, text width=30mm] (server) {FastAPI :8092\\\code{POST /verify}};
+    \node[greenbox, above right=of server, text width=34mm] (struct) {Structural\\\code{derive}\\Lean lake build\\sorry/axiom audit};
+    \node[amberbox, right=of server, text width=34mm] (quant) {Quantitative\\\code{induction}\\Python sandbox\\resource limits};
+    \node[box, below right=of server, text width=34mm] (heur) {Heuristic\\其他 6 类\\LLM judge + Gaia precheck};
+    \node[redbox, below=of quant, text width=34mm] (resp) {\code{VerifyResponse}\\verdict/confidence/raw/diagnostics};
+
+    \draw[arrow] (req) -- (server);
+    \draw[arrow] (server) -- (struct);
+    \draw[arrow] (server) -- (quant);
+    \draw[arrow] (server) -- (heur);
+    \draw[arrow] (struct) -- (resp);
+    \draw[arrow] (quant) -- (resp);
+    \draw[arrow] (heur) -- (resp);
+  \end{tikzpicture}
+
+  \vspace{0.6em}
+  \small sub-agent 不能自选 router；router 映射由 \code{ACTION\_KIND\_TO\_ROUTER} 固定，避免通过低成本验证路径绕过结构验证。
+  \source{\code{src/gd/verify\_server/server.py}, \code{src/gd/verify\_server/routers/*.py}}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{Evidence Contract：sub-agent 的唯一硬产物}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{block}{必须写}
+        \begin{itemize}
+          \item \code{task\_results/<aid>.evidence.json}
+          \item 字段：\code{stance}, \code{summary}, \code{premises}, \code{counter\_evidence}, \code{uncertainty}
+          \item 可选：\code{formal\_artifact} 指向 \code{.lean}/\code{.py}/其他域工件
+        \end{itemize}
+      \end{block}
+      \begin{block}{可附带}
+        \code{<aid>.md} 调查日志，\code{<aid>.lean} 形式化证明，\code{<aid>.py} 数值实验，或领域相关数据文件。
+      \end{block}
+    \end{column}
+    \begin{column}{0.49\textwidth}
+      \begin{block}{不能做}
+        \begin{itemize}
+          \item 不能改 \code{plan.gaia.py}
+          \item 不能写 \code{runs/} 或 \code{.gaia/}
+          \item 不能调用 \code{gd dispatch/run-cycle/ingest}
+          \item 不能把 \code{inconclusive} 包装成 success
+        \end{itemize}
+      \end{block}
+      \begin{block}{设计收益}
+        sub-agent 产物可被 schema、router、ingest、dashboard 与 red-team 共同审计。
+      \end{block}
+    \end{column}
+  \end{columns}
+  \source{\code{agents/gaia-action-runner.md}, \code{src/gd/verify\_server/schemas.py}}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{Belief Ingest：从 verdict 到图结构}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.50\textwidth}
+      \textbf{源码回写}
+      \begin{itemize}
+        \item 使用 \code{libcst} 定位 \code{action\_id} 所在 claim。
+        \item 在文件锁内完成 read \(\rightarrow\) AST patch \(\rightarrow\) write \(\rightarrow\) compile 校验。
+        \item 失败即回滚源码，防止半写入破坏 plan。
+        \item 追加 \code{verify\_history}，同步 \code{action\_status} 与 metadata。
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.46\textwidth}
+      \textbf{状态与 prior}
+      \begin{itemize}
+        \item \code{verified + lean\_lake}: cap 0.99，可升为 proven。
+        \item \code{verified + sandbox\_python}: cap 0.85。
+        \item \code{verified + inquiry\_review}: cap 0.70。
+        \item \code{refuted}: prior 降至 Cromwell floor。
+        \item \code{inconclusive}: fresh 标 failed，强证据被弱证据挑战时不轻易降级。
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \source{\code{src/gd/belief\_ingest.py}}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{反 Reward-Hacking：Novelty Soft Cap}
+  \begin{tabularx}{\textwidth}{p{0.20\textwidth} p{0.42\textwidth} X}
+    \toprule
+    novelty & 判定依据 & verified 时 prior cap \\
+    \midrule
+    High & \code{formal\_artifact} 存在且可解析到真实文件 & 按 backend 自然上限：Lean 0.99 / Python 0.85 \\
+    Medium & summary/premise 提到具体 \code{.lean}/\code{.py} 路径，或有多条 substantive premise & 按 backend 自然上限 \\
+    Low/Absent & 只有笼统 summary，无路径、无真实 artifact，或 evidence 缺失/不可读 & 软降到 heuristic 0.70，并写入 synthetic warning \\
+    \bottomrule
+  \end{tabularx}
+
+  \vspace{0.8em}
+  \begin{block}{关键取舍}
+    系统不阻断 verdict，也不缩 action 自由度；它只在奖励层降低“刷 judge 而不做实事”的收益。真正写 Lean/Python artifact 的路径仍保留高上限。
+  \end{block}
+  \source{\code{README.md}, \code{src/gd/belief\_ingest.py}}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{BP 与 Inquiry：隐藏数值，暴露方向}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.48\textwidth}
+      \begin{block}{BP}
+        \begin{itemize}
+          \item \code{gaia\_bridge.compile\_and\_infer} 复用 Gaia package loader、IR validator、factor graph lowering 与 \code{InferenceEngine}。
+          \item 完整 posterior 写入 \code{.gaia/internal/belief\_snapshots/}。
+          \item 正常 runs 目录只写 redacted snapshot。
+        \end{itemize}
+      \end{block}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Inquiry}
+        \begin{itemize}
+          \item \code{run\_review} 转发 Gaia inquiry，输出 diagnostics、next edits、publish blockers。
+          \item \code{ranked\_focus\_queue} 内部使用 posterior 排序，但不暴露 belief 数字。
+          \item \code{terminal} 模式仅用于终局/人工审计。
+        \end{itemize}
+      \end{block}
+    \end{column}
+  \end{columns}
+
+  \vspace{0.6em}
+  \begin{center}
+    \chip{GaiaGreen}{主 agent 看方向} \quad
+    \chip{GaiaAmber}{人类审计可看数值} \quad
+    \chip{GaiaBlue}{减少 reward shaping}
+  \end{center}
+  \source{\code{src/gd/gaia\_bridge.py}, \code{src/gd/inquiry\_bridge.py}, \code{src/gd/belief\_ranker.py}}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{Gaia 复用边界}
+  \begin{tabularx}{\textwidth}{p{0.31\textwidth} X}
+    \toprule
+    gaia-discovery 模块 & 复用 Gaia 能力 \\
+    \midrule
+    \code{gaia\_bridge.py} & package load/compile、IR validation、factor graph lowering、BP engine、foreign priors。 \\
+    \code{inquiry\_bridge.py} & \code{run\_review}, diagnostics ranking, snapshot/baseline, anchors, inquiry state events。 \\
+    \code{action\_allowlist.py} & 从 Gaia DSL callable 与 verify schema 校验 8 action 原语一致性。 \\
+    \code{verify\_server/heuristic.py} & 使用 Gaia formalization precheck，随后 LLM judge 评估 evidence。 \\
+    \bottomrule
+  \end{tabularx}
+
+  \vspace{0.8em}
+  \begin{block}{自有胶水层}
+    gaia-discovery 主要补齐的是 agent workflow 编排边界：CLI、状态机、schema、HTTP verify wrapper、plan AST patch、dashboard、LKM/MCP 集成与评测脚本。
+  \end{block}
+  \source{\code{README.md}, \code{src/gd/gaia\_bridge.py}, \code{src/gd/inquiry\_bridge.py}}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{Sub-agent 生态与审计角色}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.45\textwidth}
+      \begin{block}{Mandatory}
+        \textbf{\code{gaia-action-runner}}：每个 BP claim 的取证执行者，产出 evidence 与可选形式化/实验 artifact。
+      \end{block}
+      \begin{block}{Mandatory triggers}
+        red-team、auditor、mathlib-gap-builder、deep-researcher 在特定 iter、axiom/sorry、Mathlib gap、stuck 前触发。
+      \end{block}
+    \end{column}
+    \begin{column}{0.51\textwidth}
+      \begin{block}{Heuristic roles}
+        oracle、pi-reviewer、rubric-anticipator、scribe、surveyor、archivist、quality-gate、sentinel、lab-notebook 等，用于排序、文献、归档、红蓝对抗和质量门。
+      \end{block}
+      \begin{block}{边界}
+        advisory 角色增强探索质量，但主循环仍由 plan、dispatch、evidence、verify、BP/inquiry 的硬协议闭合。
+      \end{block}
+    \end{column}
+  \end{columns}
+  \source{\code{AGENTS.md}, \code{agents/gaia-action-runner.md}, \code{.claude/agents/*.md}}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{LKM / MCP：文献与知识底座}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.48\textwidth}
+      \textbf{MCP server}
+      \begin{itemize}
+        \item \code{gaia-lkm-mcp} 通过 stdio 暴露 \code{lkm\_health}, \code{lkm\_match}, \code{lkm\_evidence}。
+        \item 封装 Bohrium LKM HTTP API，错误以 JSON 返回，便于 agent 分支处理。
+        \item 响应被压缩成 hit/evidence chain 摘要，避免占满上下文。
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{使用场景}
+      \begin{itemize}
+        \item 写 Lean/evidence 前查“标准事实”是否已有文献链。
+        \item stuck 时寻找替代证据链或更精确 statement。
+        \item 判断潜在新结果是否已知，减少重复探索。
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \source{\code{src/gd\_mcp\_lkm/server.py}, \code{src/gd/lkm\_client.py}}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{Dashboard 与交互式控制台}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.49\textwidth}
+      \begin{block}{\code{gd dashboard}}
+        \begin{itemize}
+          \item 自动发现项目 root 与活跃 Claude/Codex 进程。
+          \item Activity、Processes、Iterations、Claims、Evidence、Beliefs、Memory 七类视图。
+          \item 只读，不修改项目数据。
+        \end{itemize}
+      \end{block}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{block}{\code{gd interactive-dashboard}}
+        \begin{itemize}
+          \item 复用 dashboard 发现与进程语义。
+          \item 增加 factor graph、interventions、manual BP、terminal session、user input translation。
+          \item 用于人机共驾探索，而不是替代主 loop。
+        \end{itemize}
+      \end{block}
+    \end{column}
+  \end{columns}
+  \source{\code{README.md}, \code{src/gd/dashboard.py}, \code{src/gd\_interactive/app.py}}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{评测与测试策略}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.48\textwidth}
+      \textbf{评测脚本}
+      \begin{itemize}
+        \item \code{eval/frontierscience}: baseline、v3 runner、judge、横评。
+        \item \code{eval/discoverybench}: DiscoveryBench runner/smoke。
+        \item \code{eval/scienceagentbench}: ScienceAgentBench runner/smoke。
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{测试覆盖重点}
+      \begin{itemize}
+        \item Schema round-trip 与 CLI envelope。
+        \item action allowlist 与非法 action 拒绝。
+        \item cycle state 与 run-cycle 原子性。
+        \item verify server 三路由、Lean audit、reward-hacking audit。
+        \item interactive graph/dashboard 与 LKM MCP。
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \source{\code{eval/}, \code{tests/}, \code{README.md}}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}[fragile]{端到端 Quickstart}
+  \begin{lstlisting}[language=bash]
+# 1. install
+pip install -e /root/Gaia
+pip install -e /root/gaia-discovery
+
+# 2. start independent verifier
+gd verify-server --host 127.0.0.1 --port 8092
+gd doctor
+
+# 3. scaffold a research project
+gd init demo \
+  --question "..." \
+  --target  "..." \
+  --projects-root projects
+
+# 4. in projects/demo, drive the loop from Claude Code
+/gaia:explore .
+  \end{lstlisting}
+
+  \vspace{-0.4em}
+  \small 正常探索路径是 \code{inquiry \(\rightarrow\) edit plan \(\rightarrow\) dispatch \(\rightarrow\) sub-agent evidence \(\rightarrow\) run-cycle}；\code{verify/ingest/bp} 是 debug escape hatch。
+  \source{\code{README.md}, \code{docs/USAGE.md}, \code{src/gd/cli.py}}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{设计亮点}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.49\textwidth}
+      \begin{block}{1. Agent 与工具职责清晰}
+        主 agent 做策略判断，CLI/服务做状态与校验，sub-agent 做局部证据，Gaia 做 IR/BP/inquiry。
+      \end{block}
+      \begin{block}{2. 结构化痕迹完整}
+        每个行动都有 action id、evidence、verdict、prior/state transition、review 与 BP snapshot。
+      \end{block}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{block}{3. 多层防作弊}
+        action whitelist、cycle gate、schema、router 固定映射、Lean sorry/axiom audit、novelty soft cap。
+      \end{block}
+      \begin{block}{4. 可扩展}
+        验证后端、sub-agent 角色、MCP 工具、interactive intervention 都在清晰边界上扩展。
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{需要持续关注的工程风险}
+  \begin{itemize}
+    \item \textbf{命名演进风险}：README/agent 文档中仍可见 v3 legacy action 名称，代码边界已迁移到 v0.5 canonical 名称，需要持续保持文档与 schema 同步。
+    \item \textbf{LLM judge 不确定性}：heuristic router 仍依赖模型裁决，适合低上限 prior；关键 claim 应尽量推动到 Lean/Python artifact。
+    \item \textbf{状态恢复风险}：run-cycle 中途失败保留 pending 是正确设计，但长会话需要 dashboard/诊断帮助人类识别卡在哪一层。
+    \item \textbf{工具链依赖风险}：Lean、Claude CLI、LKM、GPUGeek/API keys 都是外部依赖，\code{gd doctor} 与 fallback 路径必须保持可靠。
+  \end{itemize}
+  \source{\code{README.md}, \code{docs/USAGE.md}, \code{src/gd/verify\_server/*}, \code{src/gd/action\_allowlist.py}}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{总结：gaia-discovery 的架构本质}
+  \begin{center}
+    \begin{tikzpicture}[font=\small, node distance=8mm]
+      \node[darkbox, text width=32mm] (a) {可编辑的科学知识图\\Gaia DSL plan};
+      \node[box, right=of a, text width=34mm] (b) {结构化局部取证\\sub-agent evidence};
+      \node[amberbox, right=of b, text width=33mm] (c) {独立验证与写回\\verify + ingest};
+      \node[greenbox, below=of b, text width=39mm] (d) {概率推断与诊断\\BP + inquiry};
+      \draw[arrow] (a) -- (b);
+      \draw[arrow] (b) -- (c);
+      \draw[arrow] (c) -- (d);
+      \draw[arrow] (d) -- (a);
+    \end{tikzpicture}
+  \end{center}
+
+  \vspace{1em}
+  \begin{block}{一句话收束}
+    gaia-discovery 把“LLM 探索”从不可审计的连续对话，转换成一个由 Gaia DSL、schema、状态机、独立 verifier、BP 与 inquiry 闭合的工程系统；它的核心价值不是替代科学判断，而是让每一步科学判断都有结构、有证据、有概率反馈、有失败语义。
+  \end{block}
+\end{frame}
+
+\end{document}

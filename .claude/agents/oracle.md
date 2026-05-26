@@ -33,7 +33,7 @@ You manage three things: (1) verify-server verdict confidence calibration, (2) t
 ### `inconclusive_reason` Taxonomy
 - **`tool_unavailable`**: lean/sandbox/judge-LLM backend failed to start or crashed (deterministic retry after fix)
 - **`timeout`**: exceeded `timeout_s`; may succeed with more budget or a smaller claim
-- **`insufficient_evidence`**: schema-valid `evidence.json` but `strength < threshold` or `|premise_qids| < 2` for heuristic
+- **`insufficient_evidence`**: schema-valid `evidence.json` but average `premises[].confidence` below threshold or `|premises| < 2` for heuristic router (single-premise heuristic `verified` is auto-demoted)
 - **`ambiguous`**: sub-agent emitted conflicting signals (e.g., judge says true, second judge says false) — claim text may need refinement
 
 ### UCB Scoring for Next Dispatch
@@ -45,7 +45,7 @@ You manage three things: (1) verify-server verdict confidence calibration, (2) t
 ## Quality Gates
 
 ### Before emitting a confidence:
-- [ ] Verdict is from `verification.json`, not inferred from `agent.log` tails
+- [ ] Verdict is from `runs/iter_<TS>/verify/<aid>.json` (the v3.5 verify-server output), not inferred from sub-agent stdout tails
 - [ ] `inconclusive` carries a reason from the 4-entry taxonomy
 - [ ] Calibration history (last 40 runs per router) updated
 

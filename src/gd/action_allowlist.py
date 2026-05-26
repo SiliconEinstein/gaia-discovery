@@ -30,29 +30,17 @@ OPERATOR_ACTIONS: frozenset[str] = _SCHEMAS_OPERATOR_ACTIONS
 ALLOWED_ACTIONS: frozenset[str] = _SCHEMAS_ALL_ACTIONS
 
 
-# v3 → v0.5 alias layer (2026-05-21, post gaia v0.5 alignment).
-# gaia.engine.lang still exports the v3 names with DeprecationWarning, so
-# both legacy v3 and canonical v0.5 names are valid action_kinds. This map
-# is used by `canonicalize_action()` for downstream consumers
-# (belief_ranker, run-cycle review summary) that want a single canonical
-# label per logical action.
+# Display normalization map for historical plan metadata.
+# Maps `support, deduction, contradiction, equivalence, complement` to their
+# v0.5 equivalents (`derive, derive, contradict, equal, exclusive`). Used by
+# `belief_ranker.canonical_action_label()` to render `ranked_focus` with a
+# stable label set. Dispatch and verify-server accept only v0.5 names as
+# input.
 LEGACY_ACTION_ALIASES: dict[str, str] = dict(_SCHEMAS_V3_TO_V05_ALIASES)
 
 
 def canonicalize_action(action: str) -> str:
-    """Return the v0.5 canonical name for an action_kind.
-
-    For v3 legacy verbs (`support` / `deduction` / `contradiction` /
-    `equivalence` / `complement`) returns their v0.5 equivalent
-    (`derive` / `derive` / `contradict` / `equal` / `exclusive`).
-    All other names (including `derive`, `infer`, `abduction`, `induction`,
-    `disjunction`, etc.) are returned unchanged.
-
-    Used by:
-      * `belief_ranker.canonical_action_label()` — display canonical name in UI
-      * `run_cycle.review_session` — group actions by canonical label
-      * `is_strategy()` / `is_operator()` — defer to schema-level lookup
-    """
+    """Normalize an action_kind label to the v0.5 canonical name."""
     return LEGACY_ACTION_ALIASES.get(action, action)
 
 
@@ -98,14 +86,6 @@ def assert_allowed(action: str) -> None:
         raise ValueError(
             f"未知 action_kind {action!r}，必须 ∈ {sorted(ALLOWED_ACTIONS)}"
         )
-
-
-def is_strategy(action: str) -> bool:
-    return action in STRATEGY_ACTIONS
-
-
-def is_operator(action: str) -> bool:
-    return action in OPERATOR_ACTIONS
 
 
 __all__ = (

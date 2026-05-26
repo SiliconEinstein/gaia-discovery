@@ -1,44 +1,84 @@
-# {{__PROBLEM_ID__}} — gaia-discovery-v3 case
+# {{__PROBLEM_ID__}} — gaia-discovery v3.5 case
 
-你是这个 case 的主 agent。
-本目录由 `gd init {{__PROBLEM_ID__}}` 创建。
+You are the **main agent** for this case. This directory was created by
+`gd init {{__PROBLEM_ID__}}`.
 
-## 关键文件
-- `PROBLEM.md`：open problem 完整陈述（必读）
-- `USER_HINTS.md`：用户战略提示（每轮读，处理后 clear）
-- `PROGRESS.md`：阶段状态机（scoping → explore → verify → publish → DONE）
-- `{{__PROJECT_IMPORT__}}/__init__.py`：你的 plan.gaia.py（直接编辑）
-- `target.json`：{target_qid, threshold, strict_publish}
-- `runs/<iter>/`：每轮 orchestrator 的工件
-- `memory/<channel>.jsonl`：10 通道事实流（append-only）
-- `task_results/`：sub-agent 产出落点
+## Authoritative methodology
 
-## 工作流
-读 PROBLEM.md / USER_HINTS.md / PROGRESS.md → 通过 `/inspect-belief` / `/inspect-review`
-/ `/query-memory` 自取状态 → 按仓库根 `AGENTS.md` 的 Adaptive Control Loop（Step 1–4）走完每一轮。
-状态不会通过 prompt 模板注入；你必须主动用 skill 拉取。
+**Read and follow `/root/gaia-discovery/AGENTS.md` strictly** — especially:
 
-## MCP 工具
-本目录已配置 `.mcp.json` 注册 `gd-verify` MCP server，启动后你将拥有：
-  - `mcp__gd-verify__verify`：对一份已写好的 sub-agent artifact 立刻做 verdict 判定
-    （quantitative=sandbox / structural=lean / heuristic=inquiry+review）
-  - `mcp__gd-verify__verify_claim`：临时/自检用 HTTP verify（payload schema 见
-    `src/gd/verify_server/schemas.py::VerifyRequest`，不替代 orchestrator 自动 VERIFY phase）
-  - `mcp__gd-verify__list_actions`：查 17 个 action_kind 与 router 归属
-派 sub-agent 后或自检阶段可用，不必等 orchestrator 8 步循环走到 VERIFY。
+- §1 — inputs to read each iter
+- §2 — hard constraints (DSL imports, `prior` is scalar in `(0.001, 0.999)`,
+        `metadata.prior_justification` required, etc.)
+- §3 — DSL quick reference (8 v0.5 action verbs + 4 structural relation
+        verbs + Bayesian-modelling verbs)
+- §4 — Procedure (Step 1 read → Step 2 `gd inquiry` → Step 3 edit plan →
+        Step 4 `gd dispatch` → Step 5 spawn `Task(subagent_type="gaia-action-runner")`
+        → Step 5b review gates G1-G4 → Step 6 `gd run-cycle` → Step 7 decide)
+- §5b — Mandatory review gates (red-team / auditor / mathlib-gap-builder /
+        deep-researcher)
+- §7 — Context discipline (no full Read of plan.gaia.py; Edit before Read)
 
-## 不要
-- 不读项目目录之外的文件（按 Rethlas workspace boundary 准则）
-- 不直接改 `runs/<iter>/` 已落盘工件（这些是机器视角的历史）
-- 不替 sub-agent 写解法 —— 你只标 metadata.action 派出
+This `CLAUDE.md` does NOT redefine methodology; the canonical source is the
+repo-root `AGENTS.md`.
 
+## Key files in this project
 
-## gaia DSL 硬约束（违反 → 编译失败 → 整轮 dispatch 作废）
+- `PROBLEM.md` — open problem statement (mandatory read)
+- `USER_HINTS.md` — operator hints (read tail 200 lines + grep `^## iter-`
+  for the latest entry; do NOT read the whole file)
+- `target.json` — `{target_qid, threshold, max_iter, stuck_window,
+  audit_budget, audit_calibration_threshold}`
+- `{{__PROJECT_IMPORT__}}/__init__.py` — plan.gaia.py; edit it via `Edit`
+  with `grep -A 20`; never `Write` whole-file
+- `runs/iter_<UTC_TIMESTAMP>/` — per-run-cycle artifacts:
+  - `verify/<aid>.json` — verify-server verdict (per action)
+  - `belief_snapshot.json` — post-BP state
+  - `review.json` — inquiry review
+- `task_results/<aid>.evidence.json` — sub-agent payload (EvidencePayload schema)
+- `task_results/<aid>.<ext>` — optional formal artifact (`.lean` / `.py`)
+- `task_results/<gate_id>.review.json` — advisory verdict from red-team /
+  auditor / pi-reviewer / sentinel (machine-readable, see §5b)
+- `.gaia/cycle_state.json` — state machine (idle / dispatched / running),
+  maintained by `gd` CLI; do NOT edit by hand
 
-- **`reason` 与 `prior` 必须配对**：strategy 调用（`support` / `deduction` / `abduction` / `induction`）若给了 `reason=` 就必须给 `prior=`，反之亦然——要么都给，要么都不给。
-- **`claim()` 用 `metadata={...}` 透传**：`prior_justification` / `provenance` / `action` / `args` 等都放进 `metadata`，不能当顶层 kwarg。
-- **prior 严格 ∈ (0, 1)**：Cromwell 边界 [0.001, 0.999]，禁止 `prior=1.0` 或 `0.0`；确信极强用 0.99，反之 0.01。
-- **每个 `claim()` 必带 `metadata.prior_justification`**（一句话即可）；缺则 review 会把它列为 publish_blocker。
-- 不确定 strategy 怎么写时，**只写 `claim()` 不写 strategy 边**，留给下一轮再补 —— 半成品的 strategy 边会让本轮所有 sub-agent 派发作废。
+## Per-iter workflow (abbreviated; full version in repo-root AGENTS.md §4)
 
-**strategy 不接 `metadata=`**：`deduction` / `support` / 等只接 `premises` / `conclusion` / `reason` / `prior` 四个参数。要附 provenance/justification 就放到 `conclusion` 那个 `claim()` 的 `metadata` 里。
+1. `gd inquiry .` (explore mode → `ranked_focus` with belief hidden)
+2. Edit plan.gaia.py: add ≥1 claim with `metadata.action` (v0.5 verb)
+3. `gd dispatch .` → `actions[]`
+4. For each action: `Task(subagent_type="gaia-action-runner", prompt="action_id=...
+   action_kind=... args=... project_dir=...")`
+5. Trigger review gates if applicable (§5b G1-G4)
+6. `gd run-cycle .` (atomic verify+ingest+BP+inquiry)
+7. Decide next step or write `TERMINAL.<verdict>.iter<N>.md`
+
+## Subagent MCP context
+
+This directory has `.mcp.json` registering the `gd-verify` MCP server:
+
+- `mcp__gd-verify__verify` — verdict on a written evidence.json artifact
+  (quantitative / structural / heuristic routing per `action_kind`)
+- `mcp__gd-verify__verify_claim` — ad-hoc HTTP verify (payload schema:
+  `src/gd/verify_server/schemas.py::VerifyRequest`; this does NOT replace
+  the automatic verify pass inside `gd run-cycle`)
+- `mcp__gd-verify__list_actions` — query the **8** v0.5 `action_kind`s and
+  their router assignment
+
+## Do NOT
+
+- Read files outside this project directory or `/root/gaia-discovery/` repo
+- Edit `runs/iter_*/` artifacts after the run completes (historical record)
+- Write a solution yourself in place of a sub-agent — your job is to mark
+  `metadata.action` and dispatch
+- Write bare `SUCCESS.md` / `STUCK.md` / `REFUTED.md`; use the full
+  `TERMINAL.<verdict>.iter<N>.md` form per AGENTS.md §7
+
+## DSL hard reminders (full rules in repo-root AGENTS.md §2 + §3)
+
+- Plan imports only public `gaia.lang` symbols
+- `claim()` requires scalar `prior ∈ (0.001, 0.999)` + `metadata.prior_justification`
+- `derive` is deterministic — never give it `prior=`
+- `infer / abduction / induction` accept `reason=` and `prior=` as kwargs
+- `contradict / equal / exclusive / disjunction` are positional operators
+- Edit before Read; never `Write` plan.gaia.py whole-file

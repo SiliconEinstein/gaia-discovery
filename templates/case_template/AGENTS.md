@@ -1,31 +1,114 @@
 # AGENTS — {{__PROBLEM_ID__}}
 
-本案例的角色与边界。
+Roles and boundaries for this case.
 
-## 主 agent（你）
-- 仅你拥有 `{{__PROJECT_IMPORT__}}/__init__.py` 的写权限。
-- 读 `PROBLEM.md` / `USER_HINTS.md` / `PROGRESS.md` 与 belief / review。
-- 派 sub-agent 通过 `metadata.action` 标记。
-- 用 inquiry-bridge 操作 `.gaia/inquiry/state.json`（obligations / hypotheses / rejections）。
-- 主 agent 工作流：见仓库根 `AGENTS.md` 的 Adaptive Control Loop 段；本 case 不重抄。
+## Main agent (you)
 
-## sub-agent（17 种 action_kind）
-- 完全自由实现自己的子任务（脑推 / 脚本 / 文献 / Lean / 数值）。
-- 唯一限制：写 `task_results/<action_id>.md` + `task_results/<action_id>.evidence.json`；
-  evidence.json schema 以 `src/gd/verify_server/schemas.py::VerifyRequest` 为准。
-- 禁止动 plan.gaia.py / .gaia/ / memory/。
-- 合法 kind 权威列表：`gaia.lang.dsl.strategies`（13 个）与 `gaia.lang.dsl.operators`（4 个），
-  v3 白名单见 `src/gd/verify_server/schemas.py::ALL_ACTIONS`。
-- sub-agent 启动 prompt：`src/gd/prompts/subagent.md`（薄模板，不按 kind 分支）。
+- Only you have write access to `{{__PROJECT_IMPORT__}}/__init__.py` (plan.gaia.py).
+- You read `PROBLEM.md` / `USER_HINTS.md` / `target.json` and the latest
+  `runs/iter_*/{belief_snapshot.json, review.json}`.
+- You dispatch sub-agents via `Task(subagent_type="gaia-action-runner", ...)`
+  with `metadata.action` marked on each pending claim.
+- You operate `.gaia/inquiry/state.json` (obligations / hypotheses / rejections)
+  indirectly via `gd inquiry .` and `gd run-cycle .`.
+- **Procedure**: follow the repo-root `/root/gaia-discovery/AGENTS.md` §4
+  (Adaptive Control Loop). This case file does not duplicate that procedure.
 
-## verify_server（HTTP :8092）
-- 三 router：quantitative（sandbox）/ structural（Lean）/ heuristic（formalize+inquiry review）。
-- 不写 plan.gaia.py，只返 JSON。
+## Sub-agents (15 registered roles)
+
+Live registry: `/root/gaia-discovery/.claude/agents/*.md`. Frontmatter
+`tools:` line declares each agent's tool surface — even if the main agent
+loaded a wider MCP config, the sub-agent can only call its declared tools.
+
+### Mandatory for BP
+
+- **`gaia-action-runner`** — executes a single `action_kind` claim, writes
+  `task_results/<action_id>.evidence.json` (`EvidencePayload` schema in
+  `src/gd/verify_server/schemas.py`) and optional formal artifact
+  (`.lean` / `.py`). Never touches plan.gaia.py.
+
+### Mandatory at G1-G4 gates (see repo-root AGENTS.md §5b)
+
+- `red-team` — G1, falsify candidate solution
+- `auditor` — G2.4, compliance audit before TERMINAL.success
+- `mathlib-gap-builder` — G3, prove Mathlib gaps (Lean-only)
+- `deep-researcher` — G4, last-shot before TERMINAL.stuck
+
+Each writes `task_results/<gate_id>.review.json` (machine-readable verdict).
+
+### Heuristic (trigger by situation, not quota)
+
+`oracle / pi-reviewer / rubric-anticipator / scribe / surveyor / archivist /
+orchestrator / quality-gate / sentinel / lab-notebook`.
+
+### Action kinds (8 v0.5 canonical verbs)
+
+```
+strategy: derive, infer, abduction, induction
+operator: contradict, equal, exclusive, disjunction
+```
+
+Authoritative source: `src/gd/verify_server/schemas.py::ALL_ACTIONS` (and
+`gd.action_allowlist.ALLOWED_ACTIONS`).
+
+Use these 8 v0.5 names directly. The CLI accepts only these as
+`action_kind` input.
+
+### Hard sub-agent rules
+
+- Write only `task_results/<aid>.evidence.json` (+ optional `.<ext>`) and
+  `task_results/<gate_id>.review.json` (for review gates).
+- Never touch `{{__PROJECT_IMPORT__}}/__init__.py`, `.gaia/`, `runs/`.
+- For Lean lemmas: search via MCP (`lean_local_search` / `lean_leansearch`
+  / `lean_loogle`) before claiming a lemma exists; cite `found_via` in
+  `premises[]`.
+
+## verify-server (HTTP :8092)
+
+Three routers, dispatched by `action_kind` (see
+`src/gd/verify_server/schemas.py::ACTION_KIND_TO_ROUTER`):
+
+- `induction → quantitative` (Python sandbox)
+- `derive → structural` (Lean `lake env lean` build)
+- `infer / abduction / contradict / equal / exclusive / disjunction → heuristic`
+  (LLM judge with ≥ 2 independent premises required for `verified`)
+
+Output: `runs/iter_<TS>/verify/<aid>.json` conforming to
+`schemas/verdict.schema.json`. Verify-server never modifies plan.gaia.py.
 
 ## belief_ingest
-- libcst 把 verify verdict 改写回 plan.gaia.py 的 prior / metadata。
-- ingest 阶段串行（文件锁），dispatch / verify 阶段并行。
+
+- libcst rewrites `prior` / `metadata.action_status` on plan.gaia.py per
+  verify verdict.
+- Single-file lock during ingest (`belief_ingest._plan_lock`); dispatch and
+  verify run in parallel.
+- Anti-reward-hacking: novelty soft-cap (`GD_REWARD_NOVELTY_CHECK` default
+  on; see `src/gd/belief_ingest.py:_resolve_prior_cap`).
 
 ## inquiry
-- run_review 跑 validate / check_core / semantic_diff / BP cross-ref / diagnostics /
-  proof_context / publish_blockers，输出供主 agent 下轮决策。
+
+`run_review` runs validate / check_core / semantic_diff / BP cross-ref /
+diagnostics / proof_context / publish_blockers. Output: `runs/iter_<TS>/review.json`.
+
+`gd inquiry .` (explore mode, default) returns `ranked_focus` with beliefs
+hidden — only ordering, not numbers.
+
+`gd inquiry . --mode terminal` reveals `belief_summary` for G2.1
+calibration audit only.
+
+## Review gate output contract (v3.5+)
+
+Advisory subagents (`red-team` / `auditor` / `pi-reviewer` / `sentinel`)
+emit machine-readable JSON to `task_results/<gate_id>.review.json`:
+
+```json
+{
+  "agent": "<role>",
+  "gate": "G1 | G2.4 | pre-dispatch | ...",
+  "verdict": "pass | critical | warn",
+  "critical": [{"issue": "...", "fix": "..."}],
+  "warnings": [{"issue": "...", "fix": "..."}]
+}
+```
+
+Main agent reads `verdict` and acts before writing `TERMINAL.success.iter<N>.md`.
