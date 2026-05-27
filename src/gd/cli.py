@@ -61,7 +61,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         import gaia.engine.lang.compiler.compile  # noqa: F401
         import gaia.engine.bp.engine  # noqa: F401
         import gaia.engine.inquiry  # noqa: F401
-        print(f"[doctor] gaia-lang   : OK  ({gaia.lang.compiler.compile.__file__})")
+        print(f"[doctor] gaia-lang   : OK  ({gaia.engine.lang.compiler.compile.__file__})")
     except Exception as exc:
         print(f"[doctor] gaia-lang   : FAIL  ({exc!r})")
         issues.append(f"gaia import: {exc}")
