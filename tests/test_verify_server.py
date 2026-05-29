@@ -306,7 +306,7 @@ def test_heuristic_runs_review_pipeline(tmp_path):
     返回 verified 或 inconclusive（带 publish blocker）但不应抛异常。"""
     req = _make_heur_req(tmp_path, _DSL_OK)
     resp = verify_heuristic(req)
-    # gaia.inquiry 在最小 pkg 上几乎一定有 prior_hole 之类 → inconclusive
+    # gaia.engine.inquiry 在最小 pkg 上几乎一定有 prior_hole 之类 → inconclusive
     # 也允许 verified（取决于 gaia 当前实现），但严禁未捕获异常
     assert resp.verdict in {"verified", "inconclusive"}
     assert resp.backend == "inquiry_review"

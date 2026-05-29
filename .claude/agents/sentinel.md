@@ -32,8 +32,8 @@ Authoritative sources (Python Pydantic models):
 | Verify request | `VerifyRequest` | `schemas/verify_request.schema.json` (if present) | run-cycle → POST `:8092/verify` |
 | Verify result (verdict) | `VerifyResult` | `schemas/verdict.schema.json` | verify-server → `runs/<RUN_ID>/verify/<aid>.json` |
 | Ingest result | `IngestResult` | `schemas/ingest_result.schema.json` | run-cycle ingest stage |
-| Belief snapshot | (gaia.bp output) | `schemas/belief_snapshot.schema.json` | `compile_and_infer` → `runs/<RUN_ID>/belief_snapshot.json` |
-| Inquiry report | (gaia.inquiry output) | `schemas/inquiry_report.schema.json` | `run_review` → `runs/<RUN_ID>/review.json` |
+| Belief snapshot | (gaia.engine.bp output) | `schemas/belief_snapshot.schema.json` | `compile_and_infer` → `runs/<RUN_ID>/belief_snapshot.json` |
+| Inquiry report | (gaia.engine.inquiry output) | `schemas/inquiry_report.schema.json` | `run_review` → `runs/<RUN_ID>/review.json` |
 | Cycle state | `CycleState` | `schemas/cycle_state.schema.json` | `.gaia/cycle_state.json` |
 | Run-cycle report | envelope dict | `schemas/run_cycle_report.schema.json` | `gd run-cycle` stdout |
 

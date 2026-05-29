@@ -445,7 +445,7 @@ class IngestResult:
 def locate_plan_source(project_dir: Path | str) -> Path:
     """通过 pyproject 推算 import_name，返回 `<src_root>/<import_name>/__init__.py`。
 
-    沿用 gaia.cli._packages.load_gaia_package 的查找规则但不 import（避免污染 sys.path）。
+    沿用 gaia.engine.packaging.load_gaia_package 的查找规则但不 import（避免污染 sys.path）。
     """
     pkg_path = Path(project_dir).resolve()
     pyproject = pkg_path / "pyproject.toml"
@@ -911,14 +911,14 @@ def _emit_inquiry_events(
     verdict: str,
     backend: str,
 ) -> None:
-    """plan rewrite 成功后，把 transition 落到 gaia.inquiry 事件层。
+    """plan rewrite 成功后，把 transition 落到 gaia.engine.inquiry 事件层。
 
     - 永远 append_tactic 一条 claim_state_transition 审计事件
     - new_state ∈ {refuted, contested} → push_rejection（告诉 inquiry "这条分支关了"）
     - new_state == stale → push_obligation(diagnostic_kind="other") 让 reviewer 重审
 
     inquiry 事件 emit 失败不影响 verdict ingest（plan 已写成功），只 log warning。
-    bridge: gd.inquiry_bridge → gaia.inquiry.state.{append_tactic_event,
+    bridge: gd.inquiry_bridge → gaia.engine.inquiry.state.{append_tactic_event,
     SyntheticRejection, SyntheticObligation}。
     """
     from gd import inquiry_bridge

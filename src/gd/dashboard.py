@@ -529,13 +529,13 @@ def find_processes(project_path: Path, *, dashboard_self_pid: int | None = None)
 # --------------------------------------------------------------------- compile plan
 
 # Module-level cache keyed by (plan_path, mtime). Compiling plan.gaia.py is
-# the slowest thing this dashboard does (imports gaia.lang + runs the validator
+# the slowest thing this dashboard does (imports gaia.engine.lang + runs the validator
 # on every call), so cache by mtime — recompile only when the file changes.
 _PLAN_CACHE: dict[tuple[str, float], dict[str, Any]] = {}
 
 
 def compile_plan(project_dir: Path) -> dict[str, Any]:
-    """Compile plan.gaia.py via gaia.lang and flatten the IR for the UI.
+    """Compile plan.gaia.py via gaia.engine.lang and flatten the IR for the UI.
 
     Falls back to a regex sweep if compilation throws.  Memoised on (plan_path,
     mtime) so identical re-requests are O(1).

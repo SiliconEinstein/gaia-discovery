@@ -1,15 +1,15 @@
-"""inquiry_bridge: 薄 wrapper，不重写 gaia.inquiry 已有功能。
+"""inquiry_bridge: 薄 wrapper，不重写 gaia.engine.inquiry 已有功能。
 
-- run_review: 直接转发 gaia.inquiry.run_review；序列化前用
+- run_review: 直接转发 gaia.engine.inquiry.run_review；序列化前用
   ranking.rank_next_edits / rank_diagnostics 排序，保证 review.json 内
   next_edits 与 diagnostics 已按 mode 优先序排好，下游切片即可。
-- publish_blockers_for: 转发 gaia.inquiry.review.publish_blockers。
-- snapshot/baseline: 包 gaia.inquiry.snapshot.save_snapshot/resolve_baseline，
+- publish_blockers_for: 转发 gaia.engine.inquiry.review.publish_blockers。
+- snapshot/baseline: 包 gaia.engine.inquiry.snapshot.save_snapshot/resolve_baseline，
   支持跨迭代 semantic_diff（since=baseline_id）。
-- find_anchors_for: 包 gaia.inquiry.anchor.find_anchors，给 dispatcher /
+- find_anchors_for: 包 gaia.engine.inquiry.anchor.find_anchors，给 dispatcher /
   belief_ingest 用：plan.gaia.py 的 label → SourceAnchor。
 - push_{obligation, hypothesis, rejection}: 写 .gaia/inquiry/state.json。
-- append_tactic: gaia.inquiry.state.append_tactic_event 的转发。
+- append_tactic: gaia.engine.inquiry.state.append_tactic_event 的转发。
 """
 from __future__ import annotations
 
@@ -72,7 +72,7 @@ def _migrate_legacy_terminal_state(pkg_path: Path) -> None:
 
     The gd 'terminal' mode is a gaia-discovery-only belief-hidden override that
     is mapped to upstream 'auto'. Older runs persisted ``mode='terminal'`` to
-    state.json, which v0.5+ ``gaia.inquiry.state.load_state`` rejects. This
+    state.json, which v0.5+ ``gaia.engine.inquiry.state.load_state`` rejects. This
     migration is idempotent and silently no-ops if the file is absent / valid.
     """
     state_path = pkg_path / ".gaia" / "inquiry" / "state.json"
@@ -104,13 +104,13 @@ def run_review(
     since: str | None = None,
     strict: bool = False,
 ) -> dict[str, Any]:
-    """跑 gaia.inquiry.run_review，rank 后返回 to_json_dict(report) + status。"""
+    """跑 gaia.engine.inquiry.run_review，rank 后返回 to_json_dict(report) + status。"""
     pkg_path = Path(project_dir).resolve()
     try:
         from gaia.engine.inquiry import run_review as _run_review
         from gaia.engine.inquiry import to_json_dict
     except ImportError as exc:
-        return {"status": "error", "error": f"gaia.inquiry 不可用: {exc}"}
+        return {"status": "error", "error": f"gaia.engine.inquiry 不可用: {exc}"}
 
     # 'terminal' is a gaia-discovery-only mode (belief-hidden override). gaia's
     # core review only accepts {auto, explore, formalize, verify, publish}, so
@@ -119,7 +119,7 @@ def run_review(
     upstream_mode = "auto" if mode == "terminal" else mode
 
     # Backwards-compat: state.json persisted from earlier gd-only runs may carry
-    # mode='terminal', which v0.5+ gaia.inquiry.state.load_state rejects.
+    # mode='terminal', which v0.5+ gaia.engine.inquiry.state.load_state rejects.
     # Rewrite once so the next load succeeds. Idempotent.
     _migrate_legacy_terminal_state(pkg_path)
 
@@ -170,7 +170,7 @@ def publish_blockers_for(
     since: str | None = None,
     no_infer: bool = False,
 ) -> list[str]:
-    """publish 模式下取 gaia.inquiry.review.publish_blockers 原始 list[str]。"""
+    """publish 模式下取 gaia.engine.inquiry.review.publish_blockers 原始 list[str]。"""
     from gaia.engine.inquiry import run_review as _run_review
     from gaia.engine.inquiry.review import publish_blockers as _publish_blockers
 
@@ -192,7 +192,7 @@ def publish_blockers_for(
 
 
 def mint_review_id(ir_hash: str | None, mode: str) -> str:
-    """转发 gaia.inquiry.snapshot.mint_review_id。"""
+    """转发 gaia.engine.inquiry.snapshot.mint_review_id。"""
     from gaia.engine.inquiry.snapshot import mint_review_id as _m
     return _m(ir_hash, mode)
 
@@ -206,7 +206,7 @@ def save_review_snapshot(
     ir_dict: dict | None,
     beliefs: list[dict[str, Any]],
 ) -> Path:
-    """转发 gaia.inquiry.snapshot.save_snapshot。
+    """转发 gaia.engine.inquiry.snapshot.save_snapshot。
 
     用法：每轮 BP+review 完成后调一次，写 .gaia/reviews/<review_id>/snapshot.json，
     下轮 run_review(..., since=<review_id>) 即可拿跨轮 semantic_diff。
@@ -229,7 +229,7 @@ def resolve_baseline_id(
     since: str | None = None,
     state_last_id: str | None = None,
 ) -> str | None:
-    """转发 gaia.inquiry.snapshot.resolve_baseline。
+    """转发 gaia.engine.inquiry.snapshot.resolve_baseline。
 
     返回最后一个可用 baseline review_id（或 None，表示没有历史 snapshot）。
     """
@@ -248,7 +248,7 @@ def resolve_baseline_id(
 
 
 def find_anchors_for(project_dir: str | Path) -> dict[str, dict[str, Any]]:
-    """转发 gaia.inquiry.anchor.find_anchors，返回 label → dict。
+    """转发 gaia.engine.inquiry.anchor.find_anchors，返回 label → dict。
 
     SourceAnchor 含 path + start_line/end_line + col 信息；这里序列化为 dict
     便于 prompt 注入与 JSON 落盘。

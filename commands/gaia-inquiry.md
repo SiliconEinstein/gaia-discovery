@@ -1,6 +1,6 @@
 ---
 name: gaia-inquiry
-description: 跑 gaia.inquiry.run_review 输出 ranked_focus / blockers / next_edits / belief_stale (explore mode 默认 belief-hidden)
+description: 跑 gaia.engine.inquiry.run_review 输出 ranked_focus / blockers / next_edits / belief_stale (explore mode 默认 belief-hidden)
 user_invocable: true
 argument-hint: <project_dir> [--mode explore|publish|terminal] [--focus <qid>] [--strict]
 ---

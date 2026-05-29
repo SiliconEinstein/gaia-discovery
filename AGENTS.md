@@ -37,7 +37,7 @@ pending claim 拿到 evidence；让 BP 收敛到 target claim 的 belief ≥ thr
 
 ## 2. 硬约束（违反即拒绝执行；CLI 与 verify-server 端有强制校验）
 
-1. 编辑 plan.gaia.py 时，只能 `import` 来自 `gaia.lang` 的公开符号：
+1. 编辑 plan.gaia.py 时，只能 `import` 来自 `gaia.engine.lang` 的公开符号：
    `abduction, derive, induction, infer, contradict, disjunction, equal, exclusive`
    + `claim, setting, question`.
    未导入 / 编造的符号 → 编译失败 → `gd dispatch` 拒绝。
@@ -47,7 +47,7 @@ pending claim 拿到 evidence；让 BP 收敛到 target claim 的 belief ≥ thr
 3. provenance / judgment / lean_target 等附注一律写进 `reason=` 字符串（多行 OK），
    不要尝试塞 `metadata`。
 4. claim 上的 `metadata.action` 必须 ∈ 上述 8 原语集合。`gd dispatch` 用
-   `src/gd/action_allowlist.py` 自动从 `gaia.lang` 公开符号导出白名单，编造的
+   `src/gd/action_allowlist.py` 自动从 `gaia.engine.lang` 公开符号导出白名单，编造的
    action_kind 直接进 `rejected[]`。
 5. 不要编辑 `.gaia/`、`runs/`、`task_results/`、`src/gd/verify_server/` 等工具管理目录。
    你只编辑：`PROBLEM.md` / `target.json` / `discovery_<name>/__init__.py` / 必要时 `references.json`

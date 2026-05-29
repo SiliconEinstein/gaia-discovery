@@ -128,7 +128,7 @@ The main agent's first iter will write something like this into
 `projects/demo/discovery_demo/__init__.py`:
 
 ```python
-from gaia.lang import claim, derive, infer
+from gaia.engine.lang import claim, derive, infer
 
 target = claim(
     label="harmonic_diverges",
@@ -189,7 +189,7 @@ contradict   equal   exclusive   disjunction
 ```
 
 Authoritative source: [`src/gd/action_allowlist.py`](src/gd/action_allowlist.py)
-+ [`gaia.lang`](https://gaia-lang) public symbols.
++ [`gaia.engine.lang`](https://gaia-lang) public symbols.
 
 Full DSL with structural relations (`decompose`, `associate`, `parameter`)
 and Bayesian-modelling verbs (`bayes.model`, `bayes.compare`) is in
@@ -240,7 +240,7 @@ and Bayesian-modelling verbs (`bayes.model`, `bayes.compare`) is in
 | `gd dashboard` | Read-only web console on port 8093 | — |
 | `gd dispatch <pkg>` | Compile plan + scan pending actions | `idle` → `dispatched` |
 | `gd run-cycle <pkg>` | Atomic verify + ingest + BP + inquiry | `dispatched` → `idle` |
-| `gd inquiry <pkg> [--mode explore\|publish\|terminal]` | `gaia.inquiry.run_review`, read-only | — |
+| `gd inquiry <pkg> [--mode explore\|publish\|terminal]` | `gaia.engine.inquiry.run_review`, read-only | — |
 | `gd verify <pkg> <aid> --evidence <path>` | Single-step verify (escape hatch) | — |
 | `gd ingest <pkg> <aid> --verdict <path>` | Single-step ingest (forced BP) | — |
 | `gd bp <pkg>` | Single-step whole-graph BP | — |

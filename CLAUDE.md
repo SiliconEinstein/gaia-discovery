@@ -9,14 +9,14 @@
 - **主 agent** (这个 Claude Code session) 在每个 `projects/<problem_id>/` 目录里编辑 `plan.gaia.py` —— 这份文件**同时是** Gaia 知识包源码（编译进 IR）和探索路径文档（git diff 即可读）
 - **sub-agent** 是 `claude -p` 子进程，主 agent 在 `plan.gaia.py` 上标 `metadata={"action": ..., "args": {...}}` 派遣
 - **/verify HTTP** 在 `:8092`，按 `action_kind` 路由到 quantitative (sandbox) / structural (Lean) / heuristic (inquiry formalize+review)
-- **belief** 由 `compile_package_artifact + gaia.bp.engine.InferenceEngine.run` 在每轮 verify 后重算
+- **belief** 由 `compile_package_artifact + gaia.engine.bp.engine.InferenceEngine.run` 在每轮 verify 后重算
 
 ## 关键复用
 
-- `gaia.lang.compiler.compile.compile_package_artifact`：plan.gaia.py → IR
-- `gaia.bp.engine.InferenceEngine.run(graph, method="auto")`：BP
-- `gaia.inquiry.run_review`：validate + check_core + semantic_diff + diagnostics + ProofContext + snapshot + publish_blockers
-- `gaia.inquiry.state.{InquiryState, save_state, load_state, append_tactic_event}`：focus / synthetic_obligations / hypotheses / rejections
+- `gaia.engine.lang.compiler.compile.compile_package_artifact`：plan.gaia.py → IR
+- `gaia.engine.bp.engine.InferenceEngine.run(graph, method="auto")`：BP
+- `gaia.engine.inquiry.run_review`：validate + check_core + semantic_diff + diagnostics + ProofContext + snapshot + publish_blockers
+- `gaia.engine.inquiry.state.{InquiryState, save_state, load_state, append_tactic_event}`：focus / synthetic_obligations / hypotheses / rejections
 - `dz_hypergraph.tools.sandbox / experiment_backend / lean.verify_proof`：复用 quant + structural 后端
 - `dz_hypergraph.ingest.ingest_verified_claim`：belief ingest 规则（Lean=hard / experiment=soft cap / judge=nudge）
 

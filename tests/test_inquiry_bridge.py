@@ -1,4 +1,4 @@
-"""Tests for gd.inquiry_bridge — verify all wrappers truly delegate to gaia.inquiry."""
+"""Tests for gd.inquiry_bridge — verify all wrappers truly delegate to gaia.engine.inquiry."""
 from __future__ import annotations
 
 import json

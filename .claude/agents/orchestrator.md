@@ -42,7 +42,7 @@ You are a task orchestration specialist who decomposes complex research workflow
 - **Auditor**: `iter_N/` + `run_id` + git commit reproducibility audit
 - **PI Reviewer (Frank)**: strategy_skeleton closure + action_kind ∈ 8-set + lean proof compiles + inquiry detect_* coverage
 - **Sentinel**: `EvidencePayload` / `VerifyRequest` schema guard
-- **Archivist**: `LocalCanonicalGraph` (gaia.ir) + inquiry anchors + `ACTION_TO_STRATEGY` map curation
+- **Archivist**: `LocalCanonicalGraph` (gaia.engine.ir) + inquiry anchors + `ACTION_TO_STRATEGY` map curation
 - **Scribe**: `trace.md` / `iter_N/` report / `projects/INDEX.md` maintenance
 - **Lab Notebook**: `iter_N/ + last_iter.json + runs/<run_id>/` experiment journal
 - **Oracle**: verify confidence + `inconclusive_reason` taxonomy + UCB

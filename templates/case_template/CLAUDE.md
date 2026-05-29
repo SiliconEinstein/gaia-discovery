@@ -76,7 +76,7 @@ This directory has `.mcp.json` registering the `gd-verify` MCP server:
 
 ## DSL hard reminders (full rules in repo-root AGENTS.md §2 + §3)
 
-- Plan imports only public `gaia.lang` symbols
+- Plan imports only public `gaia.engine.lang` symbols
 - `claim()` requires scalar `prior ∈ (0.001, 0.999)` + `metadata.prior_justification`
 - `derive` is deterministic — never give it `prior=`
 - `infer / abduction / induction` accept `reason=` and `prior=` as kwargs

@@ -1,6 +1,6 @@
 """gaia_bridge: 把 plan.gaia.py 编译进 IR + 全图 BP，输出 belief snapshot。
 
-依赖 gaia.cli._packages 的高层 helper（与 `gaia review/infer` CLI 同款入口），
+依赖 gaia.engine.packaging 的高层 helper（与 `gaia review/infer` CLI 同款入口），
 而非裸 compile_package_artifact —— 这样 priors.py 注入、references 解析、
 sys.path 注入这些都自动跑。
 
@@ -120,7 +120,7 @@ def compile_and_infer(
         from gaia.engine.packaging import collect_foreign_node_priors
     except ImportError as exc:
         snapshot.compile_status = "error"
-        snapshot.error = f"gaia.bp 不可用: {exc}"
+        snapshot.error = f"gaia.engine.bp 不可用: {exc}"
         return snapshot
 
     # build knowledge_index from compiled package
@@ -145,7 +145,7 @@ def compile_and_infer(
             snapshot.ir_warnings = all_issues
             logger.warning("ir.validator issues: %s", all_issues)
     except ImportError:
-        logger.debug("gaia.ir.validator unavailable, skip IR-level validation")
+        logger.debug("gaia.engine.ir.validator unavailable, skip IR-level validation")
 
     try:
         foreign = collect_foreign_node_priors(graph, pkg_path)

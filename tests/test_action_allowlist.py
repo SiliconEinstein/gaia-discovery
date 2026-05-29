@@ -5,7 +5,7 @@
 - 编造 action 名（'conjure' / 'magic' / 'unknown_kind'）→ ValueError，错误消息列全合法集合
 - 非 str 类型 → ValueError
 - ALLOWED_ACTIONS 与 verify_server.schemas.ALL_ACTIONS 严格相等
-- import 时 gaia.lang 自检不抛（即每个名字都对应 gaia.lang callable）
+- import 时 gaia.engine.lang 自检不抛（即每个名字都对应 gaia.engine.lang callable）
 - is_strategy / is_operator 划分正确
 """
 from __future__ import annotations
@@ -88,5 +88,5 @@ def test_each_action_resolves_to_gaia_lang_callable() -> None:
     import gaia.engine.lang as L
     for action in ALLOWED_ACTIONS:
         attr = getattr(L, action, None)
-        assert attr is not None, f"gaia.lang 缺 {action}"
-        assert callable(attr), f"gaia.lang.{action} 不是 callable"
+        assert attr is not None, f"gaia.engine.lang 缺 {action}"
+        assert callable(attr), f"gaia.engine.lang.{action} 不是 callable"

@@ -10,7 +10,7 @@
   - verify           escape hatch：单步 POST :8092/verify
   - ingest           escape hatch：单步 apply_verdict + 强制 BP（闸 C）
   - bp               escape hatch：只跑 BP 写 belief_snapshot
-  - inquiry          read-only：跑 gaia.inquiry.run_review
+  - inquiry          read-only：跑 gaia.engine.inquiry.run_review
 
 主 agent 在仓库根 AGENTS.md procedure 里只调 dispatch + run-cycle + inquiry，
 其他三个 escape hatch 用于 debug / 手测，不应进入正常 procedure。
@@ -61,7 +61,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         import gaia.engine.lang.compiler.compile  # noqa: F401
         import gaia.engine.bp.engine  # noqa: F401
         import gaia.engine.inquiry  # noqa: F401
-        print(f"[doctor] gaia-lang   : OK  ({gaia.lang.compiler.compile.__file__})")
+        print(f"[doctor] gaia-lang   : OK  ({gaia.engine.lang.compiler.compile.__file__})")
     except Exception as exc:
         print(f"[doctor] gaia-lang   : FAIL  ({exc!r})")
         issues.append(f"gaia import: {exc}")
@@ -272,7 +272,7 @@ def _build_parser() -> argparse.ArgumentParser:
     sp.set_defaults(func=_lkm_review_main)
 
     # inquiry
-    sp = sub.add_parser("inquiry", help="跑 gaia.inquiry.run_review（read-only）")
+    sp = sub.add_parser("inquiry", help="跑 gaia.engine.inquiry.run_review（read-only）")
     sp.add_argument("project_dir")
     sp.add_argument("--mode", default="explore", choices=["explore", "publish", "terminal"])
     sp.add_argument("--focus", default=None)
