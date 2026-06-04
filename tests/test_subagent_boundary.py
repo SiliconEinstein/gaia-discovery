@@ -34,7 +34,7 @@ def _make_project(tmp_path: Path) -> Path:
     pkg = proj / "discovery_demo"
     pkg.mkdir()
     (pkg / "__init__.py").write_text(
-        '"""plan"""\nfrom gaia.lang import claim\nA = claim("a")\n',
+        '"""plan"""\nfrom gaia.engine.lang import claim\nA = claim("a")\n',
         encoding="utf-8",
     )
     (proj / ".gaia").mkdir()

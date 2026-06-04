@@ -64,8 +64,8 @@ plan.gaia.py → BP → run_review → 写 `runs/<iter>/{belief_snapshot, review
 
 合法 kind 的权威列表与签名：
 
-- 13 个 strategy 见 `gaia.lang.dsl.strategies`（源码 `gaia/lang/dsl/strategies.py`，skill `/gaia:gaia-lang`）
-- 4 个 operator 见 `gaia.lang.dsl.operators`（源码 `gaia/lang/dsl/operators.py`）
+- 13 个 strategy 见 `gaia.engine.lang.compat` / `gaia.engine.lang.dsl.strategies`（源码 `gaia/engine/lang/dsl/strategies.py`，skill `/gaia:gaia-lang`）
+- 4 个 operator 见 `gaia.engine.lang.compat` / `gaia.engine.lang.dsl.operators`（源码 `gaia/engine/lang/dsl/operators.py`）
 - v3 白名单实现：`src/gd/verify_server/schemas.py::ALL_ACTIONS = STRATEGY_ACTIONS | OPERATOR_ACTIONS`
 - verify_server 端强制校验：`schemas.py::VerifyRequest._check_action`（写错 → HTTP 422）
 
@@ -174,13 +174,13 @@ sub-agent 在 `task_results/` 下产出**同级两文件**（不是子目录）�
 |---|---|---|
 | **quantitative** | `dz_hypergraph.tools.sandbox` | 数值/外推类（如 `extrapolation` / `induction` / `compare` / `elimination`） |
 | **structural** | `dz_hypergraph.tools.lean.verify_proof` | 严格演绎类（如 `deduction` / `mathematical_induction` / `case_analysis`） |
-| **heuristic** | `gaia.inquiry.run_review` + LLM judge + `gaia.ir.formalize_named_strategy` | 启发式 / 复合 / 4 operator |
+| **heuristic** | `gaia.engine.inquiry.run_review` + LLM judge + `gaia.engine.ir.formalize_named_strategy` | 启发式 / 复合 / 4 operator |
 
 具体哪个 kind 走哪个 router → 看 `ACTION_KIND_TO_ROUTER`。主 agent **不**写 `metadata.route` —— 由 `VerifyRequest.router` 自动从 action_kind 派生。
 
 ## IR 层接口
 
-主 agent **不**直接 import IR；通过 slash skill 与 orchestrator 写盘的 json 看产物。完整接口与字段见 `gaia.ir.*` 源码 docstring（如 `gaia/ir/strategy.py`、`gaia/ir/formalize.py`、`gaia/ir/graphs.py`）。orchestrator / verify_server / inquiry 内部使用，本文件不复述。
+主 agent **不**直接 import IR；通过 slash skill 与 orchestrator 写盘的 json 看产物。完整接口与字段见 `gaia.engine.ir.*` 源码 docstring（如 `gaia/engine/ir/strategy.py`、`gaia/engine/ir/formalize.py`、`gaia/engine/ir/graphs.py`）。orchestrator / verify_server / inquiry 内部使用，本文件不复述。
 
 ## Slash Skills（主 agent 主要工具）
 

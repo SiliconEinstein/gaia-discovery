@@ -1,4 +1,4 @@
-"""strategy_skeleton 单测：覆盖 22 action_kinds → gaia.ir.StrategyType 映射 +
+"""strategy_skeleton 单测：覆盖 17 action_kinds → gaia.engine.ir.StrategyType 映射 +
 formalize_named_strategy 实调成功 / fallback / 错误路径。"""
 from __future__ import annotations
 
@@ -12,8 +12,8 @@ from gd.strategy_skeleton import (
 )
 
 
-def test_action_to_strategy_covers_22_kinds():
-    """22 个 action_kinds 全部映射（即使 None 也是显式登记）。"""
+def test_action_to_strategy_covers_17_kinds():
+    """17 个 action_kinds 全部映射（即使 None 也是显式登记）。"""
     expected_kinds = {
         # A. Strategy (13)
         "support", "deduction", "abduction", "induction",
@@ -22,21 +22,18 @@ def test_action_to_strategy_covers_22_kinds():
         "composite", "fills", "infer",
         # B. Operator (4)
         "contradiction", "equivalence", "complement", "disjunction",
-        # C. Runner (5)
-        "plausible", "experiment", "lean", "bridge_planning", "lean_decompose",
     }
     assert set(ACTION_TO_STRATEGY.keys()) == expected_kinds
-    assert len(ACTION_TO_STRATEGY) == 22
+    assert len(ACTION_TO_STRATEGY) == 17
 
 
 def test_can_formalize_split():
     """gaia 命名 strategy 9 个：deduction/elimination/math_ind/case_an/abduction/
-    analogy/extrapolation/support/compare；plausible→support；lean→deduction。"""
+    analogy/extrapolation/support/compare。"""
     formalizable = {k for k in ACTION_TO_STRATEGY if can_formalize(k)}
     assert formalizable == {
         "support", "deduction", "abduction", "mathematical_induction",
         "analogy", "case_analysis", "extrapolation", "compare", "elimination",
-        "plausible", "lean",
     }
 
 
@@ -89,8 +86,7 @@ def test_formalize_mathematical_induction():
 
 
 def test_formalize_returns_none_for_non_formalizable():
-    for kind in ["experiment", "contradiction", "complement",
-                 "fills", "infer", "induction", "composite"]:
+    for kind in ["contradiction", "complement", "fills", "infer", "induction", "composite"]:
         sk = formalize_strategy_for_action(
             action_kind=kind,
             premise_qids=["x"],

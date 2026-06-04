@@ -7,7 +7,7 @@
     * verified + lean_lake     → prior=0.99, action_status="done", state="proven"
     * verified + sandbox_python → prior=0.85, action_status="done"
     * verified + inquiry_review → prior=0.70, action_status="done"
-    * refuted                  → prior=0.00, action_status="done", state="refuted"
+    * refuted                  → prior=0.001, action_status="done", state="refuted"
     * inconclusive             → action_status="failed" (不动 prior)
   并在 metadata.provenance 追加 {source, action_id, evidence}
 - 改写后立即 round-trip compile 校验：失败则回滚源码，IngestResult.error 上报
@@ -29,13 +29,18 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-import fcntl
 import libcst as cst
 
 from gd.gaia_bridge import CompileError, load_and_compile
 
 
 logger = logging.getLogger(__name__)
+
+try:
+    import fcntl  # type: ignore[import-not-found]
+except ImportError:  # pragma: no cover - exercised on Windows
+    fcntl = None
+    import msvcrt
 
 
 _DEFAULT_LOCK_TIMEOUT_S = 60.0
@@ -56,7 +61,7 @@ def _plan_lock(plan_path: Path, timeout: float = _DEFAULT_LOCK_TIMEOUT_S):
         deadline = _time.monotonic() + timeout
         while True:
             try:
-                fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                _lock_file_nonblocking(f)
                 break
             except BlockingIOError:
                 if _time.monotonic() > deadline:
@@ -67,9 +72,28 @@ def _plan_lock(plan_path: Path, timeout: float = _DEFAULT_LOCK_TIMEOUT_S):
         try:
             yield
         finally:
-            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+            _unlock_file(f)
     finally:
         f.close()
+
+
+def _lock_file_nonblocking(f) -> None:
+    if fcntl is not None:
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return
+    try:
+        f.seek(0)
+        msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+    except OSError as exc:  # Windows non-blocking lock failure
+        raise BlockingIOError from exc
+
+
+def _unlock_file(f) -> None:
+    if fcntl is not None:
+        fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+        return
+    f.seek(0)
+    msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
 
 
 # ---------------------------------------------------------------------------
@@ -79,7 +103,7 @@ def _plan_lock(plan_path: Path, timeout: float = _DEFAULT_LOCK_TIMEOUT_S):
 PRIOR_CAP_LEAN: float = 0.99
 PRIOR_CAP_EXPERIMENT: float = 0.85
 PRIOR_CAP_HEURISTIC: float = 0.70
-PRIOR_FLOOR_REFUTED: float = 0.00
+PRIOR_FLOOR_REFUTED: float = 0.001
 
 
 _BACKEND_TO_CAP: dict[str, float] = {
@@ -118,7 +142,7 @@ class IngestResult:
 def locate_plan_source(project_dir: Path | str) -> Path:
     """通过 pyproject 推算 import_name，返回 `<src_root>/<import_name>/__init__.py`。
 
-    沿用 gaia.cli._packages.load_gaia_package 的查找规则但不 import（避免污染 sys.path）。
+    沿用 gaia.engine.packaging.load_gaia_package 的查找规则但不 import（避免污染 sys.path）。
     """
     pkg_path = Path(project_dir).resolve()
     pyproject = pkg_path / "pyproject.toml"
@@ -754,25 +778,36 @@ def append_evidence_subgraph(
 
 
 def _ensure_imports(src: str, needed: list[str]) -> str:
-    """确保 plan.gaia.py 顶部 from gaia.lang import ... 包含 needed 全部符号。"""
+    """Ensure plan.gaia.py imports v0.5 Gaia DSL and legacy compat helpers."""
+    current_symbols = {"claim", "question", "note", "register_prior"}
+    current_needed = [sym for sym in needed if sym in current_symbols]
+    compat_needed = [sym for sym in needed if sym not in current_symbols]
+
+    src = _ensure_import_from_module(src, "gaia.engine.lang", current_needed)
+    src = _ensure_import_from_module(src, "gaia.engine.lang.compat", compat_needed)
+    return src
+
+
+def _ensure_import_from_module(src: str, module: str, needed: list[str]) -> str:
     missing = []
+    escaped = _re.escape(module)
     for sym in needed:
-        if not _re.search(rf"from\s+gaia\.lang\s+import[\s\S]*?\b{sym}\b", src):
+        if not _re.search(rf"from\s+{escaped}\s+import[\s\S]*?\b{sym}\b", src):
             missing.append(sym)
     if not missing:
         return src
-    m = _re.search(r"from\s+gaia\.lang\s+import\s*\(([^)]*)\)", src, _re.S)
+    m = _re.search(rf"from\s+{escaped}\s+import\s*\(([^)]*)\)", src, _re.S)
     if m:
         inside = m.group(1).rstrip().rstrip(",")
         added = ",\n    ".join(missing)
         new_inside = inside + ",\n    " + added + ",\n"
         return src[:m.start(1)] + new_inside + src[m.end(1):]
-    m2 = _re.search(r"from\s+gaia\.lang\s+import\s+([^\n]+)", src)
+    m2 = _re.search(rf"from\s+{escaped}\s+import\s+([^\n]+)", src)
     if m2:
         line = m2.group(0)
         new_line = line.rstrip() + ", " + ", ".join(missing)
         return src.replace(line, new_line, 1)
-    return "from gaia.lang import " + ", ".join(missing) + "\n" + src
+    return f"from {module} import " + ", ".join(missing) + "\n" + src
 
 def _append_evidence_locked(
     *,

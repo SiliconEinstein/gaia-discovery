@@ -14,7 +14,7 @@
 - 唯一限制：写 `task_results/<action_id>.md` + `task_results/<action_id>.evidence.json`；
   evidence.json schema 以 `src/gd/verify_server/schemas.py::VerifyRequest` 为准。
 - 禁止动 plan.gaia.py / .gaia/ / memory/。
-- 合法 kind 权威列表：`gaia.lang.dsl.strategies`（13 个）与 `gaia.lang.dsl.operators`（4 个），
+- 合法 kind 权威列表：`gaia.engine.lang.compat` / `gaia.engine.lang.dsl.strategies`（13 个）与 `gaia.engine.lang.compat` / `gaia.engine.lang.dsl.operators`（4 个），
   v3 白名单见 `src/gd/verify_server/schemas.py::ALL_ACTIONS`。
 - sub-agent 启动 prompt：`src/gd/prompts/subagent.md`（薄模板，不按 kind 分支）。
 

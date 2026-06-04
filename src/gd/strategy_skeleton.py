@@ -1,15 +1,15 @@
-"""strategy_skeleton: 把 22 action_kinds 映射到 gaia.ir.StrategyType，调用
-gaia.ir.formalize_named_strategy 得到 FormalStrategy IR 骨架。
+"""strategy_skeleton: 把 17 action_kinds 映射到 gaia.engine.ir.StrategyType，调用
+gaia.engine.ir.formalize_named_strategy 得到 FormalStrategy IR 骨架。
 
 用途：sub-agent 返回 markdown + 结构化字段（premise_qids/conclusion_qid/strategy_kind）
 后，verify-heuristic 与 belief_ingest 调本模块拿到 gaia 原生 FormalStrategy；
 该 IR 可直接灌进 LocalCanonicalGraph 给 run_review 做结构性校验，
 而不是 v3 自己用 claude -p 二次 NL→DSL（那一步保留作 fallback）。
 
-gaia.ir.formalize_named_strategy 只支持 9 种命名 strategy：
+gaia.engine.ir.formalize_named_strategy 只支持 9 种命名 strategy：
   DEDUCTION, ELIMINATION, MATHEMATICAL_INDUCTION, CASE_ANALYSIS,
   ABDUCTION, ANALOGY, EXTRAPOLATION, SUPPORT, COMPARE
-其余 13 个 action_kinds（experiment/lean/contradiction/...）走 fallback 返回 None；
+其余 action_kinds（induction/contradiction/...）走 fallback 返回 None；
 caller 按需走 NL→DSL formalize 或直接 quantitative router。
 """
 from __future__ import annotations
@@ -18,13 +18,13 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-from gaia.ir import StrategyType, formalize_named_strategy
-from gaia.ir.formalize import FormalizationResult
+from gaia.engine.ir import StrategyType, formalize_named_strategy
+from gaia.engine.ir.formalize import FormalizationResult
 
 logger = logging.getLogger(__name__)
 
 
-# 22 action_kinds → gaia.ir.StrategyType 映射；None ⇒ 不可 formalize（走 fallback）
+# 17 action_kinds → gaia.engine.ir.StrategyType 映射；None ⇒ 不可 formalize（走 fallback）
 ACTION_TO_STRATEGY: dict[str, StrategyType | None] = {
     # A. DSL Strategy actions（13 种） —— gaia 原生支持 9 个
     "support": StrategyType.SUPPORT,
@@ -45,12 +45,6 @@ ACTION_TO_STRATEGY: dict[str, StrategyType | None] = {
     "equivalence": None,
     "complement": None,
     "disjunction": None,
-    # C. DZ Runner actions（5 种）—— 全部走 quantitative/structural，不需要 IR
-    "plausible": StrategyType.SUPPORT,             # plausible NL ≈ support
-    "experiment": None,                            # quantitative，无 IR formalize
-    "lean": StrategyType.DEDUCTION,                # lean 证明本质是演绎
-    "bridge_planning": None,                       # 多步规划：composite 类
-    "lean_decompose": None,                        # 拆 lemma：递归 caller 处理
 }
 
 
@@ -89,7 +83,7 @@ def formalize_strategy_for_action(
     package_name: str,
     metadata: dict[str, Any] | None = None,
 ) -> StrategySkeleton | None:
-    """对一个具体 action 调 gaia.ir.formalize_named_strategy。
+    """对一个具体 action 调 gaia.engine.ir.formalize_named_strategy。
 
     返回 None 表示该 action_kind 在 gaia 里没有命名模板（不是错误）。
     其它异常（gaia 自己的 ValueError 等）会冒泡 —— caller 负责捕获 + 走 fallback。

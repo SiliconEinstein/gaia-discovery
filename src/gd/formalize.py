@@ -1,7 +1,7 @@
 """formalize: 把自然语言论证转成 Gaia DSL 片段（NL → IR 形式化层）。
 
 设计取舍：
-  - gaia 没有现成的 NL→IR formalize（gaia.ir.formalize.formalize_named_strategy
+  - gaia 没有现成的 NL→IR formalize（gaia.engine.ir.formalize.formalize_named_strategy
     是 IR 内部展开 NamedStrategy，不是从 NL 起步）
   - 因此用 stateless `claude -p` 充当形式化器，prompt 中给 claim 上下文 + 子 agent
     的 NL 论证，要求只产 Gaia DSL 片段（不写解释、不调任何工具）
@@ -34,13 +34,14 @@ DEFAULT_BASE_FLAGS: tuple[str, ...] = (
 
 FORMALIZE_PROMPT_TEMPLATE = """\
 You are an internal Gaia DSL formalizer. Convert the natural-language argument
-below into a minimal compilable Gaia DSL fragment so that gaia.lang and
-gaia.inquiry.run_review can structurally check it.
+below into a minimal compilable Gaia DSL fragment so that gaia.engine.lang and
+gaia.engine.inquiry.run_review can structurally check it.
 
 Rules (strict):
 1. Output exactly ONE ```python ...``` code block. No prose outside it.
 2. First line must be:
-   from gaia.lang import claim, support, deduction, abduction, induction, analogy, case_analysis, contradiction, equivalence, complement, disjunction
+   from gaia.engine.lang import claim
+   from gaia.engine.lang.compat import support, deduction, abduction, induction, analogy, case_analysis, contradiction, equivalence, complement, disjunction
    (drop unused names, keep at least claim).
 3. Use assignment form: `Name = claim(...)`. Variable names become IR labels.
 4. Include at least one claim node named T whose content reflects the original
@@ -86,7 +87,7 @@ def _extract_code_block(stdout: str) -> str | None:
     if m:
         return m.group("body").strip()
     s = stdout.strip()
-    if s.startswith("from gaia.lang import"):
+    if s.startswith("from gaia.engine.lang import") or s.startswith("from gaia.engine.lang.compat import"):
         return s
     return None
 

@@ -1,6 +1,6 @@
 """gaia_bridge: 把 plan.gaia.py 编译进 IR + 全图 BP，输出 belief snapshot。
 
-依赖 gaia.cli._packages 的高层 helper（与 `gaia review/infer` CLI 同款入口），
+依赖 gaia.engine.packaging 的高层 helper（与 `gaia build/run` CLI 同款入口），
 而非裸 compile_package_artifact —— 这样 priors.py 注入、references 解析、
 sys.path 注入这些都自动跑。
 
@@ -39,22 +39,20 @@ class CompileError(RuntimeError):
 
 
 def load_and_compile(pkg_path):
-    """复用 gaia.cli._packages 的标准 load → priors → compile 流水线。
+    """复用 gaia.engine.packaging 的标准 load → priors → compile 流水线。
 
     返回 (loaded_package, compiled_artifact)。任何步骤失败 → CompileError。
     """
     try:
-        from gaia.cli._packages import (
+        from gaia.engine.packaging import (
             apply_package_priors,
             compile_loaded_package_artifact,
-            ensure_package_env,
             load_gaia_package,
         )
     except ImportError as exc:
         raise CompileError(f"gaia 不可用: {exc}") from exc
 
     try:
-        ensure_package_env(pkg_path)
         loaded = load_gaia_package(str(pkg_path))
         apply_package_priors(loaded)
         compiled = compile_loaded_package_artifact(loaded)
@@ -118,12 +116,12 @@ def compile_and_infer(
         return snapshot
 
     try:
-        from gaia.bp import lower_local_graph
-        from gaia.bp.engine import InferenceEngine
-        from gaia.cli._packages import collect_foreign_node_priors
+        from gaia.engine.bp import lower_local_graph
+        from gaia.engine.bp.engine import InferenceEngine
+        from gaia.engine.packaging import collect_foreign_node_priors
     except ImportError as exc:
         snapshot.compile_status = "error"
-        snapshot.error = f"gaia.bp 不可用: {exc}"
+        snapshot.error = f"gaia.engine.bp 不可用: {exc}"
         return snapshot
 
     # build knowledge_index from compiled package
@@ -141,14 +139,14 @@ def compile_and_infer(
 
     # IR 级校验：记录违规到 ir_warnings，不阻断 BP（校验即报告）
     try:
-        from gaia.ir.validator import validate_local_graph
+        from gaia.engine.ir.validator import validate_local_graph
         ir_vr = validate_local_graph(graph)
         all_issues = list(ir_vr.errors or []) + list(ir_vr.warnings or [])
         if all_issues:
             snapshot.ir_warnings = all_issues
             logger.warning("ir.validator issues: %s", all_issues)
     except ImportError:
-        logger.debug("gaia.ir.validator unavailable, skip IR-level validation")
+        logger.debug("gaia.engine.ir.validator unavailable, skip IR-level validation")
 
     try:
         foreign = collect_foreign_node_priors(graph, pkg_path)
@@ -166,7 +164,7 @@ def compile_and_infer(
         snapshot.error = f"infer: {exc!r}"
         return snapshot
 
-    snapshot.beliefs = dict(result.bp_result.beliefs)
+    snapshot.beliefs = dict(result.beliefs)
     snapshot.method_used = result.method_used
     snapshot.treewidth = result.treewidth
     snapshot.elapsed_ms = result.elapsed_ms

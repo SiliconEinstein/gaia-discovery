@@ -20,7 +20,8 @@ from gd.gaia_bridge import load_and_compile
 
 _PLAN = textwrap.dedent('''\
     """concurrency test plan"""
-    from gaia.lang import claim, support, question
+    from gaia.engine.lang import claim, question
+    from gaia.engine.lang.compat import support
 
     Q = question("conc test", qid="t1")
     A = claim("claim A", action="induction", args={"n": 1}, prior=0.5)

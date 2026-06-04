@@ -15,9 +15,8 @@ from gd.formalize import (
 
 
 def _make_fake_bin(tmp_path: Path, body: str, name: str = "fakefmt") -> Path:
-    p = tmp_path / name
+    p = tmp_path / f"{name}.cmd"
     p.write_text(body, encoding="utf-8")
-    p.chmod(p.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
     return p
 
 
@@ -30,21 +29,19 @@ def test_build_prompt_substitutes():
     assert "support" in s
     assert "X is bounded" in s
     assert "claim X holds because of Y" in s
-    assert "from gaia.lang import" in s
+    assert "from gaia.engine.lang import" in s
 
 
 def test_extract_python_fenced_block(tmp_path):
     body = (
-        "#!/bin/bash\n"
-        "cat <<'EOF'\n"
-        "Some preamble\n"
-        "```python\n"
-        "from gaia.lang import claim\n"
-        "T = claim(\"target\", prior=0.5)\n"
-        "```\n"
-        "trailing\n"
-        "EOF\n"
-        "exit 0\n"
+        "@echo off\n"
+        "echo Some preamble\n"
+        "echo ```python\n"
+        "echo from gaia.engine.lang import claim\n"
+        "echo T = claim(\"target\", prior=0.5)\n"
+        "echo ```\n"
+        "echo trailing\n"
+        "exit /b 0\n"
     )
     fake = _make_fake_bin(tmp_path, body)
     res = formalize_nl(
@@ -52,18 +49,16 @@ def test_extract_python_fenced_block(tmp_path):
         binary=str(fake), timeout=5.0,
     )
     assert res.ok, res.error
-    assert "from gaia.lang import claim" in res.dsl
+    assert "from gaia.engine.lang import claim" in res.dsl
     assert "T = claim(" in res.dsl
 
 
 def test_extract_unfenced_fallback(tmp_path):
     body = (
-        "#!/bin/bash\n"
-        "cat <<'EOF'\n"
-        "from gaia.lang import claim\n"
-        "T = claim(\"x\")\n"
-        "EOF\n"
-        "exit 0\n"
+        "@echo off\n"
+        "echo from gaia.engine.lang import claim\n"
+        "echo T = claim(\"x\")\n"
+        "exit /b 0\n"
     )
     fake = _make_fake_bin(tmp_path, body)
     res = formalize_nl(
@@ -71,11 +66,11 @@ def test_extract_unfenced_fallback(tmp_path):
         binary=str(fake), timeout=5.0,
     )
     assert res.ok
-    assert "from gaia.lang import claim" in res.dsl
+    assert "from gaia.engine.lang import claim" in res.dsl
 
 
 def test_no_code_block_fails(tmp_path):
-    fake = _make_fake_bin(tmp_path, "#!/bin/bash\necho 'no code here'\nexit 0\n")
+    fake = _make_fake_bin(tmp_path, "@echo off\necho no code here\nexit /b 0\n")
     res = formalize_nl(
         nl_text="x", claim_text="x", action_kind="support",
         binary=str(fake), timeout=5.0,
@@ -86,15 +81,13 @@ def test_no_code_block_fails(tmp_path):
 
 def test_blacklist_token_blocked(tmp_path):
     body = (
-        "#!/bin/bash\n"
-        "cat <<'EOF'\n"
-        "```python\n"
-        "from gaia.lang import claim\n"
-        "import os\n"   # 黑名单
-        "T = claim('x')\n"
-        "```\n"
-        "EOF\n"
-        "exit 0\n"
+        "@echo off\n"
+        "echo ```python\n"
+        "echo from gaia.engine.lang import claim\n"
+        "echo import os\n"
+        "echo T = claim('x')\n"
+        "echo ```\n"
+        "exit /b 0\n"
     )
     fake = _make_fake_bin(tmp_path, body)
     res = formalize_nl(
@@ -107,7 +100,7 @@ def test_blacklist_token_blocked(tmp_path):
 
 
 def test_timeout(tmp_path):
-    fake = _make_fake_bin(tmp_path, "#!/bin/bash\nsleep 10\n")
+    fake = _make_fake_bin(tmp_path, "@echo off\nping 127.0.0.1 -n 10 > nul\n")
     res = formalize_nl(
         nl_text="x", claim_text="x", action_kind="support",
         binary=str(fake), timeout=0.5,
@@ -126,7 +119,7 @@ def test_binary_not_found():
 
 
 def test_nonzero_exit(tmp_path):
-    fake = _make_fake_bin(tmp_path, "#!/bin/bash\necho 'bad' >&2\nexit 3\n")
+    fake = _make_fake_bin(tmp_path, "@echo off\necho bad 1>&2\nexit /b 3\n")
     res = formalize_nl(
         nl_text="x", claim_text="x", action_kind="support",
         binary=str(fake), timeout=5.0,

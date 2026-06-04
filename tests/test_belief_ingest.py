@@ -58,7 +58,7 @@ def _make_pkg(tmp_path: Path, plan_src: str) -> Path:
 # ---------------------------------------------------------------------------
 
 def test_locate_plan_finds_init_py(tmp_path):
-    pkg = _make_pkg(tmp_path, "from gaia.lang import claim\nA = claim('x', prior=0.5)\n")
+    pkg = _make_pkg(tmp_path, "from gaia.engine.lang import claim\nA = claim('x', prior=0.5)\n")
     p = locate_plan_source(pkg)
     assert p.name == "__init__.py"
     assert p.is_file()
@@ -84,7 +84,7 @@ def test_locate_plan_wrong_gaia_type(tmp_path):
 # ---------------------------------------------------------------------------
 
 _PLAN_TWO_CLAIMS = textwrap.dedent('''\
-    from gaia.lang import claim
+    from gaia.engine.lang import claim
 
     A = claim("hypothesis A", action="experiment", args={"n": 100}, prior=0.5)
     B = claim("hypothesis B", action="lean", prior=0.5)
@@ -201,7 +201,7 @@ def test_apply_refuted(stamped_pkg):
     assert res.new_state == "refuted"
     src = locate_plan_source(stamped_pkg).read_text(encoding="utf-8")
     assert 'state="refuted"' in src
-    assert 'prior=0.0' in src
+    assert 'prior=0.001' in src
 
 
 def test_apply_inconclusive(stamped_pkg):

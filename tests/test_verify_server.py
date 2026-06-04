@@ -242,7 +242,8 @@ def test_structural_path_escape(tmp_path):
 # ---------------------------------------------------------------------------
 
 _DSL_OK = '''\
-from gaia.lang import claim, support
+from gaia.engine.lang import claim
+from gaia.engine.lang.compat import support
 
 A = claim("hypothesis A holds", prior=0.6)
 B = claim("hypothesis B holds", prior=0.6)
@@ -253,7 +254,8 @@ support(premises=[A, B], conclusion=C, prior=0.7)
 _DSL_SYNTAX_BROKEN = "this is (not valid python\n"
 
 _DSL_BINDING_BROKEN = '''\
-from gaia.lang import support, claim
+from gaia.engine.lang import claim
+from gaia.engine.lang.compat import support
 
 C = claim("conclusion only", prior=0.4)
 # 引用未定义变量，期望 NameError
@@ -296,7 +298,7 @@ def test_heuristic_runs_review_pipeline(tmp_path):
     返回 verified 或 inconclusive（带 publish blocker）但不应抛异常。"""
     req = _make_heur_req(tmp_path, _DSL_OK)
     resp = verify_heuristic(req)
-    # gaia.inquiry 在最小 pkg 上几乎一定有 prior_hole 之类 → inconclusive
+    # gaia.engine.inquiry 在最小 pkg 上几乎一定有 prior_hole 之类 → inconclusive
     # 也允许 verified（取决于 gaia 当前实现），但严禁未捕获异常
     assert resp.verdict in {"verified", "inconclusive"}
     assert resp.backend == "inquiry_review"

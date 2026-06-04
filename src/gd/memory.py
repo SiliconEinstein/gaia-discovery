@@ -17,7 +17,6 @@ channel ∈ CANONICAL_CHANNELS（11 个：10 业务 + events）。
 """
 from __future__ import annotations
 
-import fcntl
 import json
 import logging
 import time
@@ -26,6 +25,12 @@ from pathlib import Path
 from typing import Any, Iterable
 
 logger = logging.getLogger(__name__)
+
+try:
+    import fcntl  # type: ignore[import-not-found]
+except ImportError:  # pragma: no cover - exercised on Windows
+    fcntl = None
+    import msvcrt
 
 
 CANONICAL_CHANNELS: tuple[str, ...] = (
@@ -121,7 +126,7 @@ def append(
     with f.open("a", encoding="utf-8") as h:
         while True:
             try:
-                fcntl.flock(h.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                _lock_file_nonblocking(h)
                 break
             except BlockingIOError:
                 if time.monotonic() >= deadline:
@@ -133,8 +138,27 @@ def append(
             h.write(line + "\n")
             h.flush()
         finally:
-            fcntl.flock(h.fileno(), fcntl.LOCK_UN)
+            _unlock_file(h)
     return record
+
+
+def _lock_file_nonblocking(f) -> None:
+    if fcntl is not None:
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return
+    try:
+        f.seek(0)
+        msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+    except OSError as exc:
+        raise BlockingIOError from exc
+
+
+def _unlock_file(f) -> None:
+    if fcntl is not None:
+        fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+        return
+    f.seek(0)
+    msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
 
 
 def tail(

@@ -30,7 +30,8 @@ from gd.orchestrator import (
 
 
 PLAN_INITIAL = textwrap.dedent('''\
-    from gaia.lang import claim, support
+    from gaia.engine.lang import claim
+    from gaia.engine.lang.compat import support
 
     A = claim("hypothesis A", action="induction", args={"n": 100}, prior=0.5)
     B = claim("hypothesis B", prior=0.6)
@@ -356,7 +357,8 @@ def test_run_explore_breaks_mid_loop_when_deadline_hits(tmp_path, monkeypatch):
 
 
 PLAN_3_ACTIONS = textwrap.dedent("""\
-    from gaia.lang import claim, support
+    from gaia.engine.lang import claim
+    from gaia.engine.lang.compat import support
 
     A = claim("A", action="induction", args={"n": 1}, prior=0.5)
     B = claim("B", action="induction", args={"n": 2}, prior=0.5)

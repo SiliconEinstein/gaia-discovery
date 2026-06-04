@@ -50,7 +50,7 @@ def set_judge_hook(fn) -> None:
 
 
 # gaia 原生支持的 strategy 类型（formalize_named_strategy 已实现的 9 种）
-# 见 /root/Gaia/gaia/ir/formalize.py:562-570 _BUILDERS 表
+# 见 gaia.engine.ir.formalize._BUILDERS。
 _GAIA_NATIVE_STRATEGY_TYPES = frozenset({
     "deduction", "elimination", "mathematical_induction", "case_analysis",
     "abduction", "analogy", "extrapolation", "support", "compare",
@@ -63,13 +63,13 @@ def _gaia_structural_check(
     claim_text: str | None,
     project_dir: Path,
 ) -> tuple[bool, str | None]:
-    """用 gaia.ir.formalize.formalize_named_strategy 当结构判别器。
+    """用 gaia.engine.ir.formalize.formalize_named_strategy 当结构判别器。
 
     返回 (ok, error)���ok=False 时 error 是 gaia 抛的具体错误。
     仅对 action_kind in _GAIA_NATIVE_STRATEGY_TYPES 调用。
     """
     try:
-        from gaia.ir.formalize import formalize_named_strategy
+        from gaia.engine.ir.formalize import formalize_named_strategy
     except ImportError as exc:
         return True, None  # gaia 不可用就不预检，直接放行到 LLM
     raw_premises = evidence.get("premises") or []
