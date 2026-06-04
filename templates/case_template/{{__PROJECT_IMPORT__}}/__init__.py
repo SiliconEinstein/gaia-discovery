@@ -6,12 +6,12 @@
     (b) 你的探索路径 (git diff 即可读)
 * USER hint: 用户可在任意位置插入 `# USER: ...` 注释，主 agent 必须读并响应。
 """
-from gaia.engine.lang import claim, question
+from gaia.engine.lang import claim, infer, question
 from gaia.engine.lang.compat import (
     setting,
     support, deduction, abduction, induction, mathematical_induction,
     analogy, case_analysis, extrapolation, compare, elimination,
-    composite, fills, infer,
+    composite, fills,
     contradiction, equivalence, complement, disjunction,
 )
 

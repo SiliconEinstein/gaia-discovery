@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import json
 import os
-import resource
 import subprocess
 import sys
 import tempfile
@@ -28,9 +27,17 @@ from gd.verify_server.schemas import (
     VerifyResponse,
 )
 
+try:
+    import resource  # type: ignore[import-not-found]
+except ImportError:  # pragma: no cover - exercised on Windows
+    resource = None
+
 
 def _make_preexec(memory_bytes: int, cpu_seconds: int, fsize_bytes: int):
     """Linux only。每个 RLIMIT 都设为 (soft, hard)。"""
+    if resource is None:
+        return None
+
     def _apply() -> None:
         resource.setrlimit(resource.RLIMIT_AS, (memory_bytes, memory_bytes))
         resource.setrlimit(resource.RLIMIT_CPU, (cpu_seconds, cpu_seconds + 1))

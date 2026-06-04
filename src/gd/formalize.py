@@ -40,7 +40,7 @@ gaia.engine.inquiry.run_review can structurally check it.
 Rules (strict):
 1. Output exactly ONE ```python ...``` code block. No prose outside it.
 2. First line must be:
-   from gaia.engine.lang import claim
+   from gaia.engine.lang import claim, infer
    from gaia.engine.lang.compat import support, deduction, abduction, induction, analogy, case_analysis, contradiction, equivalence, complement, disjunction
    (drop unused names, keep at least claim).
 3. Use assignment form: `Name = claim(...)`. Variable names become IR labels.
