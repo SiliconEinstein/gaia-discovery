@@ -2,20 +2,19 @@
 
 **Claude Code 驱动的 Gaia DSL 探索系统**
 
-主控制面 = Claude Code 主 agent；它直接编辑 `plan.gaia.py`（Gaia 知识包，编译进 IR），用 `metadata={"action": ...}` 把不会做的子问题派给 sub-agent；sub-agent 走独立 HTTP `/verify` 校验后写回 belief；`compile_package_artifact + InferenceEngine.run` 全图 BP；`gaia.inquiry.run_review` 回流 diagnostics + ProofContext + semantic_diff + publish_blockers。
+主控制面 = Claude Code 主 agent；它直接编辑 `plan.gaia.py`（Gaia 知识包，编译进 IR），用 `metadata={"action": ...}` 把不会做的子问题派给 sub-agent；sub-agent 走独立 HTTP `/verify` 校验后写回 belief；`compile_package_artifact + InferenceEngine.run` 全图 BP；`gaia.engine.inquiry.run_review` 回流 diagnostics + ProofContext + semantic_diff + publish_blockers。
 
 ## 前置条件
 
-1. **Python 3.11+**（`tomllib` 内置）
-2. **Gaia**（Anthropic-private）：`pip install -e /path/to/Gaia`
+1. **Python 3.12+**
+2. **Gaia Lang**：通过本项目依赖从 PyPI 安装 `gaia-lang==0.5.0a3`，无需预先 clone Gaia 源码仓库
 3. **claude CLI**：能裸跑 `claude --version`；`~/.claude/settings.json` 里配好 API key
 
 ## Quickstart
 
 ```bash
 # 1. 安装
-pip install -e /path/to/Gaia
-pip install -e .
+python -m pip install -e .[dev]
 
 # 2. 配置主 agent 模型（见下方「模型配置」）
 cp gd.toml.example gd.toml

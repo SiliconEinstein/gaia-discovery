@@ -1,6 +1,6 @@
 """gaia_bridge: 把 plan.gaia.py 编译进 IR + 全图 BP，输出 belief snapshot。
 
-依赖 gaia.cli._packages 的高层 helper（与 `gaia review/infer` CLI 同款入口），
+依赖 gaia.engine.inquiry.review 的高层 helper（与 `gaia review/infer` CLI 同款入口），
 而非裸 compile_package_artifact —— 这样 priors.py 注入、references 解析、
 sys.path 注入这些都自动跑。
 
@@ -39,7 +39,7 @@ class CompileError(RuntimeError):
 
 
 def load_and_compile(pkg_path):
-    """复用 gaia.cli._packages 的标准 load → priors → compile 流水线。
+    """复用 gaia.engine.inquiry.review 的标准 load → priors → compile 流水线。
 
     返回 (loaded_package, compiled_artifact)。任何步骤失败 → CompileError。
     """

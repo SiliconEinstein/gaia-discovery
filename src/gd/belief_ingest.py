@@ -118,7 +118,7 @@ class IngestResult:
 def locate_plan_source(project_dir: Path | str) -> Path:
     """通过 pyproject 推算 import_name，返回 `<src_root>/<import_name>/__init__.py`。
 
-    沿用 gaia.cli._packages.load_gaia_package 的查找规则但不 import（避免污染 sys.path）。
+    沿用 Gaia package loader 的查找规则但不 import（避免污染 sys.path）。
     """
     pkg_path = Path(project_dir).resolve()
     pyproject = pkg_path / "pyproject.toml"

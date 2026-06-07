@@ -6,11 +6,8 @@
 git clone <repo-url> gaia-discovery-v3
 cd gaia-discovery-v3
 
-# 安装 Gaia（需先 clone gaia 仓库到 /root/Gaia 或调整路径）
-pip install -e /root/Gaia
-
-# 安装本项目
-pip install -e .
+# 安装本项目；gaia-lang==0.5.0a3 会从 PyPI 自动安装
+python -m pip install -e .[dev]
 ```
 
 **验证安装**：
@@ -192,8 +189,8 @@ gaia-discovery-v3/
 │   ├── orchestrator.py      # 8 步探索循环
 │   ├── subagent.py          # 子 agent 派发（走 backend）
 │   ├── formalize.py         # NL → Gaia DSL（走 backend.chat）
-│   ├── inquiry_bridge.py    # gaia.inquiry 封装
-│   ├── gaia_bridge.py       # gaia.bp + gaia.ir 封装
+│   ├── inquiry_bridge.py    # gaia.engine.inquiry 封装
+│   ├── gaia_bridge.py       # gaia.engine.bp + gaia.engine.ir 封装
 │   ├── belief_ingest.py     # libcst AST 改写 plan.gaia.py
 │   ├── dispatcher.py        # IR 扫描 → ActionSignal
 │   ├── runner.py            # 主 agent（Claude CLI）

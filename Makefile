@@ -1,13 +1,11 @@
 .PHONY: install-all test lint run-verify run-explore clean fmt
 
-PY := python3
-PIP := pip
-ROOT := /root/personal/gaia-discovery-v3
+PY := python
+PIP := $(PY) -m pip
+ROOT := $(CURDIR)
 
 install-all:
-	$(PIP) install -e /root/Gaia
-	$(PIP) install -e /root/gaia-discovery/packages/dz-hypergraph
-	$(PIP) install -e $(ROOT)[dev]
+	$(PIP) install -e .[dev]
 
 test:
 	cd $(ROOT) && $(PY) -m pytest -q
