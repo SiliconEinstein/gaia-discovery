@@ -18,8 +18,8 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-from gaia.ir import StrategyType, formalize_named_strategy
-from gaia.ir.formalize import FormalizationResult
+from gaia.engine.ir import StrategyType, formalize_named_strategy
+from gaia.engine.ir.formalize import FormalizationResult
 
 logger = logging.getLogger(__name__)
 

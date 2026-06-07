@@ -47,7 +47,7 @@ def _write_minimal_pkg(pkg_dir: Path, name: str = "demo_pkg") -> Path:
     src_dir.mkdir(exist_ok=True)
     (src_dir / "__init__.py").write_text(textwrap.dedent("""
         \"\"\"Minimal Gaia knowledge package for tests.\"\"\"
-        from gaia.lang import claim, setting, support
+        from gaia.engine.lang import claim, setting, support
 
         # background setting
         ctx = setting("Working in standard real analysis.")

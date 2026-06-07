@@ -242,7 +242,7 @@ def test_structural_path_escape(tmp_path):
 # ---------------------------------------------------------------------------
 
 _DSL_OK = '''\
-from gaia.lang import claim, support
+from gaia.engine.lang import claim, support
 
 A = claim("hypothesis A holds", prior=0.6)
 B = claim("hypothesis B holds", prior=0.6)
@@ -253,7 +253,7 @@ support(premises=[A, B], conclusion=C, prior=0.7)
 _DSL_SYNTAX_BROKEN = "this is (not valid python\n"
 
 _DSL_BINDING_BROKEN = '''\
-from gaia.lang import support, claim
+from gaia.engine.lang import support, claim
 
 C = claim("conclusion only", prior=0.4)
 # 引用未定义变量，期望 NameError

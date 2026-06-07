@@ -40,10 +40,10 @@ def doctor() -> None:
 
     # 2. Gaia 可 import
     try:
-        import gaia.lang.compiler.compile  # noqa: F401
-        import gaia.bp.engine  # noqa: F401
-        import gaia.inquiry  # noqa: F401
-        table.add_row("gaia-lang", "OK", gaia.lang.compiler.compile.__file__)
+        import gaia.engine.lang.compiler.compile  # noqa: F401
+        import gaia.engine.bp.engine  # noqa: F401
+        import gaia.engine.inquiry  # noqa: F401
+        table.add_row("gaia-lang", "OK", gaia.engine.lang.compiler.compile.__file__)
     except Exception as exc:
         table.add_row("gaia-lang", "FAIL", repr(exc))
         issues.append(f"gaia import: {exc}")

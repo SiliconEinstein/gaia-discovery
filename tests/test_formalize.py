@@ -30,7 +30,7 @@ def test_build_prompt_substitutes():
     assert "support" in s
     assert "X is bounded" in s
     assert "claim X holds because of Y" in s
-    assert "from gaia.lang import" in s
+    assert "from gaia.engine.lang import" in s
 
 
 def test_extract_python_fenced_block(tmp_path):
@@ -39,7 +39,7 @@ def test_extract_python_fenced_block(tmp_path):
         "cat <<'EOF'\n"
         "Some preamble\n"
         "```python\n"
-        "from gaia.lang import claim\n"
+        "from gaia.engine.lang import claim\n"
         "T = claim(\"target\", prior=0.5)\n"
         "```\n"
         "trailing\n"
@@ -52,7 +52,7 @@ def test_extract_python_fenced_block(tmp_path):
         binary=str(fake), timeout=5.0,
     )
     assert res.ok, res.error
-    assert "from gaia.lang import claim" in res.dsl
+    assert "from gaia.engine.lang import claim" in res.dsl
     assert "T = claim(" in res.dsl
 
 
@@ -60,7 +60,7 @@ def test_extract_unfenced_fallback(tmp_path):
     body = (
         "#!/bin/bash\n"
         "cat <<'EOF'\n"
-        "from gaia.lang import claim\n"
+        "from gaia.engine.lang import claim\n"
         "T = claim(\"x\")\n"
         "EOF\n"
         "exit 0\n"
@@ -71,7 +71,7 @@ def test_extract_unfenced_fallback(tmp_path):
         binary=str(fake), timeout=5.0,
     )
     assert res.ok
-    assert "from gaia.lang import claim" in res.dsl
+    assert "from gaia.engine.lang import claim" in res.dsl
 
 
 def test_no_code_block_fails(tmp_path):
@@ -89,7 +89,7 @@ def test_blacklist_token_blocked(tmp_path):
         "#!/bin/bash\n"
         "cat <<'EOF'\n"
         "```python\n"
-        "from gaia.lang import claim\n"
+        "from gaia.engine.lang import claim\n"
         "import os\n"   # 黑名单
         "T = claim('x')\n"
         "```\n"

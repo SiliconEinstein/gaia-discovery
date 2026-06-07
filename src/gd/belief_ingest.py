@@ -754,25 +754,25 @@ def append_evidence_subgraph(
 
 
 def _ensure_imports(src: str, needed: list[str]) -> str:
-    """确保 plan.gaia.py 顶部 from gaia.lang import ... 包含 needed 全部符号。"""
+    """确保 plan.gaia.py 顶部 from gaia.engine.lang import ... 包含 needed 全部符号。"""
     missing = []
     for sym in needed:
-        if not _re.search(rf"from\s+gaia\.lang\s+import[\s\S]*?\b{sym}\b", src):
+        if not _re.search(rf"from\s+gaia\.engine\.lang(?:\.compat)?\s+import[\s\S]*?\b{sym}\b", src):
             missing.append(sym)
     if not missing:
         return src
-    m = _re.search(r"from\s+gaia\.lang\s+import\s*\(([^)]*)\)", src, _re.S)
+    m = _re.search(r"from\s+gaia\.engine\.lang\s+import\s*\(([^)]*)\)", src, _re.S)
     if m:
         inside = m.group(1).rstrip().rstrip(",")
         added = ",\n    ".join(missing)
         new_inside = inside + ",\n    " + added + ",\n"
         return src[:m.start(1)] + new_inside + src[m.end(1):]
-    m2 = _re.search(r"from\s+gaia\.lang\s+import\s+([^\n]+)", src)
+    m2 = _re.search(r"from\s+gaia\.engine\.lang\s+import\s+([^\n]+)", src)
     if m2:
         line = m2.group(0)
         new_line = line.rstrip() + ", " + ", ".join(missing)
         return src.replace(line, new_line, 1)
-    return "from gaia.lang import " + ", ".join(missing) + "\n" + src
+    return "from gaia.engine.lang import " + ", ".join(missing) + "\n" + src
 
 def _append_evidence_locked(
     *,

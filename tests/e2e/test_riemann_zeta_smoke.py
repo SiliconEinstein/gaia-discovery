@@ -45,7 +45,7 @@ _TARGET_TXT = (
 
 _PLAN_INITIAL = '''\
 """plan.gaia.py — 问题 demo_zeta 的 Gaia 知识包。"""
-from gaia.lang import claim, support, deduction, question
+from gaia.engine.lang import claim, support, deduction, question
 
 q_main = question(
     "证明 Riemann zeta 函数非平凡零点间距 / log T 的均值收敛于 1",

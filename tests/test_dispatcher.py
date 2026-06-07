@@ -75,7 +75,7 @@ def test_scan_minimal_pkg_no_actions(unique_pkg):
 def test_scan_finds_pending_action(tmp_path, cleanup_modules):
     name = "pkg_pending_action"
     body = textwrap.dedent("""
-        from gaia.lang import claim, setting
+        from gaia.engine.lang import claim, setting
 
         ctx = setting("Real analysis context.")
         T = claim(
@@ -101,7 +101,7 @@ def test_scan_finds_pending_action(tmp_path, cleanup_modules):
 def test_scan_skips_non_pending(tmp_path, cleanup_modules):
     name = "pkg_non_pending"
     body = textwrap.dedent("""
-        from gaia.lang import claim
+        from gaia.engine.lang import claim
         K1 = claim("already done", action="induction", action_status="done")
         K2 = claim("in flight", action="induction", action_status="dispatched")
     """).lstrip()
@@ -113,7 +113,7 @@ def test_scan_skips_non_pending(tmp_path, cleanup_modules):
 def test_scan_default_pending_when_status_missing(tmp_path, cleanup_modules):
     name = "pkg_default_pending"
     body = textwrap.dedent("""
-        from gaia.lang import claim
+        from gaia.engine.lang import claim
         K = claim("need verify", action="deduction")
     """).lstrip()
     pkg = _make_pkg(tmp_path, name, body)
@@ -125,7 +125,7 @@ def test_scan_default_pending_when_status_missing(tmp_path, cleanup_modules):
 def test_scan_rejects_unknown_action(tmp_path, cleanup_modules):
     name = "pkg_unknown_action"
     body = textwrap.dedent("""
-        from gaia.lang import claim
+        from gaia.engine.lang import claim
         K = claim("x", action="telepathy")
     """).lstrip()
     pkg = _make_pkg(tmp_path, name, body)
@@ -137,7 +137,7 @@ def test_scan_rejects_unknown_action(tmp_path, cleanup_modules):
 def test_scan_rejects_bad_args_type(tmp_path, cleanup_modules):
     name = "pkg_bad_args"
     body = textwrap.dedent("""
-        from gaia.lang import claim
+        from gaia.engine.lang import claim
         K = claim("x", action="induction", args=[1, 2, 3])
     """).lstrip()
     pkg = _make_pkg(tmp_path, name, body)
@@ -149,7 +149,7 @@ def test_scan_rejects_bad_args_type(tmp_path, cleanup_modules):
 def test_action_id_stable_for_same_node(tmp_path, cleanup_modules):
     name = "pkg_stable_id"
     body = textwrap.dedent("""
-        from gaia.lang import claim
+        from gaia.engine.lang import claim
         K = claim("need check", action="induction")
     """).lstrip()
     pkg = _make_pkg(tmp_path, name, body)
@@ -163,7 +163,7 @@ def test_action_id_stable_for_same_node(tmp_path, cleanup_modules):
 def test_write_signals_serializes(tmp_path, cleanup_modules):
     name = "pkg_write_signals"
     body = textwrap.dedent("""
-        from gaia.lang import claim
+        from gaia.engine.lang import claim
         K = claim("x", action="support", args={"depth": 2})
     """).lstrip()
     pkg = _make_pkg(tmp_path, name, body)
@@ -180,7 +180,7 @@ def test_write_signals_serializes(tmp_path, cleanup_modules):
 def test_scan_multiple_actions(tmp_path, cleanup_modules):
     name = "pkg_multi"
     body = textwrap.dedent("""
-        from gaia.lang import claim
+        from gaia.engine.lang import claim
         K1 = claim("need exp", action="induction")
         K2 = claim("need lean", action="deduction")
         K3 = claim("already done", action="support", action_status="done")

@@ -44,7 +44,7 @@ def load_and_compile(pkg_path):
     返回 (loaded_package, compiled_artifact)。任何步骤失败 → CompileError。
     """
     try:
-        from gaia.cli._packages import (
+        from gaia.engine.inquiry.review import (
             apply_package_priors,
             compile_loaded_package_artifact,
             ensure_package_env,
@@ -118,9 +118,9 @@ def compile_and_infer(
         return snapshot
 
     try:
-        from gaia.bp import lower_local_graph
-        from gaia.bp.engine import InferenceEngine
-        from gaia.cli._packages import collect_foreign_node_priors
+        from gaia.engine.bp import lower_local_graph
+        from gaia.engine.bp.engine import InferenceEngine
+        from gaia.engine.inquiry.review import collect_foreign_node_priors
     except ImportError as exc:
         snapshot.compile_status = "error"
         snapshot.error = f"gaia.bp 不可用: {exc}"
@@ -141,7 +141,7 @@ def compile_and_infer(
 
     # IR 级校验：记录违规到 ir_warnings，不阻断 BP（校验即报告）
     try:
-        from gaia.ir.validator import validate_local_graph
+        from gaia.engine.ir.validator import validate_local_graph
         ir_vr = validate_local_graph(graph)
         all_issues = list(ir_vr.errors or []) + list(ir_vr.warnings or [])
         if all_issues:

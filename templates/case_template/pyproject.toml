@@ -3,7 +3,7 @@ name = "discovery-{{__PROBLEM_ID__}}-gaia"
 version = "0.1.0"
 description = "gaia-discovery-v3 case for open problem {{__PROBLEM_ID__}}"
 requires-python = ">=3.12"
-dependencies = ["gaia-lang"]
+dependencies = ["gaia-lang==0.5.0a3"]
 
 [tool.gaia]
 type = "knowledge-package"
