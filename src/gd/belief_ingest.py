@@ -7,7 +7,7 @@
     * verified + lean_lake     → prior=0.99, action_status="done", state="proven"
     * verified + sandbox_python → prior=0.85, action_status="done"
     * verified + inquiry_review → prior=0.70, action_status="done"
-    * refuted                  → prior=0.00, action_status="done", state="refuted"
+    * refuted                  → prior=0.001, action_status="done", state="refuted"
     * inconclusive             → action_status="failed" (不动 prior)
   并在 metadata.provenance 追加 {source, action_id, evidence}
 - 改写后立即 round-trip compile 校验：失败则回滚源码，IngestResult.error 上报
@@ -79,7 +79,7 @@ def _plan_lock(plan_path: Path, timeout: float = _DEFAULT_LOCK_TIMEOUT_S):
 PRIOR_CAP_LEAN: float = 0.99
 PRIOR_CAP_EXPERIMENT: float = 0.85
 PRIOR_CAP_HEURISTIC: float = 0.70
-PRIOR_FLOOR_REFUTED: float = 0.00
+PRIOR_FLOOR_REFUTED: float = 1e-3
 
 
 _BACKEND_TO_CAP: dict[str, float] = {

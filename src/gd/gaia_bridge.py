@@ -31,7 +31,7 @@ from typing import Any, Literal
 
 logger = logging.getLogger(__name__)
 
-MethodChoice = Literal["auto", "jt", "gbp", "bp", "exact"]
+MethodChoice = Literal["auto", "jt", "trw_bp", "mean_field", "gbp", "bp", "exact"]
 
 
 class CompileError(RuntimeError):
@@ -159,14 +159,15 @@ def compile_and_infer(
             snapshot.error = "factor_graph validate: " + "; ".join(fg_errs)
             return snapshot
         engine = InferenceEngine()
-        result = engine.run(fg, method=method)
+        method_arg = {"gbp": "trw_bp", "bp": "trw_bp"}.get(method, method)
+        result = engine.run(fg, method=method_arg)  # type: ignore[arg-type]
     except Exception as exc:
         logger.exception("BP failed for %s", pkg_path)
         snapshot.compile_status = "error"
         snapshot.error = f"infer: {exc!r}"
         return snapshot
 
-    snapshot.beliefs = dict(result.bp_result.beliefs)
+    snapshot.beliefs = dict(result.beliefs)
     snapshot.method_used = result.method_used
     snapshot.treewidth = result.treewidth
     snapshot.elapsed_ms = result.elapsed_ms
